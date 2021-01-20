@@ -1,0 +1,6 @@
+-MD
+-std=c++20
+-Weverything
+-Wno-c++98-compat-pedantic
+-Wno-newline-eof
+-Wno-global-constructors
