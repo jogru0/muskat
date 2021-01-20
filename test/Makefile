@@ -3,13 +3,13 @@ CXXFLAGS 	 := @../Compilerflags
 
 LDFLAGS  	 := -lgtest -lpthread
 BUILD    	 := ./build
-TARGET   	 := turning-testsuite
+TARGET   	 := muskat-test
 
 OBJ_DIR_DBG  := $(BUILD)/$(TARGET)-debug/objects
 OBJ_DIR_TST  := $(BUILD)/$(TARGET)-test/objects
 
 APP_DIR  	 := ./bin
-INCLUDE  	 := -iquote ../include -iquote include -isystem ../submodules -isystem ../external_header
+INCLUDE  	 := -iquote ../src/include -iquote src/include -isystem ../src/external
 SRC      	 := $(wildcard src/*.cpp)
 
 OBJECTS_DBG := $(SRC:%.cpp=$(OBJ_DIR_DBG)/%.o)
@@ -44,11 +44,11 @@ build:
 	@mkdir -p $(OBJ_DIR_TST)
 	@mkdir -p $(OBJ_DIR_DBG)
 
-debug: CXXFLAGS += -g -ggdb
+debug: CXXFLAGS += -ggdb
 debug: build_binary_debug
 
 test: CXXFLAGS += -O3
-test: clean build_binary_test
+test: build_binary_test
 
 clean:
 	-@rm -rvf $(OBJ_DIR_DBG)/*

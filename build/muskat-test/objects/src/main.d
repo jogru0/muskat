@@ -177,4 +177,5 @@ build/muskat-test/objects/src/main.o: src/main.cpp \
   /usr/bin/../lib/gcc/x86_64-linux-gnu/10/../../../../include/c++/10/istream \
   /usr/bin/../lib/gcc/x86_64-linux-gnu/10/../../../../include/c++/10/bits/istream.tcc \
   /usr/bin/../lib/gcc/x86_64-linux-gnu/10/../../../../include/c++/10/cassert \
-  /usr/include/assert.h
+  /usr/include/assert.h src/include/set_of_cards.h \
+  src/external/stdc/literals.h

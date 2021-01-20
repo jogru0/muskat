@@ -81,7 +81,8 @@
         "concepts": "cpp",
         "ranges": "cpp",
         "stop_token": "cpp",
-        "cassert": "cpp"
+        "cassert": "cpp",
+        "any": "cpp"
     },
     "terminal.integrated.shell.windows": "cmd.exe",
     "git.ignoreLimitWarning": true, 

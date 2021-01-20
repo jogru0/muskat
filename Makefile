@@ -6,7 +6,7 @@
 CXX      	 := clang++-11
 CXXFLAGS 	 := @Compilerflags
 LDFLAGS  	 :=
-INCLUDE  	 := -iquote include -isystem submodules -isystem external_header
+INCLUDE  	 := -iquote src/include -isystem src/external
 SRC      	 := $(wildcard src/*.cpp)
 
 # project settings
