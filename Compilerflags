@@ -4,3 +4,4 @@
 -Wno-c++98-compat-pedantic
 -Wno-newline-eof
 -Wno-global-constructors
+-Wno-padded

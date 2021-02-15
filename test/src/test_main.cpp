@@ -2,7 +2,7 @@
 
 #include <gtest/gtest.h>
 
-#include "test_set_of_cards.h"
+#include "test_cards.h"
 
 int main(int argc, char **argv) {
 	auto asserts_are_active = false;
