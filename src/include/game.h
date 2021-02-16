@@ -36,7 +36,7 @@ namespace muskat {
 		auto &second_defener = sager;
 		auto &hand_second_defener = hand_sager;
 		
-		auto role_winner_last_tick = Role::FirstDefender; //Hören == Kommen
+		auto role_of_winner_last_tick = Role::FirstDefender; //Hören == Kommen
 		
 		auto role_to_player_and_hand = [&](auto role) -> std::tuple<AbstractPlayer &, Cards &> {
 			switch (role) {
@@ -67,7 +67,12 @@ namespace muskat {
 		auto points_defender = 0_z;
 		
 		for (auto number_of_trick = 1_z; number_of_trick != 11; ++number_of_trick) {
-			auto [player, hand]
+			auto [player, hand] = role_to_player_and_hand(role_of_winner_last_tick);
+			auto first_card = player.request_move();
+			//CHECK IF HE HAS THIS CARD.
+			auto trick_type = get_trick_type(first_card, game_type);
+
+
 		}
 
 

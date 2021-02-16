@@ -7,7 +7,7 @@
 #include <stdc/mathematics.h>
 
 int main() {
-	assert(std::cout << "Wir debuggen.\n");
+	assert(std::cout << "Wir asserten.\n");
 	
 	std::cout << "Hello Sailor!\n";
 

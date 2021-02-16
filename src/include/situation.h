@@ -15,7 +15,7 @@ namespace muskat {
 enum class Role {Declarer, FirstDefender, SecondDefender};
 
 [[nodiscard]] constexpr auto next(Role role) {
-	switch (player) {
+	switch (role) {
 		case Role::Declarer: return Role::FirstDefender;
 		case Role::FirstDefender: return Role::SecondDefender;
 		case Role::SecondDefender: return Role::Declarer;
@@ -24,7 +24,7 @@ enum class Role {Declarer, FirstDefender, SecondDefender};
 
 using Deck = std::array<Card, 32>;
 
-[[nodiscard]] inline auto deal_deck(const Decck &deck) {
+[[nodiscard]] inline auto deal_deck(const Deck &deck) {
 		assert(!stdc::contains_duplicates(RANGE(deck)));
 		
 		auto hand_left = Cards{};
@@ -76,7 +76,7 @@ using Deck = std::array<Card, 32>;
 
 		return std::tuple{
 			hand_self, hand_left, hand_right, skat
-		}
+		};
 }
 
 
@@ -106,7 +106,7 @@ private:
 	Cards m_hand_second_defender;
 	std::optional<Card> m_maybe_first_trick_card;
 	std::optional<Card> m_maybe_second_trick_card;
-	Player m_player;
+	Role m_active_role;
 
 public:
 
@@ -117,8 +117,8 @@ public:
 		return result;
 	}
 
-	[[nodiscard]] auto player() const {
-		return m_player;
+	[[nodiscard]] auto active_role() const {
+		return m_active_role;
 	}
 
 	[[nodiscard]] auto get_maybe_first_trick_card() const {
@@ -129,11 +129,11 @@ public:
 		return m_maybe_second_trick_card;
 	}
 
-	[[nodiscard]] auto hand(Player player) const {
-		switch (player) {
-			case Player::Declarer: return m_hand_declarer;
-			case Player::FirstDefender: return m_hand_first_defender;
-			case Player::SecondDefender: return m_hand_second_defender;
+	[[nodiscard]] auto hand(Role role) const {
+		switch (role) {
+			case Role::Declarer: return m_hand_declarer;
+			case Role::FirstDefender: return m_hand_first_defender;
+			case Role::SecondDefender: return m_hand_second_defender;
 		}
 	}
 	
@@ -143,7 +143,7 @@ public:
 		m_hand_second_defender{},
 		m_maybe_first_trick_card{},
 		m_maybe_second_trick_card{},
-		m_player{Player::Declarer}
+		m_active_role{Role::Declarer}
 	{
 		auto skat = Cards{};
 		std::tie(m_hand_declarer, m_hand_first_defender, m_hand_second_defender, skat) = deal_deck(deck);
@@ -169,9 +169,9 @@ public:
 		//Trick played in order.
 		assert(IMPLIES(m_maybe_second_trick_card, m_maybe_first_trick_card));
 
-		auto number_cards_belonging_to_p = hand(m_player).size();
-		auto number_cards_belonging_to_np = hand(next(m_player)).size() + (m_maybe_second_trick_card ? 1 : 0);
-		auto number_cards_belonging_to_nnp = hand(next(next(m_player))).size() + (m_maybe_first_trick_card ? 1 : 0);
+		auto number_cards_belonging_to_p = hand(m_active_role).size();
+		auto number_cards_belonging_to_np = hand(next(m_active_role)).size() + (m_maybe_second_trick_card ? 1 : 0);
+		auto number_cards_belonging_to_nnp = hand(next(next(m_active_role))).size() + (m_maybe_first_trick_card ? 1 : 0);
 		assert(stdc::are_all_equal(number_cards_belonging_to_p, number_cards_belonging_to_np, number_cards_belonging_to_nnp));
 	}
 
@@ -185,7 +185,7 @@ public:
 }
 
 [[nodiscard]] inline auto next_possible_plays(Situation &sit, GameType game) {
-	auto player_hand = sit.hand(sit.player());
+	auto player_hand = sit.hand(sit.active_role());
 	
 	if (auto maybe_first_trick_card = sit.get_maybe_first_trick_card()) {
 		return legal_response_cards(player_hand, get_trick_and_game_type(*maybe_first_trick_card, game));
@@ -196,7 +196,7 @@ public:
 }
 
 [[nodiscard]] inline auto is_at_game_start(const Situation &sit) -> bool {
-	return sit.cellar().size() == 2 && sit.player() == Player::Declarer;
+	return sit.cellar().size() == 2 && sit.active_role() == Role::Declarer;
 }
 
 
