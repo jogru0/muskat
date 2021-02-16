@@ -6,11 +6,27 @@
 
 namespace muskat {
 
-	enum class Position {
-		Vorderhand, Mittelhand, Hinterhand
-	};
+	inline void play_card_from_hand(
+		Cards &hand,
+		Card card,
+		std::optional<TrickAndGameType> maybe_trick_game_type
+	) {
+		auto legal_cards = maybe_trick_game_type
+			? legal_response_cards(hand, *maybe_trick_game_type)
+			: hand;
+		
+		if (!legal_cards[card]) {
+			//TODO: Correctly handle this.
+			assert(false);
+		}
 
-	[[nodiscard]] inline void play_one_game(
+		auto card_in_hand = hand.get_ref(card);
+		assert(card_in_hand);
+		card_in_hand = false;
+	}
+
+
+	[[nodiscard]] inline auto play_one_game(
 		AbstractPlayer &geber,
 		AbstractPlayer &hoerer,
 		AbstractPlayer &sager,
@@ -19,8 +35,9 @@ namespace muskat {
 		using namespace stdc::literals;
 
 		geber.inform_about_first_position(Position::Hinterhand);
-		hoerer.inform_about_first_position(Position::Vorderhand);
+		hoerer.inform_about_first_position(Position::Vorhand);
 		sager.inform_about_first_position(Position::Mittelhand);
+		auto role_of_winner_last_tick = Role::FirstDefender; //Hören == Kommen
 
 		auto [hand_geber, hand_hoerer, hand_sager, skat] = deal_deck(deck);
 
@@ -36,15 +53,13 @@ namespace muskat {
 		auto &second_defener = sager;
 		auto &hand_second_defener = hand_sager;
 		
-		auto role_of_winner_last_tick = Role::FirstDefender; //Hören == Kommen
-		
 		auto role_to_player_and_hand = [&](auto role) -> std::tuple<AbstractPlayer &, Cards &> {
 			switch (role) {
 				case Role::Declarer : return {declarer, hand_declarer};
 				case Role::FirstDefender : return {first_defender, hand_first_defender};
 				case Role::SecondDefender : return {second_defener, hand_second_defener};
 			}
-		}
+		};
 		
 		declarer.inform_about_role(Role::Declarer);
 		first_defender.inform_about_role(Role::FirstDefender);
@@ -65,16 +80,54 @@ namespace muskat {
 
 		auto points_declarer = to_points(skat);
 		auto points_defender = 0_z;
+
+		auto process_one_move = [&](
+			Role role,
+			std::optional<TrickAndGameType> maybe_type = std::nullopt
+		) {
+			auto [player, hand] = role_to_player_and_hand(role);
+
+			auto card_to_play = player.request_move();
+			play_card_from_hand(hand, card_to_play, maybe_type);
+
+			geber.inform_about_move(card_to_play);
+			hoerer.inform_about_move(card_to_play);
+			sager.inform_about_move(card_to_play);
+
+			return card_to_play;
+		};
 		
 		for (auto number_of_trick = 1_z; number_of_trick != 11; ++number_of_trick) {
-			auto [player, hand] = role_to_player_and_hand(role_of_winner_last_tick);
-			auto first_card = player.request_move();
-			//CHECK IF HE HAS THIS CARD.
-			auto trick_type = get_trick_type(first_card, game_type);
+			auto role_vorhand = role_of_winner_last_tick;
+			auto role_mittelhand = next(role_vorhand);
+			auto role_hinterhand = next(role_mittelhand);
+			
+			auto first_card = process_one_move(role_vorhand);
+			auto trick_game_type = TrickAndGameType{first_card, game_type};
+			auto second_card = process_one_move(role_mittelhand, trick_game_type);
+			auto third_card = process_one_move(role_hinterhand, trick_game_type);
 
+			auto trick = Trick{first_card, second_card, third_card};
 
+			switch (trick_winner_position(trick, trick_game_type)) {
+				case Position::Vorhand: role_of_winner_last_tick = role_vorhand; break;
+				case Position::Mittelhand: role_of_winner_last_tick = role_mittelhand; break;
+				case Position::Hinterhand: role_of_winner_last_tick = role_hinterhand;
+			}
+
+			auto trick_points = to_points(trick);
+			if (role_of_winner_last_tick == Role::Declarer) {
+				points_declarer += trick_points;
+			} else {
+				points_defender += trick_points;
+			}
 		}
 
+		assert(points_defender + points_declarer == 120_z);
+		assert(hand_geber.empty());
+		assert(hand_hoerer.empty());
+		assert(hand_sager.empty());
 
+		return points_declarer;
 	}
 } // namespace muskat

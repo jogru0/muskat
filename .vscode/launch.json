@@ -5,7 +5,7 @@
             "name": "C++ Debug (gdb)",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/test/bin/muskat-test-debug",
+            "program": "${workspaceFolder}/bin/muskat-debug",
             "preLaunchTask": "Build C++ project for debug",
             "args": [],
             "stopAtEntry": false,

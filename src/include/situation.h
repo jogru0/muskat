@@ -14,6 +14,14 @@ namespace muskat {
 
 enum class Role {Declarer, FirstDefender, SecondDefender};
 
+[[nodiscard]] inline constexpr auto to_string(Role role) {
+	switch (role) {
+		case Role::Declarer: return "Declarer";
+		case Role::FirstDefender: return "First Defender";
+		case Role::SecondDefender: return "Second Defender";
+	}
+}
+
 [[nodiscard]] constexpr auto next(Role role) {
 	switch (role) {
 		case Role::Declarer: return Role::FirstDefender;
@@ -32,47 +40,47 @@ using Deck = std::array<Card, 32>;
 		auto hand_self = Cards{};
 		auto skat = Cards{};
 
-		hand_left[deck[0]] = true;
-		hand_left[deck[1]] = true;
-		hand_left[deck[2]] = true;
+		hand_left.get_ref(deck[0]) = true;
+		hand_left.get_ref(deck[1]) = true;
+		hand_left.get_ref(deck[2]) = true;
 		
-		hand_right[deck[3]] = true;
-		hand_right[deck[4]] = true;
-		hand_right[deck[5]] = true;
+		hand_right.get_ref(deck[3]) = true;
+		hand_right.get_ref(deck[4]) = true;
+		hand_right.get_ref(deck[5]) = true;
 		
-		hand_self[deck[6]] = true;
-		hand_self[deck[7]] = true;
-		hand_self[deck[8]] = true;
+		hand_self.get_ref(deck[6]) = true;
+		hand_self.get_ref(deck[7]) = true;
+		hand_self.get_ref(deck[8]) = true;
 
-		skat[deck[9]] = true;
-		skat[deck[10]] = true;
+		skat.get_ref(deck[9]) = true;
+		skat.get_ref(deck[10]) = true;
 
-		hand_left[deck[11]] = true;
-		hand_left[deck[12]] = true;
-		hand_left[deck[13]] = true;
-		hand_left[deck[14]] = true;
+		hand_left.get_ref(deck[11]) = true;
+		hand_left.get_ref(deck[12]) = true;
+		hand_left.get_ref(deck[13]) = true;
+		hand_left.get_ref(deck[14]) = true;
 		
-		hand_right[deck[15]] = true;
-		hand_right[deck[16]] = true;
-		hand_right[deck[17]] = true;
-		hand_right[deck[18]] = true;
+		hand_right.get_ref(deck[15]) = true;
+		hand_right.get_ref(deck[16]) = true;
+		hand_right.get_ref(deck[17]) = true;
+		hand_right.get_ref(deck[18]) = true;
 		
-		hand_self[deck[19]] = true;
-		hand_self[deck[20]] = true;
-		hand_self[deck[21]] = true;
-		hand_self[deck[22]] = true;
+		hand_self.get_ref(deck[19]) = true;
+		hand_self.get_ref(deck[20]) = true;
+		hand_self.get_ref(deck[21]) = true;
+		hand_self.get_ref(deck[22]) = true;
 		
-		hand_left[deck[23]] = true;
-		hand_left[deck[24]] = true;
-		hand_left[deck[25]] = true;
+		hand_left.get_ref(deck[23]) = true;
+		hand_left.get_ref(deck[24]) = true;
+		hand_left.get_ref(deck[25]) = true;
 		
-		hand_right[deck[26]] = true;
-		hand_right[deck[27]] = true;
-		hand_right[deck[28]] = true;
+		hand_right.get_ref(deck[26]) = true;
+		hand_right.get_ref(deck[27]) = true;
+		hand_right.get_ref(deck[28]) = true;
 		
-		hand_self[deck[29]] = true;
-		hand_self[deck[30]] = true;
-		hand_self[deck[31]] = true;
+		hand_self.get_ref(deck[29]) = true;
+		hand_self.get_ref(deck[30]) = true;
+		hand_self.get_ref(deck[31]) = true;
 
 		return std::tuple{
 			hand_self, hand_left, hand_right, skat
@@ -112,8 +120,8 @@ public:
 
 	[[nodiscard]] auto cellar() const {
 		auto result = ~(m_hand_declarer | m_hand_first_defender | m_hand_second_defender);
-		IMPLIES(m_maybe_first_trick_card, result[*m_maybe_first_trick_card] = false);
-		IMPLIES(m_maybe_second_trick_card, result[*m_maybe_first_trick_card] = false);
+		IMPLIES(m_maybe_first_trick_card, result[*m_maybe_first_trick_card] == false);
+		IMPLIES(m_maybe_second_trick_card, result[*m_maybe_first_trick_card] == false);
 		return result;
 	}
 
@@ -177,18 +185,11 @@ public:
 
 };
 
-[[nodiscard]] inline auto get_trick_and_game_type(Card &first_trick_card, GameType game) {
-	return TrickAndGameType{
-		get_trick_type(first_trick_card, game),
-		game
-	};
-}
-
 [[nodiscard]] inline auto next_possible_plays(Situation &sit, GameType game) {
 	auto player_hand = sit.hand(sit.active_role());
 	
 	if (auto maybe_first_trick_card = sit.get_maybe_first_trick_card()) {
-		return legal_response_cards(player_hand, get_trick_and_game_type(*maybe_first_trick_card, game));
+		return legal_response_cards(player_hand, TrickAndGameType{*maybe_first_trick_card, game});
 	}
 
 	return player_hand;

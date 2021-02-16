@@ -5,3 +5,5 @@
 -Wno-newline-eof
 -Wno-global-constructors
 -Wno-padded
+-Wno-switch-enum
+-Wno-weak-vtables
