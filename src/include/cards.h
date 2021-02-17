@@ -4,6 +4,7 @@
 #include <stdc/type_traits.h>
 
 #include <bitset>
+#include <random>
 
 #include <climits>
 #include <cassert>
@@ -89,43 +90,44 @@ namespace muskat {
 	return is;
 }
 
+enum class Suit {
+	S, H, G, E
+};
+
+enum class Rank {
+	L7, L8, L9, Z, U, O, K, A
+};
+
+[[nodiscard]] inline auto to_suit(Card card) {
+	return static_cast<Suit>(static_cast<size_t>(card) / 8);
+}
+
+[[nodiscard]] inline auto to_rank(Card card) {
+	return static_cast<Rank>(static_cast<size_t>(card) % 8);
+}
+
+[[nodiscard]] inline auto get_random_card(std::mt19937 &rng) {
+	return static_cast<Card>(std::uniform_int_distribution{0, 31}(rng));
+}
 	
-	enum class Suit {
-		S, H, G, E
-	};
-
-	enum class Rank {
-		L7, L8, L9, Z, U, O, K, A
-	};
-
-	[[nodiscard]] inline auto to_suit(Card card) {
-		return static_cast<Suit>(static_cast<size_t>(card) / 8);
+[[nodiscard]] inline auto to_points(Card card) -> size_t {
+	switch (to_rank(card)) {
+	case Rank::L7: [[fallthrough]];
+		case Rank::L8: [[fallthrough]];
+		case Rank::L9: return 0;
+		case Rank::Z: return 10;
+		case Rank::U: return 2;
+		case Rank::O: return 3;
+		case Rank::K: return 4;
+		case Rank::A: return 11;
 	}
+}
 
-	[[nodiscard]] inline auto to_rank(Card card) {
-		return static_cast<Rank>(static_cast<size_t>(card) % 8);
-	}
+enum class GameType {
+	Schell, Herz, Green, Eichel, Null, Grand
+};
 
-		
-	[[nodiscard]] inline auto to_points(Card card) -> size_t {
-		switch (to_rank(card)) {
-		case Rank::L7: [[fallthrough]];
-			case Rank::L8: [[fallthrough]];
-			case Rank::L9: return 0;
-			case Rank::Z: return 10;
-			case Rank::U: return 2;
-			case Rank::O: return 3;
-			case Rank::K: return 4;
-			case Rank::A: return 11;
-		}
-	}
-
-
-	enum class GameType {
-		Schell, Herz, Green, Eichel, Null, Grand
-	};
-
-	[[nodiscard]] inline constexpr auto to_string(GameType game) {
+[[nodiscard]] inline constexpr auto to_string(GameType game) {
 	switch (game) {
 		case GameType::Schell: return "Schell";
 		case GameType::Herz: return "Herz";
@@ -137,126 +139,140 @@ namespace muskat {
 }
 
 
-	enum class TrickType {
-		Schell, Herz, Green, Eichel, Trump
-	};
+enum class TrickType {
+	Schell, Herz, Green, Eichel, Trump
+};
 
-	template<typename To, typename From>
-	[[nodiscard]] inline auto convert_between_suit_types(From from) {
-		static_assert(stdc::is_any_of_v<From, GameType, TrickType, Suit>);
-		static_assert(stdc::is_any_of_v<To, GameType, TrickType, Suit>);
-		static_assert(!std::is_same_v<From, To>);
+template<typename To, typename From>
+[[nodiscard]] inline auto convert_between_suit_types(From from) {
+	static_assert(stdc::is_any_of_v<From, GameType, TrickType, Suit>);
+	static_assert(stdc::is_any_of_v<To, GameType, TrickType, Suit>);
+	static_assert(!std::is_same_v<From, To>);
 
-		auto val = static_cast<size_t>(from);
-		assert(val < 4);
-		return static_cast<To>(val);
+	auto val = static_cast<size_t>(from);
+	assert(val < 4);
+	return static_cast<To>(val);
+}
+
+class Cards {
+private:
+	std::bitset<32> m_bitset;
+public:
+	explicit constexpr Cards(uint32_t bits) : m_bitset{bits} {}
+	explicit constexpr Cards() = default;
+
+	[[nodiscard]] constexpr auto operator[](Card card) const -> bool {
+		return m_bitset[static_cast<size_t>(card)];
 	}
 
-	class Cards {
-	private:
-		std::bitset<32> m_bitset;
-	public:
-		explicit constexpr Cards(uint32_t bits) : m_bitset{bits} {}
-		explicit constexpr Cards() = default;
-
-		[[nodiscard]] constexpr auto operator[](Card card) const -> bool {
-			return m_bitset[static_cast<size_t>(card)];
-		}
-
-		[[nodiscard]] auto get_ref(Card card) {
-			return m_bitset[static_cast<size_t>(card)];
-		}
-
-		[[nodiscard]] auto size() const {
-			return m_bitset.count();
-		}
-
-		[[nodiscard]] auto empty() const {
-			return m_bitset.none();
-		}
-
-		auto &operator&=(const Cards &other) noexcept {
-			m_bitset &= other.m_bitset;
-			return *this;
-		}
-		auto &operator|=(const Cards &other) noexcept {
-			m_bitset |= other.m_bitset;
-			return *this;
-		}
-		auto &operator^=(const Cards &other) noexcept {
-			m_bitset ^= other.m_bitset;
-			return *this;
-		}
-
-		[[nodiscard]] auto operator~() noexcept {
-			auto result = *this;
-			result.m_bitset.flip();
-			return result;
-		}
-
-		[[nodiscard]] auto operator==(const Cards &other) const noexcept {
-			return m_bitset == other.m_bitset;
-		}
-	};
-
-	[[nodiscard]] inline auto operator&(Cards lhs, const Cards &rhs) noexcept {
-		return lhs &= rhs;
-	}
-	[[nodiscard]] inline auto operator|(Cards lhs, const Cards &rhs) noexcept {
-		return lhs |= rhs;
-	}
-	[[nodiscard]] inline auto operator^(Cards lhs, const Cards &rhs) noexcept {
-		return lhs ^= rhs;
+	[[nodiscard]] auto get_ref(Card card) {
+		return m_bitset[static_cast<size_t>(card)];
 	}
 
-
-	[[nodiscard]] inline auto to_string(Cards cards) {
-		using namespace stdc::literals;
-		auto result = "{ "s;
-		for (auto i = 0; i < 32; ++i) {
-			auto card = static_cast<Card>(i);
-			if (cards[card]) {
-				result += to_string(card) + " ";
-			}
-		}
-		result += "}";
-		return result;
+	[[nodiscard]] auto size() const {
+		return m_bitset.count();
 	}
-	
-	[[nodiscard]] inline auto to_points(const Cards &cards) -> size_t {
-		auto result = 0;
-		for (auto i = 0; i < 32; ++i) {
-			auto card = static_cast<Card>(i);
-			if (cards[card]) {
-				result += to_points(card);
-			}
-		}
+
+	[[nodiscard]] auto empty() const {
+		return m_bitset.none();
+	}
+
+	auto &operator&=(const Cards &other) noexcept {
+		m_bitset &= other.m_bitset;
+		return *this;
+	}
+	auto &operator|=(const Cards &other) noexcept {
+		m_bitset |= other.m_bitset;
+		return *this;
+	}
+	auto &operator^=(const Cards &other) noexcept {
+		m_bitset ^= other.m_bitset;
+		return *this;
+	}
+
+	[[nodiscard]] auto operator~() noexcept {
+		auto result = *this;
+		result.m_bitset.flip();
 		return result;
 	}
 
-	inline constexpr auto number_of_cards_per_suit = 8;
-
-	inline constexpr auto cards_of_suit(Suit suit) {
-		return Cards{0b00000000'00000000'00000000'11111111u << (number_of_cards_per_suit * static_cast<size_t>(suit))};
-	};
-	
-	inline constexpr auto cards_of_rank(Rank rank) {
-		return Cards{0b00000001'00000001'00000001'00000001u << static_cast<size_t>(rank)};
+	[[nodiscard]] auto operator==(const Cards &other) const noexcept {
+		return m_bitset == other.m_bitset;
 	}
+};
 
-	inline constexpr auto buben = cards_of_rank(Rank::U);
+[[nodiscard]] inline auto operator&(Cards lhs, const Cards &rhs) noexcept {
+	return lhs &= rhs;
+}
+[[nodiscard]] inline auto operator|(Cards lhs, const Cards &rhs) noexcept {
+	return lhs |= rhs;
+}
+[[nodiscard]] inline auto operator^(Cards lhs, const Cards &rhs) noexcept {
+	return lhs ^= rhs;
+}
 
-	inline constexpr auto trump_cards(GameType game) {
-		switch (game) {
-			case GameType::Null:
-				return Cards{};
-			case GameType::Grand:
-				return buben;
-			case GameType::Schell: [[fallthrough]];
-			case GameType::Herz: [[fallthrough]];
-			case GameType::Green: [[fallthrough]];
-			case GameType::Eichel:
-				return cards_of_suit(convert_between_suit_types<Suit>(game)) | buben;
+[[nodiscard]] inline auto random_card_from(const Cards &cards, std::mt19937 &rng) noexcept {
+	assert(!cards.empty());
+	for (;;) {
+		if (
+			auto card = get_random_card(rng);
+			cards[card]
+		) {
+			return card;
 		}
 	}
+}
+
+
+[[nodiscard]] inline auto to_string(Cards cards) {
+	using namespace stdc::literals;
+	auto result = "{ "s;
+	for (auto i = 0; i < 32; ++i) {
+		auto card = static_cast<Card>(i);
+		if (cards[card]) {
+			result += to_string(card) + " ";
+		}
+	}
+	result += "}";
+	return result;
+}
+
+[[nodiscard]] inline auto to_points(const Cards &cards) -> size_t {
+	using namespace stdc::literals;
+	auto result = 0_z;
+	for (auto i = 0; i < 32; ++i) {
+		auto card = static_cast<Card>(i);
+		if (cards[card]) {
+			result += to_points(card);
+		}
+	}
+	return result;
+}
+
+inline constexpr auto number_of_cards_per_suit = 8;
+
+inline constexpr auto cards_of_suit(Suit suit) {
+	return Cards{0b00000000'00000000'00000000'11111111u << (number_of_cards_per_suit * static_cast<size_t>(suit))};
+};
+
+inline constexpr auto cards_of_rank(Rank rank) {
+	return Cards{0b00000001'00000001'00000001'00000001u << static_cast<size_t>(rank)};
+}
+
+inline constexpr auto buben = cards_of_rank(Rank::U);
+
+inline constexpr auto trump_cards(GameType game) {
+	switch (game) {
+		case GameType::Null:
+			return Cards{};
+		case GameType::Grand:
+			return buben;
+		case GameType::Schell: [[fallthrough]];
+		case GameType::Herz: [[fallthrough]];
+		case GameType::Green: [[fallthrough]];
+		case GameType::Eichel:
+			return cards_of_suit(convert_between_suit_types<Suit>(game)) | buben;
+	}
+}
+
 } // namespace muskat

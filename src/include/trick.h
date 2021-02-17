@@ -131,4 +131,13 @@ return type.trick() == TrickType::Trump
 	return result;
 }
 
+[[nodiscard]] inline auto get_legal_cards(
+	Cards &hand,
+	std::optional<TrickAndGameType> maybe_trick_game_type
+) {
+	return maybe_trick_game_type
+		? legal_response_cards(hand, *maybe_trick_game_type)
+		: hand;
+}
+
 } // namespace muskat
