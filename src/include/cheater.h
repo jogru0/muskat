@@ -4,6 +4,7 @@
 #include "situation_solver.h"
 
 #include <stdc/literals.h>
+#include <stdc/WATCH.h>
 
 #include <string>
 #include <random>
@@ -69,7 +70,11 @@ namespace muskat {
 		virtual auto request_move() -> Card final {
 			assert(m_current_situation.active_role() == m_role);
 			assert(!is_at_game_end(m_current_situation));
+			WATCH("decide").reset();
+			WATCH("decide").start();
 			auto card = m_solver.pick_best_card(m_current_situation);
+			WATCH("decide").stop();
+			std::cout << "I thought for " << WATCH("decide").elapsed<std::chrono::milliseconds>() << " ms.\n";
 			return card;
 		}
 

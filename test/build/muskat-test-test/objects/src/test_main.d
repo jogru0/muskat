@@ -12,8 +12,8 @@ build/muskat-test-test/objects/src/test_main.o: src/test_main.cpp \
   /usr/bin/../lib/gcc/x86_64-linux-gnu/10/../../../../include/c++/10/pstl/pstl_config.h \
   /usr/include/assert.h /usr/include/gtest/gtest.h \
   /usr/bin/../lib/gcc/x86_64-linux-gnu/10/../../../../include/c++/10/cstddef \
-  /usr/lib/llvm-11/lib/clang/11.0.0/include/stddef.h \
-  /usr/lib/llvm-11/lib/clang/11.0.0/include/__stddef_max_align_t.h \
+  /usr/lib/llvm-11/lib/clang/11.0.1/include/stddef.h \
+  /usr/lib/llvm-11/lib/clang/11.0.1/include/__stddef_max_align_t.h \
   /usr/bin/../lib/gcc/x86_64-linux-gnu/10/../../../../include/c++/10/limits \
   /usr/bin/../lib/gcc/x86_64-linux-gnu/10/../../../../include/c++/10/memory \
   /usr/bin/../lib/gcc/x86_64-linux-gnu/10/../../../../include/c++/10/bits/stl_algobase.h \
@@ -66,7 +66,7 @@ build/muskat-test-test/objects/src/test_main.o: src/test_main.cpp \
   /usr/include/x86_64-linux-gnu/bits/libc-header-start.h \
   /usr/include/x86_64-linux-gnu/bits/floatn.h \
   /usr/include/x86_64-linux-gnu/bits/floatn-common.h \
-  /usr/lib/llvm-11/lib/clang/11.0.0/include/stdarg.h \
+  /usr/lib/llvm-11/lib/clang/11.0.1/include/stdarg.h \
   /usr/include/x86_64-linux-gnu/bits/wchar.h \
   /usr/include/x86_64-linux-gnu/bits/types/wint_t.h \
   /usr/include/x86_64-linux-gnu/bits/types/mbstate_t.h \
@@ -118,7 +118,7 @@ build/muskat-test-test/objects/src/test_main.o: src/test_main.cpp \
   /usr/bin/../lib/gcc/x86_64-linux-gnu/10/../../../../include/c++/10/string \
   /usr/bin/../lib/gcc/x86_64-linux-gnu/10/../../../../include/c++/10/bits/char_traits.h \
   /usr/bin/../lib/gcc/x86_64-linux-gnu/10/../../../../include/c++/10/cstdint \
-  /usr/lib/llvm-11/lib/clang/11.0.0/include/stdint.h \
+  /usr/lib/llvm-11/lib/clang/11.0.1/include/stdint.h \
   /usr/include/stdint.h /usr/include/x86_64-linux-gnu/bits/stdint-intn.h \
   /usr/include/x86_64-linux-gnu/bits/stdint-uintn.h \
   /usr/bin/../lib/gcc/x86_64-linux-gnu/10/../../../../include/c++/10/bits/ostream_insert.h \
@@ -272,7 +272,7 @@ build/muskat-test-test/objects/src/test_main.o: src/test_main.cpp \
   /usr/include/x86_64-linux-gnu/bits/types/struct_sigstack.h \
   /usr/include/x86_64-linux-gnu/bits/sigthread.h \
   /usr/include/x86_64-linux-gnu/bits/signal_ext.h \
-  /usr/lib/llvm-11/lib/clang/11.0.0/include/float.h \
+  /usr/lib/llvm-11/lib/clang/11.0.1/include/float.h \
   /usr/bin/../lib/gcc/x86_64-linux-gnu/10/../../../../include/c++/10/iomanip \
   /usr/bin/../lib/gcc/x86_64-linux-gnu/10/../../../../include/c++/10/bits/quoted_string.h \
   /usr/bin/../lib/gcc/x86_64-linux-gnu/10/../../../../include/c++/10/sstream \
@@ -307,15 +307,59 @@ build/muskat-test-test/objects/src/test_main.o: src/test_main.cpp \
   /usr/include/gtest/internal/gtest-param-util.h \
   /usr/include/gtest/gtest-test-part.h /usr/include/gtest/gtest_prod.h \
   /usr/include/gtest/gtest-typed-test.h \
-  /usr/include/gtest/gtest_pred_impl.h src/include/test_set_of_cards.h \
-  ../src/include/set_of_cards.h ../src/external/stdc/literals.h \
+  /usr/include/gtest/gtest_pred_impl.h src/include/test_cards.h \
+  ../src/include/cards.h ../src/external/stdc/literals.h \
   ../src/external/stdc/type_traits.h ../src/external/stdc/pack.h \
   /usr/bin/../lib/gcc/x86_64-linux-gnu/10/../../../../include/c++/10/bitset \
+  /usr/bin/../lib/gcc/x86_64-linux-gnu/10/../../../../include/c++/10/random \
+  /usr/bin/../lib/gcc/x86_64-linux-gnu/10/../../../../include/c++/10/cmath \
+  /usr/include/math.h /usr/include/x86_64-linux-gnu/bits/math-vector.h \
+  /usr/include/x86_64-linux-gnu/bits/libm-simd-decl-stubs.h \
+  /usr/include/x86_64-linux-gnu/bits/flt-eval-method.h \
+  /usr/include/x86_64-linux-gnu/bits/fp-logb.h \
+  /usr/include/x86_64-linux-gnu/bits/fp-fast.h \
+  /usr/include/x86_64-linux-gnu/bits/mathcalls-helper-functions.h \
+  /usr/include/x86_64-linux-gnu/bits/mathcalls.h \
+  /usr/include/x86_64-linux-gnu/bits/mathcalls-narrow.h \
+  /usr/include/x86_64-linux-gnu/bits/iscanonical.h \
+  /usr/include/x86_64-linux-gnu/bits/mathinline.h \
+  /usr/bin/../lib/gcc/x86_64-linux-gnu/10/../../../../include/c++/10/bits/specfun.h \
+  /usr/bin/../lib/gcc/x86_64-linux-gnu/10/../../../../include/c++/10/tr1/gamma.tcc \
+  /usr/bin/../lib/gcc/x86_64-linux-gnu/10/../../../../include/c++/10/tr1/special_function_util.h \
+  /usr/bin/../lib/gcc/x86_64-linux-gnu/10/../../../../include/c++/10/tr1/bessel_function.tcc \
+  /usr/bin/../lib/gcc/x86_64-linux-gnu/10/../../../../include/c++/10/tr1/beta_function.tcc \
+  /usr/bin/../lib/gcc/x86_64-linux-gnu/10/../../../../include/c++/10/tr1/ell_integral.tcc \
+  /usr/bin/../lib/gcc/x86_64-linux-gnu/10/../../../../include/c++/10/tr1/exp_integral.tcc \
+  /usr/bin/../lib/gcc/x86_64-linux-gnu/10/../../../../include/c++/10/tr1/hypergeometric.tcc \
+  /usr/bin/../lib/gcc/x86_64-linux-gnu/10/../../../../include/c++/10/tr1/legendre_function.tcc \
+  /usr/bin/../lib/gcc/x86_64-linux-gnu/10/../../../../include/c++/10/tr1/modified_bessel_func.tcc \
+  /usr/bin/../lib/gcc/x86_64-linux-gnu/10/../../../../include/c++/10/tr1/poly_hermite.tcc \
+  /usr/bin/../lib/gcc/x86_64-linux-gnu/10/../../../../include/c++/10/tr1/poly_laguerre.tcc \
+  /usr/bin/../lib/gcc/x86_64-linux-gnu/10/../../../../include/c++/10/tr1/riemann_zeta.tcc \
+  /usr/bin/../lib/gcc/x86_64-linux-gnu/10/../../../../include/c++/10/bits/random.h \
+  /usr/bin/../lib/gcc/x86_64-linux-gnu/10/../../../../include/x86_64-linux-gnu/c++/10/bits/opt_random.h \
+  /usr/bin/../lib/gcc/x86_64-linux-gnu/10/../../../../include/c++/10/bits/random.tcc \
+  /usr/bin/../lib/gcc/x86_64-linux-gnu/10/../../../../include/c++/10/numeric \
+  /usr/bin/../lib/gcc/x86_64-linux-gnu/10/../../../../include/c++/10/bits/stl_numeric.h \
+  /usr/bin/../lib/gcc/x86_64-linux-gnu/10/../../../../include/c++/10/pstl/glue_numeric_defs.h \
   /usr/bin/../lib/gcc/x86_64-linux-gnu/10/../../../../include/c++/10/climits \
-  /usr/lib/llvm-11/lib/clang/11.0.0/include/limits.h \
+  /usr/lib/llvm-11/lib/clang/11.0.1/include/limits.h \
   /usr/include/limits.h /usr/include/x86_64-linux-gnu/bits/posix1_lim.h \
   /usr/include/x86_64-linux-gnu/bits/local_lim.h \
   /usr/include/linux/limits.h \
   /usr/include/x86_64-linux-gnu/bits/posix2_lim.h \
   /usr/include/x86_64-linux-gnu/bits/xopen_lim.h \
-  /usr/include/x86_64-linux-gnu/bits/uio_lim.h
+  /usr/include/x86_64-linux-gnu/bits/uio_lim.h ../src/include/trick.h \
+  ../src/external/stdc/container_wrapper.h ../src/external/stdc/get.h \
+  ../src/external/stdc/utility.h \
+  /usr/bin/../lib/gcc/x86_64-linux-gnu/10/../../../../include/c++/10/charconv \
+  src/include/test_solver.h ../src/include/situation_solver.h \
+  ../src/include/situation.h ../src/external/stdc/algorithm.h \
+  /usr/bin/../lib/gcc/x86_64-linux-gnu/10/../../../../include/c++/10/algorithm \
+  /usr/bin/../lib/gcc/x86_64-linux-gnu/10/../../../../include/c++/10/bits/ranges_algo.h \
+  /usr/bin/../lib/gcc/x86_64-linux-gnu/10/../../../../include/c++/10/pstl/glue_algorithm_defs.h \
+  /usr/bin/../lib/gcc/x86_64-linux-gnu/10/../../../../include/c++/10/unordered_set \
+  /usr/bin/../lib/gcc/x86_64-linux-gnu/10/../../../../include/c++/10/bits/unordered_set.h \
+  ../src/external/stdc/hasher.h ../src/external/stdc/srange.h \
+  ../src/external/stdc/iterator.h ../src/external/stdc/mathematics.h \
+  ../src/external/stdc/metaprogramming.h

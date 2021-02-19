@@ -162,7 +162,7 @@ public:
 		Cards hand_declarer,
 		Cards hand_first_defender,
 		Cards hand_second_defender,
-		Cards gedrueckt,
+		[[maybe_unused]] Cards gedrueckt,
 		Role first_active_role
 	) :
 		m_hand_declarer{hand_declarer},
@@ -207,9 +207,9 @@ private:
 		//Trick played in order.
 		assert(IMPLIES(m_maybe_second_trick_card, m_maybe_first_trick_card));
 
-		auto number_cards_belonging_to_p = hand(m_active_role).size();
-		auto number_cards_belonging_to_np = hand(next(m_active_role)).size() + (m_maybe_second_trick_card ? 1 : 0);
-		auto number_cards_belonging_to_nnp = hand(next(next(m_active_role))).size() + (m_maybe_first_trick_card ? 1 : 0);
+		[[maybe_unused]] auto number_cards_belonging_to_p = hand(m_active_role).size();
+		[[maybe_unused]] auto number_cards_belonging_to_np = hand(next(m_active_role)).size() + (m_maybe_second_trick_card ? 1 : 0);
+		[[maybe_unused]] auto number_cards_belonging_to_nnp = hand(next(next(m_active_role))).size() + (m_maybe_first_trick_card ? 1 : 0);
 		assert(stdc::are_all_equal(number_cards_belonging_to_p, number_cards_belonging_to_np, number_cards_belonging_to_nnp));
 	}
 public:
@@ -247,7 +247,7 @@ public:
 			}
 
 			if (m_active_role == Role::Declarer) {
-				result += to_points(trick);
+				result += to_points(trick, game);
 			}
 			
 			m_maybe_first_trick_card = std::nullopt;

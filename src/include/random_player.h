@@ -13,7 +13,7 @@ namespace muskat {
 		std::string m_name;
 
 		void say(const auto &string) {
-			// std::cout << '[' << m_name << "]: " << string << '\n';
+			std::cout << '[' << m_name << "]: " << string << '\n';
 		}
 
 		Cards m_hand;

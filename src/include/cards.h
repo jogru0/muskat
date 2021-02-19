@@ -109,8 +109,13 @@ enum class Rank {
 [[nodiscard]] inline auto get_random_card(std::mt19937 &rng) {
 	return static_cast<Card>(std::uniform_int_distribution{0, 31}(rng));
 }
+
+enum class GameType {
+	Schell, Herz, Green, Eichel, Null, Grand
+};
 	
-[[nodiscard]] inline auto to_points(Card card) -> size_t {
+[[nodiscard]] inline auto to_points(Card card, [[maybe_unused]] GameType game) -> size_t {
+	assert(game != GameType::Null);
 	switch (to_rank(card)) {
 	case Rank::L7: [[fallthrough]];
 		case Rank::L8: [[fallthrough]];
@@ -122,10 +127,6 @@ enum class Rank {
 		case Rank::A: return 11;
 	}
 }
-
-enum class GameType {
-	Schell, Herz, Green, Eichel, Null, Grand
-};
 
 [[nodiscard]] inline constexpr auto to_string(GameType game) {
 	switch (game) {
@@ -254,13 +255,13 @@ namespace muskat {
 	return result;
 }
 
-[[nodiscard]] inline auto to_points(const Cards &cards) -> size_t {
+[[nodiscard]] inline auto to_points(const Cards &cards, GameType game) -> size_t {
 	using namespace stdc::literals;
 	auto result = 0_z;
 	for (auto i = 0; i < 32; ++i) {
 		auto card = static_cast<Card>(i);
 		if (cards[card]) {
-			result += to_points(card);
+			result += to_points(card, game);
 		}
 	}
 	return result;

@@ -38,8 +38,8 @@ namespace muskat {
 		return left.lower() == right.lower() && left.upper() == right.upper();
 	}
 
-	[[nodiscard]] inline auto quick_bounds(Situation sit) {
-		return Bounds{0, 120 - to_points(sit.cellar())};
+	[[nodiscard]] inline auto quick_bounds(Situation sit, GameType game) {
+		return Bounds{0, 120 - to_points(sit.cellar(), game)};
 	}
 
 	class SituationSolver {
@@ -57,7 +57,7 @@ namespace muskat {
 				return it->second;
 			}
 
-			auto [it, succ] = m_look_up.emplace(sit, quick_bounds(sit));
+			auto [it, succ] = m_look_up.emplace(sit, quick_bounds(sit, m_game));
 			assert(succ);
 			return it->second;
 		}
@@ -182,8 +182,8 @@ namespace muskat {
 			return std::nullopt;
 		}
 
-	//Undefined if no card is left.
-	auto pick_best_card(Situation sit) -> Card {
+
+	auto calculate_potential_score(Situation sit) -> uint_fast16_t {
 		if (sit.active_role() == Role::Declarer) {
 			auto goal = uint_fast16_t{};
 			while (still_makes_at_least(sit, goal)) {
@@ -192,8 +192,7 @@ namespace muskat {
 			assert(0 < goal);
 			--goal;
 			assert(goal <= 120);
-			std::cout << "Picking card to reach at least " << goal << ".\n";
-			return stdc::surely(maybe_card_for_threshold(sit, goal));
+			return goal;
 		}
 
 		auto goal = uint_fast16_t{121};
@@ -203,9 +202,20 @@ namespace muskat {
 		
 		}
 		assert(goal <= 120);
-		++goal;
-		std::cout << "Picking card to not let him reach " << goal << ".\n";
-		return stdc::surely(maybe_card_for_threshold(sit, goal));
+		return goal;
+	}
+
+	//Undefined if no card is left.
+	auto pick_best_card(Situation sit) -> Card {
+		auto threshold = calculate_potential_score(sit);
+
+		if (sit.active_role() == Role::Declarer) {
+			std::cout << "Picking card to reach at least " << threshold << ".\n";
+			return stdc::surely(maybe_card_for_threshold(sit, threshold));
+		}
+
+		std::cout << "Picking card to not let him reach " << threshold + 1 << ".\n";
+		return stdc::surely(maybe_card_for_threshold(sit, threshold + 1));
 	}
 };
 

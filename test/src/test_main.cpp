@@ -3,8 +3,11 @@
 #include <gtest/gtest.h>
 
 #include "test_cards.h"
+#include "test_solver.h"
 
 int main(int argc, char **argv) {
+	std::cout << "Custom test main runs." << std::endl;
+	
 	auto asserts_are_active = false;
 	assert(asserts_are_active = true);
 	if (!asserts_are_active) {

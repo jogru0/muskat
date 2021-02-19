@@ -200,10 +200,11 @@ namespace stdc {
 		return factor * (... + values);
 	}
 
+	template<unsigned int init, unsigned int step>
 	struct DeterministicSourceOfRandomness {
-		unsigned int value = 0;
+		unsigned int value = init;
 		[[nodiscard]] auto operator()() {
-			value += 77'777'777;
+			value += step;
 			return value;
 		}
 	};
