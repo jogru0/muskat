@@ -3,7 +3,8 @@
         {
             "name": "Linux",
             "includePath": [
-                "${workspaceFolder}/**"
+                "${workspaceFolder}/**",
+                "${workspaceFolder}/src/external"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/clang++-11",

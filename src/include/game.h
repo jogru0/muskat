@@ -70,16 +70,30 @@ namespace muskat {
 		hand_declarer |= skat;
 		declarer.inform_about_skat(skat);
 
-		//Also no Drücken or Spielansagen.
-		hand_declarer &= ~skat;
+		//Also no choice for Drücken or Spielansagen.
+		auto gedrueckt = skat;
+		hand_declarer &= ~gedrueckt;
 		auto game_type = GameType::Herz;
 		
 		geber.inform_about_game(game_type);
 		hoerer.inform_about_game(game_type);
 		sager.inform_about_game(game_type);
 
-		auto points_declarer = to_points(skat);
+		auto points_declarer = to_points(gedrueckt);
 		auto points_defender = 0_z;
+
+		auto situation = Situation{
+			hand_declarer,
+			hand_first_defender,
+			hand_second_defener,
+			gedrueckt,
+			role_of_winner_last_tick
+		};
+
+		geber.cheat(situation);
+		hoerer.cheat(situation);
+		sager.cheat(situation);
+		
 
 		auto process_one_move = [&](
 			Role role,

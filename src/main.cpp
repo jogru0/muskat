@@ -6,7 +6,10 @@
 
 #include "human_player.h"
 #include "random_player.h"
+#include "cheater.h"
 #include "game.h"
+
+#include <stdc/WATCH.h>
 
 #include <stdc/mathematics.h>
 
@@ -15,20 +18,48 @@ int main() {
 	
 	std::cout << "Hello Sailor!\n";
 
-	auto rng = stdc::seeded_RNG(/*stdc::DeterministicSourceOfRandomness{}*/);
+	// using SOR = stdc::DeterministicSourceOfRandomness;
+	using SOR = std::random_device;
+	
+	auto rng = stdc::seeded_RNG(SOR{});
+	
+	// auto game = muskat::GameType::Herz;
+	
+	// auto iters = 1000;
 
+	// auto wins = 0;
 
+	// for (auto i = 0; i < iters; ++i) {
+	// 	auto deck = muskat::get_shuffled_deck(rng);
+	// 	auto [hand_geber, hand_hoerer, hand_sager, skat] = deal_deck(deck);
+	// 	auto initial_situation = muskat::Situation{hand_geber, hand_hoerer, hand_sager, skat, muskat::Role::Declarer};
+	// 	auto solver = muskat::SituationSolver{game};
 
-	auto p1 = muskat::RandomPlayer{"1", stdc::seeded_RNG(/*stdc::DeterministicSourceOfRandomness{}*/)};
-	auto p2 = muskat::RandomPlayer{"2", stdc::seeded_RNG(/*stdc::DeterministicSourceOfRandomness{}*/)};
-	auto p3 = muskat::RandomPlayer{"3", stdc::seeded_RNG(/*stdc::DeterministicSourceOfRandomness{}*/)};
+	// 	WATCH("solver").start();
+	// 	auto won = solver.still_makes_at_least(initial_situation, 61);
+	// 	WATCH("solver").stop();
 
-	auto number_of_iterations = 1'000'000;
+	// 	if (won) {
+	// 		++wins;
+	// 	}
+
+	// }
+
+	// std::cout << "won by declarer: " << (100. * wins) / iters << " %\n";
+	// std::cout << "One iteration took " << WATCH("solver").elapsed<std::chrono::microseconds>() / iters << "us.\n";
+
+	// return 0;
+
+	auto p1 = muskat::Cheater{"1", stdc::seeded_RNG(SOR{})};
+	auto p2 = muskat::Cheater{"2", stdc::seeded_RNG(SOR{})};
+	auto p3 = muskat::Cheater{"3", stdc::seeded_RNG(SOR{})};
+
+	auto number_of_iterations = 1;
 	auto number_of_wins = 0;
 
 	for (auto i = 0; i < number_of_iterations; ++i) {
-		auto deck = muskat::get_shuffled_deck(rng);
-		auto res = muskat::play_one_game(p1, p2, p3, deck);
+		auto res = muskat::play_one_game(p1, p2, p3, muskat::get_shuffled_deck(rng)
+		);
 		if (61 <= res) {
 			++number_of_wins;
 		}

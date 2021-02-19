@@ -199,7 +199,24 @@ public:
 	[[nodiscard]] auto operator==(const Cards &other) const noexcept {
 		return m_bitset == other.m_bitset;
 	}
+
+	friend std::hash<Cards>;
 };
+
+} //namespace muskat
+
+namespace std {
+	template<>
+	struct hash<muskat::Cards> {
+		[[nodiscard]] auto operator()(const muskat::Cards &cards) const
+			-> size_t
+		{
+			return hash<std::bitset<32>>{}(cards.m_bitset);
+		}
+	};
+} //namespace std
+
+namespace muskat {
 
 [[nodiscard]] inline auto operator&(Cards lhs, const Cards &rhs) noexcept {
 	return lhs &= rhs;

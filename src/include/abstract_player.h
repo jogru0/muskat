@@ -13,12 +13,7 @@ namespace muskat {
 		virtual void inform_about_skat(Cards) = 0;
 		virtual void inform_about_move(Card) = 0;
 		virtual auto request_move() -> Card = 0;
-		virtual void cheat(
-			[[maybe_unused]] Cards cards_geber,
-			[[maybe_unused]] Cards cards_hoerer,
-			[[maybe_unused]] Cards cards_sager,
-			[[maybe_unused]] Cards skat
-		) {}
+		virtual void cheat(const Situation &) {}
 
 	protected:
 		AbstractPlayer() = default;
