@@ -16,32 +16,81 @@
 namespace perf {
 	static void decide_winner_farbspiel() {
 			
-		auto rng = stdc::seeded_RNG(stdc::DeterministicSourceOfRandomness<0, 77'777'777>{});
+		// auto rng = stdc::seeded_RNG(stdc::DeterministicSourceOfRandomness<0, 77'777'777>{});
+		
+		WATCH("rng").reset();
+		WATCH("rng").start();
+		auto rng = stdc::seeded_RNG();
+		WATCH("rng").stop();
+		std::cout << "RNG: " << WATCH("rng").elapsed<std::chrono::seconds>() << "s.\n";
 
 		auto game = muskat::GameType::Herz;
 		auto role_vorhand = muskat::Role::Declarer;
 
-		auto iters = 1000;
+		auto iters = 100;
 
 		auto wins = 0;
-		WATCH("solver").reset();
+		auto watch = detail::Watch{};
+		auto watch_shuffle = detail::Watch{};
+		auto watch_deal = detail::Watch{};
+		auto watch_sit = detail::Watch{};
+		auto watch_solv_init = detail::Watch{};
+
+		auto destructors = detail::Watch{};
+
+		WATCH("loop").reset();
+		WATCH("loop").start();
+	
 		for (auto i = 0; i < iters; ++i) {
+			
+			watch_shuffle.start();
 			auto deck = muskat::get_shuffled_deck(rng);
+			watch_shuffle.stop();
+			
+
+			watch_deal.start();
 			auto [hand_geber, hand_hoerer, hand_sager, skat] = deal_deck(deck);
+			watch_deal.stop();
+			
+
+			watch_sit.start();
 			auto initial_situation = muskat::Situation{hand_geber, hand_hoerer, hand_sager, skat, role_vorhand};
-			auto solver = muskat::SituationSolver{game};
+			watch_sit.stop();
 
-			WATCH("solver").start();
-			auto won = solver.still_makes_at_least(initial_situation, 61);
-			WATCH("solver").stop();
+			{
 
-			if (won) {
-				++wins;
-			}
+				watch_solv_init.start();
+				auto solver = muskat::SituationSolver{game};
+				watch_solv_init.stop();
+
+
+				watch.start();
+				auto won = solver.still_makes_at_least(initial_situation, 61);
+				watch.stop();
+
+				if (won) {
+					++wins;
+				}
+
+				destructors.start();
+			} //Destruct the solver.
+			destructors.stop();
+			
 
 		}
+
+		WATCH("loop").stop();
+		std::cout << "Loop: " << WATCH("loop").elapsed<std::chrono::seconds>() << "s.\n";
+
+
 		std::cout << "won by declarer: " << (100. * wins) / iters << " %\n";
-		std::cout << "One iteration took " << WATCH("solver").elapsed<std::chrono::milliseconds>() / iters << "ms.\n";
+		std::cout << "Shuffle:           " << watch_shuffle.elapsed<std::chrono::milliseconds>() / iters << "ms.\n";
+		std::cout << "Deal:              " << watch_deal.elapsed<std::chrono::milliseconds>() / iters << "ms.\n";
+		std::cout << "Init Sit:          " << watch_sit.elapsed<std::chrono::milliseconds>() / iters << "ms.\n";
+		std::cout << "Init Solver:       " << watch_solv_init.elapsed<std::chrono::milliseconds>() / iters << "ms.\n";
+		std::cout << "Solve for 61:      " << watch.elapsed<std::chrono::milliseconds>() / iters << "ms.\n";
+		std::cout << "Destruct Solver:   " << destructors.elapsed<std::chrono::milliseconds>() / iters << "ms.\n";
+		
 	}
 } //namespace perf
 
