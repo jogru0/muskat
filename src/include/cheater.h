@@ -23,7 +23,7 @@ namespace muskat {
 		GameType m_game;
 		std::mt19937 m_rng;
 		SituationSolver m_solver;
-		uint_fast16_t m_points_declarer;
+		Points m_points_declarer;
 
 	public:
 		void cheat(const Situation &situation) override {

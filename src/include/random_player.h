@@ -55,7 +55,7 @@ namespace muskat {
 			using namespace stdc::literals;
 			say("Card "s + to_string(card) + " was played.");
 
-			assert(!m_hand[card]);
+			assert(!m_hand.contains(card));
 			
 			if (m_number_of_cards_already_played % 3 == 0) {
 				m_maybe_type = TrickAndGameType{card, m_game};
@@ -70,9 +70,7 @@ namespace muskat {
 
 		virtual auto request_move() -> Card final {
 			auto card = random_card_from(get_legal_cards(m_hand, m_maybe_type), m_rng);
-			auto card_in_hand = m_hand.get_ref(card);
-			assert(card_in_hand);
-			card_in_hand = false;
+			m_hand.remove(card);
 			return card;
 		}
 

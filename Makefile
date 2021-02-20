@@ -81,9 +81,6 @@ clean:
 	-@rm -rvf $(OBJ_DIR_TST)/*
 	-@rm -rvf $(APP_DIR)/*
 
-docker:
-	docker build --no-cache .
-
 -include $(OBJECTS_REL:.o=.d)
 -include $(OBJECTS_DBG:.o=.d)
 -include $(OBJECTS_TST:.o=.d)

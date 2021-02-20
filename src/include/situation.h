@@ -13,7 +13,7 @@
 
 namespace muskat {
 
-enum class Role {Declarer, FirstDefender, SecondDefender};
+enum class Role : uint8_t {Declarer, FirstDefender, SecondDefender};
 
 [[nodiscard]] inline constexpr auto to_string(Role role) {
 	switch (role) {
@@ -41,47 +41,47 @@ using Deck = std::array<Card, 32>;
 		auto hand_self = Cards{};
 		auto skat = Cards{};
 
-		hand_left.get_ref(deck[0]) = true;
-		hand_left.get_ref(deck[1]) = true;
-		hand_left.get_ref(deck[2]) = true;
+		hand_left.add(deck[0]);
+		hand_left.add(deck[1]);
+		hand_left.add(deck[2]);
 		
-		hand_right.get_ref(deck[3]) = true;
-		hand_right.get_ref(deck[4]) = true;
-		hand_right.get_ref(deck[5]) = true;
+		hand_right.add(deck[3]);
+		hand_right.add(deck[4]);
+		hand_right.add(deck[5]);
 		
-		hand_self.get_ref(deck[6]) = true;
-		hand_self.get_ref(deck[7]) = true;
-		hand_self.get_ref(deck[8]) = true;
+		hand_self.add(deck[6]);
+		hand_self.add(deck[7]);
+		hand_self.add(deck[8]);
 
-		skat.get_ref(deck[9]) = true;
-		skat.get_ref(deck[10]) = true;
+		skat.add(deck[9]);
+		skat.add(deck[10]);
 
-		hand_left.get_ref(deck[11]) = true;
-		hand_left.get_ref(deck[12]) = true;
-		hand_left.get_ref(deck[13]) = true;
-		hand_left.get_ref(deck[14]) = true;
+		hand_left.add(deck[11]);
+		hand_left.add(deck[12]);
+		hand_left.add(deck[13]);
+		hand_left.add(deck[14]);
 		
-		hand_right.get_ref(deck[15]) = true;
-		hand_right.get_ref(deck[16]) = true;
-		hand_right.get_ref(deck[17]) = true;
-		hand_right.get_ref(deck[18]) = true;
+		hand_right.add(deck[15]);
+		hand_right.add(deck[16]);
+		hand_right.add(deck[17]);
+		hand_right.add(deck[18]);
 		
-		hand_self.get_ref(deck[19]) = true;
-		hand_self.get_ref(deck[20]) = true;
-		hand_self.get_ref(deck[21]) = true;
-		hand_self.get_ref(deck[22]) = true;
+		hand_self.add(deck[19]);
+		hand_self.add(deck[20]);
+		hand_self.add(deck[21]);
+		hand_self.add(deck[22]);
 		
-		hand_left.get_ref(deck[23]) = true;
-		hand_left.get_ref(deck[24]) = true;
-		hand_left.get_ref(deck[25]) = true;
+		hand_left.add(deck[23]);
+		hand_left.add(deck[24]);
+		hand_left.add(deck[25]);
 		
-		hand_right.get_ref(deck[26]) = true;
-		hand_right.get_ref(deck[27]) = true;
-		hand_right.get_ref(deck[28]) = true;
+		hand_right.add(deck[26]);
+		hand_right.add(deck[27]);
+		hand_right.add(deck[28]);
 		
-		hand_self.get_ref(deck[29]) = true;
-		hand_self.get_ref(deck[30]) = true;
-		hand_self.get_ref(deck[31]) = true;
+		hand_self.add(deck[29]);
+		hand_self.add(deck[30]);
+		hand_self.add(deck[31]);
 
 		return std::tuple{
 			hand_self, hand_left, hand_right, skat
@@ -108,30 +108,71 @@ class Situation;
 
 [[nodiscard]] inline auto is_at_game_start(const Situation &) -> bool;
 [[nodiscard]] inline auto is_at_game_end(const Situation &) -> bool;
-[[nodiscard]] inline auto next_possible_plays(Situation &, GameType ) -> Cards;
+[[nodiscard]] inline auto next_possible_plays(Situation &, GameType) -> Cards;
+
+
+class MaybeCard {
+private:
+	//This can be nocard_internal!
+	Card m_card_or_nocard;
+	static constexpr auto nocard_internal = static_cast<Card>(32);
+public:
+	/*explicit*/ constexpr MaybeCard(Card card = nocard_internal) : m_card_or_nocard{card} {}
+
+	explicit operator bool() const { return m_card_or_nocard != nocard_internal; }
+	constexpr auto operator*() const {
+		assert(m_card_or_nocard != nocard_internal);
+		return m_card_or_nocard;
+	}
+
+	[[nodiscard]] auto operator==(MaybeCard other) const {
+		return m_card_or_nocard == other.m_card_or_nocard;
+	}
+
+	friend struct std::hash<MaybeCard>;
+	friend auto hash_8(MaybeCard) -> uint8_t;
+};
+
+[[nodiscard]] inline auto hash_8(MaybeCard maybe_card) -> uint8_t {
+	return static_cast<uint8_t>(maybe_card.m_card_or_nocard);
+}
+
+[[nodiscard]] inline auto hash_8(Role role) -> uint8_t {
+	return static_cast<uint8_t>(role);
+}
+
+inline constexpr auto nocard = MaybeCard{};
 
 class Situation {
 private:
 	Cards m_hand_declarer;
 	Cards m_hand_first_defender;
 	Cards m_hand_second_defender;
-	std::optional<Card> m_maybe_first_trick_card;
-	std::optional<Card> m_maybe_second_trick_card;
+	MaybeCard m_maybe_first_trick_card;
+	MaybeCard m_maybe_second_trick_card;
 	Role m_active_role;
 
 public:
 
+	[[nodiscard]] auto remaining_cards_in_hands() const {
+		return m_hand_declarer | m_hand_first_defender | m_hand_second_defender;
+	}
+
 	[[nodiscard]] auto cellar() const {
-		auto result = ~(m_hand_declarer | m_hand_first_defender | m_hand_second_defender);
-		IMPLIES(m_maybe_first_trick_card, result.get_ref(*m_maybe_first_trick_card) = false);
-		IMPLIES(m_maybe_second_trick_card, result.get_ref(*m_maybe_second_trick_card) = false);
+		auto result = ~remaining_cards_in_hands();
+		if(m_maybe_first_trick_card) {
+			result.remove(*m_maybe_first_trick_card);
+		}
+		if(m_maybe_second_trick_card) {
+			result.remove(*m_maybe_second_trick_card);
+		}
 		return result;
 	}
 
 	[[nodiscard]] auto active_role() const {
 		return m_active_role;
 	}
-
+	
 	[[nodiscard]] auto get_maybe_first_trick_card() const {
 		return m_maybe_first_trick_card;
 	}
@@ -214,15 +255,14 @@ private:
 	}
 public:
 	//Returns what points the declarer makes  with this move.
-	[[nodiscard]] auto play_card(Card card, GameType game) -> uint_fast16_t {
-		assert(next_possible_plays(*this, game)[card]);
+	[[nodiscard]] auto play_card(Card card, GameType game) -> Points {
+		assert(next_possible_plays(*this, game).contains(card));
 		auto &hand = mutable_hand(m_active_role);
-		assert(hand[card]);
-		hand.get_ref(card) = false;
+		hand.remove(card);
 
 		m_active_role = next(m_active_role);
 
-		auto result = uint_fast16_t{};
+		auto result = Points{};
 
 		if (!m_maybe_first_trick_card) {
 			m_maybe_first_trick_card = card;
@@ -250,8 +290,8 @@ public:
 				result += to_points(trick, game);
 			}
 			
-			m_maybe_first_trick_card = std::nullopt;
-			m_maybe_second_trick_card = std::nullopt;
+			m_maybe_first_trick_card = nocard;
+			m_maybe_second_trick_card = nocard;
 		}
 
 		assert_invariants();
@@ -272,18 +312,39 @@ public:
 
 namespace std {
 	template<>
-	struct hash<muskat::Situation> {
-		[[nodiscard]] constexpr auto operator()(const muskat::Situation &s) const
+	struct hash<muskat::MaybeCard> {
+		[[nodiscard]] auto operator()(muskat::MaybeCard maybe_card) const
 			-> size_t
 		{
-			return stdc::GeneralHasher{}(
-				s.active_role(),
-				s.get_maybe_first_trick_card(),
-				s.get_maybe_second_trick_card(),
-				s.hand(muskat::Role::Declarer),
-				s.hand(muskat::Role::FirstDefender),
-				s.hand(muskat::Role::SecondDefender)
-			);
+			return std::hash<muskat::Card>{}(maybe_card.m_card_or_nocard);
+		}
+	};
+	
+	template<>
+	struct hash<muskat::Situation> {
+		[[nodiscard]] auto operator()(muskat::Situation s) const
+			-> size_t
+		{
+			static_assert(sizeof(size_t) == 8);
+			auto hash_32_cards_in_hands = muskat::hash_32(s.remaining_cards_in_hands());
+			auto hash_8_maybe_first_trick_card = muskat::hash_8(s.get_maybe_first_trick_card());
+			auto hash_8_maybe_second_trick_card = muskat::hash_8(s.get_maybe_second_trick_card());
+			auto hash_8_active_role = muskat::hash_8(s.active_role());
+			
+			auto result = size_t{};
+			result |= hash_8_active_role;
+			
+			result <<= 8;
+			result |= hash_8_maybe_second_trick_card;
+			
+			result <<= 8;
+			result |= hash_8_maybe_first_trick_card;
+			
+			result <<= 32;
+			result |= hash_32_cards_in_hands;
+
+			return result;
+			
 		}
 	};
 } //namespace std

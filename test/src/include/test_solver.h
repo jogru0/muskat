@@ -10,7 +10,7 @@ inline void test_calculate_potential_score(
 	muskat::Deck deck,
 	muskat::GameType game,
 	muskat::Role role_of_vorhand,
-	uint_fast16_t expected
+	muskat::Points expected
 ) {
 	auto [hand_geber, hand_hoerer, hand_sager, skat] = deal_deck(deck);
 	auto initial_situation = muskat::Situation{hand_geber, hand_hoerer, hand_sager, skat, role_of_vorhand};
@@ -28,9 +28,9 @@ inline void test_calculate_potential_score(
 inline void test_calculate_potential_score_for_rng_series(
 	muskat::GameType game,
 	muskat::Role role_vorhand,
-	std::vector<uint_fast16_t> expected_results
+	std::vector<muskat::Points> expected_results
 ) {
-	auto rng = stdc::seeded_RNG(stdc::DeterministicSourceOfRandomness{});
+	auto rng = stdc::seeded_RNG(stdc::DeterministicSourceOfRandomness<0, 77'777'777>{});
 
 	for (auto expected_result : expected_results) {
 		auto deck = muskat::get_shuffled_deck(rng);
@@ -43,7 +43,7 @@ TEST(solver, calculate_potential_score_series_herz_vorhand) {
 	test_calculate_potential_score_for_rng_series(
 		muskat::GameType::Herz,
 		muskat::Role::Declarer,
-		std::vector<uint_fast16_t>{71, 0, 0, 6, 39}
+		std::vector<muskat::Points>{71, 0, 0, 6, 39}
 	);
 }
 
@@ -51,7 +51,7 @@ TEST(solver, calculate_potential_score_series_herz_mittelhand) {
 	test_calculate_potential_score_for_rng_series(
 		muskat::GameType::Herz,
 		muskat::Role::SecondDefender,
-		std::vector<uint_fast16_t>{61, 0, 0, 6, 32}
+		std::vector<muskat::Points>{61, 0, 0, 6, 32}
 	);
 }
 
@@ -60,7 +60,7 @@ TEST(solver, calculate_potential_score_series_herz_hinterhand) {
 	test_calculate_potential_score_for_rng_series(
 		muskat::GameType::Herz,
 		muskat::Role::FirstDefender,
-		std::vector<uint_fast16_t>{61, 0, 0, 6, 32}
+		std::vector<muskat::Points>{61, 0, 0, 6, 32}
 	);
 }
 
@@ -68,7 +68,7 @@ TEST(solver, calculate_potential_score_series_grand_vorhand) {
 	test_calculate_potential_score_for_rng_series(
 		muskat::GameType::Grand,
 		muskat::Role::Declarer,
-		std::vector<uint_fast16_t>{68, 11, 0, 10, 43}
+		std::vector<muskat::Points>{68, 11, 0, 10, 43}
 	);
 }
 
@@ -76,7 +76,7 @@ TEST(solver, calculate_potential_score_series_grand_mittelhand) {
 	test_calculate_potential_score_for_rng_series(
 		muskat::GameType::Grand,
 		muskat::Role::SecondDefender,
-		std::vector<uint_fast16_t>{36, 11, 0, 4, 43}
+		std::vector<muskat::Points>{36, 11, 0, 4, 43}
 	);
 }
 
@@ -85,6 +85,6 @@ TEST(solver, calculate_potential_score_series_grand_hinterhand) {
 	test_calculate_potential_score_for_rng_series(
 		muskat::GameType::Grand,
 		muskat::Role::FirstDefender,
-		std::vector<uint_fast16_t>{36, 11, 0, 4, 43}
+		std::vector<muskat::Points>{36, 11, 0, 4, 43}
 	);
 }

@@ -31,7 +31,7 @@ struct Trick : public stdc::ExposedArray<std::array<Card, 3>> {
 };
 
 [[nodiscard]] inline constexpr auto get_trick_type(Card card, GameType game) {
-	if (trump_cards(game)[card]) {
+	if (trump_cards(game).contains(card)) {
 		return TrickType::Trump;
 	}
 	return convert_between_suit_types<TrickType>(to_suit(card));
@@ -68,10 +68,11 @@ return type.trick() == TrickType::Trump
 	: cards_of_suit(convert_between_suit_types<Suit>(type.trick())) & ~current_trump_cards;
 }
 
+using Power = int8_t;
 
-[[nodiscard]] inline auto to_power(Card card, TrickAndGameType type) -> int_fast16_t {
-	auto card_is_trump = trump_cards(type.game())[card]; //TODO!!!!!: UB???
-	auto card_follows_trick_type = cards_following_trick_type(type)[card];
+[[nodiscard]] inline auto to_power(Card card, TrickAndGameType type) -> Power {
+	auto card_is_trump = trump_cards(type.game()).contains(card);
+	auto card_follows_trick_type = cards_following_trick_type(type).contains(card);
 	
 	if (!card_is_trump && !card_follows_trick_type) {
 		return -1;
@@ -80,15 +81,15 @@ return type.trick() == TrickType::Trump
 	auto rank = to_rank(card);
 
 	if (type.game() == GameType::Null) {
-		return static_cast<int_fast16_t>(rank);
+		return static_cast<Power>(rank);
 	}
 
-	auto result = [&]() -> int_fast16_t {
+	auto result = [&]() -> Power {
 		switch (rank) {
 			case Rank::Z: return 7;
 			case Rank::A: return 8;
-			case Rank::U: return 9 + static_cast<int_fast16_t>(to_suit(card));
-			default: return static_cast<int_fast16_t>(rank);
+			case Rank::U: return 9 + static_cast<Power>(to_suit(card));
+			default: return static_cast<Power>(rank);
 		}
 	}();
 

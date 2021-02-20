@@ -1,5 +1,6 @@
 -MD
 -std=c++20
+-march=native
 -Weverything
 -Wno-c++98-compat-pedantic
 -Wno-newline-eof

@@ -9,200 +9,76 @@
 #include <climits>
 #include <cassert>
 
+#include "card.h"
+
 namespace muskat {
-	
-	//We cast these to uint_fast8_t
-	enum class Card {
-		S7, S8, S9, SZ, SU, SO, SK, SA,
-		H7, H8, H9, HZ, HU, HO, HK, HA,
-		G7, G8, G9, GZ, GU, GO, GK, GA,
-		E7, E8, E9, EZ, EU, EO, EK, EA
-	};
 
-	[[nodiscard]] inline auto to_string(Card card) {
-		using namespace stdc::literals;
-		
-		switch (card) {
-			case Card::S7: return "S7"s;
-			case Card::S8: return "S8"s;
-			case Card::S9: return "S9"s;
-			case Card::SZ: return "SZ"s;
-			case Card::SU: return "SU"s;
-			case Card::SO: return "SO"s;
-			case Card::SK: return "SK"s;
-			case Card::SA: return "SA"s;
-			case Card::H7: return "H7"s;
-			case Card::H8: return "H8"s;
-			case Card::H9: return "H9"s;
-			case Card::HZ: return "HZ"s;
-			case Card::HU: return "HU"s;
-			case Card::HO: return "HO"s;
-			case Card::HK: return "HK"s;
-			case Card::HA: return "HA"s;
-			case Card::G7: return "G7"s;
-			case Card::G8: return "G8"s;
-			case Card::G9: return "G9"s;
-			case Card::GZ: return "GZ"s;
-			case Card::GU: return "GU"s;
-			case Card::GO: return "GO"s;
-			case Card::GK: return "GK"s;
-			case Card::GA: return "GA"s;
-			case Card::E7: return "E7"s;
-			case Card::E8: return "E8"s;
-			case Card::E9: return "E9"s;
-			case Card::EZ: return "EZ"s;
-			case Card::EU: return "EU"s;
-			case Card::EO: return "EO"s;
-			case Card::EK: return "EK"s;
-			case Card::EA: return "EA"s;
-		}
+namespace detail {
+	[[nodiscard]] constexpr inline auto to_bit(Card card) -> uint32_t {
+		return uint32_t{1} << to_underlying(card);
 	}
-
-	inline std::istream &operator>> (std::istream &is, Card &card)
-{
-	char c_suit;
-	char c_rank;
-	is >> c_suit >> c_rank;
-	
-	auto code = 0;
-
-	switch (c_suit) {
-		case 'S': break;
-		case 'H': code += 8; break;
-		case 'G': code += 16; break;
-		case 'E': code += 24; break;
-		default: assert(false);
-	}
-
-	switch (c_rank) {
-		case '7': break;
-		case '8': code += 1; break;
-		case '9': code += 2; break;
-		case 'Z': code += 3; break;
-		case 'U': code += 4; break;
-		case 'O': code += 5; break;
-		case 'K': code += 6; break;
-		case 'A': code += 7; break;
-		default: assert(false);
-	}
-
-	card = static_cast<Card>(code);
-	return is;
-}
-
-enum class Suit {
-	S, H, G, E
-};
-
-enum class Rank {
-	L7, L8, L9, Z, U, O, K, A
-};
-
-[[nodiscard]] inline auto to_suit(Card card) {
-	return static_cast<Suit>(static_cast<size_t>(card) / 8);
-}
-
-[[nodiscard]] inline auto to_rank(Card card) {
-	return static_cast<Rank>(static_cast<size_t>(card) % 8);
-}
-
-[[nodiscard]] inline auto get_random_card(std::mt19937 &rng) {
-	return static_cast<Card>(std::uniform_int_distribution{0, 31}(rng));
-}
-
-enum class GameType {
-	Schell, Herz, Green, Eichel, Null, Grand
-};
-	
-[[nodiscard]] inline auto to_points(Card card, [[maybe_unused]] GameType game) -> size_t {
-	assert(game != GameType::Null);
-	switch (to_rank(card)) {
-	case Rank::L7: [[fallthrough]];
-		case Rank::L8: [[fallthrough]];
-		case Rank::L9: return 0;
-		case Rank::Z: return 10;
-		case Rank::U: return 2;
-		case Rank::O: return 3;
-		case Rank::K: return 4;
-		case Rank::A: return 11;
-	}
-}
-
-[[nodiscard]] inline constexpr auto to_string(GameType game) {
-	switch (game) {
-		case GameType::Schell: return "Schell";
-		case GameType::Herz: return "Herz";
-		case GameType::Green: return "Green";
-		case GameType::Eichel: return "Eichel";
-		case GameType::Null: return "Null";
-		case GameType::Grand: return "Grand";
-	}
-}
-
-
-enum class TrickType {
-	Schell, Herz, Green, Eichel, Trump
-};
-
-template<typename To, typename From>
-[[nodiscard]] inline auto convert_between_suit_types(From from) {
-	static_assert(stdc::is_any_of_v<From, GameType, TrickType, Suit>);
-	static_assert(stdc::is_any_of_v<To, GameType, TrickType, Suit>);
-	static_assert(!std::is_same_v<From, To>);
-
-	auto val = static_cast<size_t>(from);
-	assert(val < 4);
-	return static_cast<To>(val);
 }
 
 class Cards {
 private:
-	std::bitset<32> m_bitset;
+	uint32_t m_bits;
+
 public:
-	explicit constexpr Cards(uint32_t bits) : m_bitset{bits} {}
-	explicit constexpr Cards() = default;
+	explicit constexpr Cards(uint32_t bits = 0) : m_bits{bits} {}
 
-	[[nodiscard]] constexpr auto operator[](Card card) const -> bool {
-		return m_bitset[static_cast<size_t>(card)];
+	[[nodiscard]] constexpr auto contains(Card card) const -> bool {
+		return (m_bits & detail::to_bit(card)) != 0;
 	}
 
-	[[nodiscard]] auto get_ref(Card card) {
-		return m_bitset[static_cast<size_t>(card)];
+	void add(Card card) {
+		assert(!contains(card));
+		m_bits |= detail::to_bit(card);
 	}
 
+	void remove(Card card) {
+		assert(contains(card));
+		m_bits &= ~detail::to_bit(card);
+	}
+
+	//TODO: Return type? (int atm)
 	[[nodiscard]] auto size() const {
-		return m_bitset.count();
+		static_assert(std::is_same_v<uint32_t, unsigned int>);
+		return __builtin_popcount(m_bits);
 	}
 
 	[[nodiscard]] auto empty() const {
-		return m_bitset.none();
+		return m_bits == 0;
 	}
 
 	auto &operator&=(const Cards &other) noexcept {
-		m_bitset &= other.m_bitset;
+		m_bits &= other.m_bits;
 		return *this;
 	}
 	auto &operator|=(const Cards &other) noexcept {
-		m_bitset |= other.m_bitset;
+		m_bits |= other.m_bits;
 		return *this;
 	}
 	auto &operator^=(const Cards &other) noexcept {
-		m_bitset ^= other.m_bitset;
+		m_bits ^= other.m_bits;
+		return *this;
+	}
+	auto &flip() noexcept {
+		m_bits = ~m_bits;
 		return *this;
 	}
 
-	[[nodiscard]] auto operator~() noexcept {
-		auto result = *this;
-		result.m_bitset.flip();
-		return result;
-	}
 
 	[[nodiscard]] auto operator==(const Cards &other) const noexcept {
-		return m_bitset == other.m_bitset;
+		return m_bits == other.m_bits;
 	}
 
 	friend std::hash<Cards>;
+	friend auto hash_32(Cards) -> uint32_t;
 };
+
+[[nodiscard]] auto hash_32(Cards cards) -> uint32_t {
+	return cards.m_bits;
+}
 
 } //namespace muskat
 
@@ -212,7 +88,7 @@ namespace std {
 		[[nodiscard]] auto operator()(const muskat::Cards &cards) const
 			-> size_t
 		{
-			return hash<std::bitset<32>>{}(cards.m_bitset);
+			return hash<uint32_t>{}(cards.m_bits);
 		}
 	};
 } //namespace std
@@ -228,13 +104,16 @@ namespace muskat {
 [[nodiscard]] inline auto operator^(Cards lhs, const Cards &rhs) noexcept {
 	return lhs ^= rhs;
 }
+[[nodiscard]] inline auto operator~(Cards cards) noexcept {
+	return cards.flip();
+}
 
 [[nodiscard]] inline auto random_card_from(const Cards &cards, std::mt19937 &rng) noexcept {
 	assert(!cards.empty());
 	for (;;) {
 		if (
 			auto card = get_random_card(rng);
-			cards[card]
+			cards.contains(card)
 		) {
 			return card;
 		}
@@ -247,7 +126,7 @@ namespace muskat {
 	auto result = "{ "s;
 	for (auto i = 0; i < 32; ++i) {
 		auto card = static_cast<Card>(i);
-		if (cards[card]) {
+		if (cards.contains(card)) {
 			result += to_string(card) + " ";
 		}
 	}
@@ -255,12 +134,11 @@ namespace muskat {
 	return result;
 }
 
-[[nodiscard]] inline auto to_points(const Cards &cards, GameType game) -> size_t {
-	using namespace stdc::literals;
-	auto result = 0_z;
+[[nodiscard]] inline auto to_points(const Cards &cards, GameType game) -> Points {
+	auto result = Points{};
 	for (auto i = 0; i < 32; ++i) {
 		auto card = static_cast<Card>(i);
-		if (cards[card]) {
+		if (cards.contains(card)) {
 			result += to_points(card, game);
 		}
 	}

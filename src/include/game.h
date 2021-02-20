@@ -15,14 +15,12 @@ namespace muskat {
 			? legal_response_cards(hand, *maybe_trick_game_type)
 			: hand;
 		
-		if (!legal_cards[card]) {
+		if (!legal_cards.contains(card)) {
 			//TODO: Correctly handle this.
 			assert(false);
 		}
 
-		auto card_in_hand = hand.get_ref(card);
-		assert(card_in_hand);
-		card_in_hand = false;
+		hand.remove(card);
 	}
 
 
@@ -80,7 +78,7 @@ namespace muskat {
 		sager.inform_about_game(game_type);
 
 		auto points_declarer = to_points(gedrueckt, game_type);
-		auto points_defender = 0_z;
+		auto points_defender = Points{};
 
 		auto situation = Situation{
 			hand_declarer,
