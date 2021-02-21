@@ -10,7 +10,7 @@ namespace muskat {
 
 
 	class Bounds {
-	private:
+	public:
 		Points m_lower;
 		Points m_upper;
 	public:
@@ -26,14 +26,14 @@ namespace muskat {
 		[[nodiscard]] constexpr auto upper() const{ return m_upper; }
 
 		constexpr void update_lower(Points new_value) {
-			assert (m_lower < new_value);
+			assert (m_lower <= new_value);
 			m_lower = new_value;
 			assert(m_lower <= m_upper);
 		}
 		constexpr void update_upper(Points new_value) {
-			assert(new_value < m_upper);
+			assert(new_value <= m_upper);
 			m_upper = new_value;
-			assert(m_lower <= m_upper);	
+			assert(m_lower <= m_upper);
 		}
 	};
 
@@ -88,23 +88,21 @@ namespace muskat {
 	private:
 		template<bool is_declarer>
 		[[nodiscard]] auto improve_bounds_to_decide_threshold(Bounds bounds, Situation sit, Points threshold) {
+			using namespace stdc::literals;
+			
 			assert((sit.active_role() == Role::Declarer) == is_declarer);
 
 			assert(!decides_threshold(bounds, threshold));
 
-			auto other_bound = is_declarer ? Points{} : Points{120};
+			auto bound_calculated_over_all_children = is_declarer ? Points{} : Points{120};
 
-			auto possible_plays = next_possible_plays(sit, m_game);
+			auto remaining_possible_plays = next_possible_plays(sit, m_game);
 			//We catch these via strict bounds.
-			assert(!possible_plays.empty());
+			assert(!remaining_possible_plays.empty());
 
-			for (auto i = 0; i < 32; ++i) {
-				auto card = static_cast<Card>(i);
+			while (!remaining_possible_plays.empty()) {
+				auto card = remaining_possible_plays.remove_next();
 				
-				if (!possible_plays.contains(card)) {
-					continue;
-				}
-
 				auto child = sit;
 				auto points = child.play_card(card, m_game);
 				auto threshold_child = threshold <= points ? Points{} : static_cast<Points>(threshold - points);
@@ -112,41 +110,34 @@ namespace muskat {
 				auto bounds_child = bounds_deciding_threshold(child, threshold_child);
 
 				if constexpr (is_declarer) {
-					stdc::maximize(other_bound, static_cast<Points>(bounds_child.upper() + points));
-					
-					auto new_lower = static_cast<Points>(bounds_child.lower() + points);
-					if (bounds.lower() < new_lower) {
-						bounds.update_lower(new_lower);
-						if (threshold <= new_lower) {
-							return bounds;
-						}
-					}
+					stdc::maximize(bounds.m_lower, static_cast<Points>(bounds_child.lower() + points));
+					stdc::maximize(bound_calculated_over_all_children, static_cast<Points>(bounds_child.upper() + points));
 				} else {
-					stdc::minimize(other_bound, static_cast<Points>(bounds_child.lower() + points));
-					
-					auto new_upper = static_cast<Points>(bounds_child.upper() + points);
-					if (new_upper < bounds.upper()) {
-						bounds.update_upper(new_upper);
-						if (new_upper < threshold) {
-							return bounds;
-						}
-					}
+					stdc::minimize(bound_calculated_over_all_children, static_cast<Points>(bounds_child.lower() + points));
+					stdc::minimize(bounds.m_upper, static_cast<Points>(bounds_child.upper() + points));
+				}
+				
+				if (decides_threshold(bounds, threshold)) {
+					break;
+				}
+			}
+			
+			if (remaining_possible_plays.empty()) {
+				if constexpr (is_declarer) {
+					//No winning child.
+					bounds.update_upper(bound_calculated_over_all_children);
+				} else {
+					//All childs win.
+					bounds.update_lower(bound_calculated_over_all_children);
 				}
 			}
 
-			if constexpr (is_declarer) {
-				//No winning child.
-				bounds.update_upper(other_bound);
-				return bounds;
-			} else {
-				//All childs win.
-				bounds.update_lower(other_bound);
-				return bounds;
-			}
+			return bounds;
 		}
 
 	public:
 		[[nodiscard]] auto bounds_deciding_threshold(Situation sit, Points threshold) -> Bounds {
+			
 			auto bounds = current_bounds(sit);
 			if (!decides_threshold(bounds, threshold)) {
 				switch (sit.active_role() == Role::Declarer) {
@@ -226,9 +217,7 @@ namespace muskat {
 			return std::nullopt;
 		}
 
-
-	auto calculate_potential_score(Situation sit) -> Points {
-		if (sit.active_role() == Role::Declarer) {
+		auto calculate_potential_score_2(Situation sit) -> Points {
 			auto goal = Points{};
 			while (still_makes_at_least(sit, goal)) {
 				++goal;
@@ -239,28 +228,29 @@ namespace muskat {
 			return goal;
 		}
 
-		auto goal = Points{121};
-		while (!still_makes_at_least(sit, goal)) {
-			assert(0 < goal);
-			--goal;
-		
-		}
-		assert(goal <= 120);
-		return goal;
-	}
-
-	//Undefined if no card is left.
-	auto pick_best_card(Situation sit) -> Card {
-		auto threshold = calculate_potential_score(sit);
-
-		if (sit.active_role() == Role::Declarer) {
-			std::cout << "Picking card to reach at least " << threshold << ".\n";
-			return stdc::surely(maybe_card_for_threshold(sit, threshold));
+		auto calculate_potential_score_3(Situation sit) -> Points {
+			auto goal = Points{121};
+			while (!still_makes_at_least(sit, goal)) {
+				assert(0 < goal);
+				--goal;
+			
+			}
+			assert(goal <= 120);
+			return goal;
 		}
 
-		std::cout << "Picking card to not let him reach " << threshold + 1 << ".\n";
-		return stdc::surely(maybe_card_for_threshold(sit, threshold + 1));
-	}
-};
+		//Undefined if no card is left.
+		auto pick_best_card(Situation sit) -> Card {
+			auto threshold = calculate_potential_score_2(sit);
+
+			if (sit.active_role() == Role::Declarer) {
+				std::cout << "Picking card to reach at least " << threshold << ".\n";
+				return stdc::surely(maybe_card_for_threshold(sit, threshold));
+			}
+
+			std::cout << "Picking card to not let him reach " << threshold + 1 << ".\n";
+			return stdc::surely(maybe_card_for_threshold(sit, threshold + 1));
+		}
+	};
 
 } // namespace muskat

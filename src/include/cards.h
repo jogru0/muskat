@@ -40,15 +40,23 @@ public:
 		m_bits &= ~detail::to_bit(card);
 	}
 
-	//TODO: Return type? (int atm)
-	[[nodiscard]] auto size() const {
-		static_assert(std::is_same_v<uint32_t, unsigned int>);
-		return __builtin_popcount(m_bits);
-	}
-
 	[[nodiscard]] auto empty() const {
 		return m_bits == 0;
 	}
+
+	[[nodiscard]] auto size() const {
+		static_assert(std::is_same_v<uint32_t, unsigned int>);
+		return static_cast<size_t>(__builtin_popcount(m_bits));
+	}
+	
+	[[nodiscard]] auto remove_next() {
+		assert(!empty());
+		auto next_bit = m_bits & -m_bits;
+		auto id_card = __builtin_ctz(next_bit);
+		m_bits ^= next_bit;
+		return static_cast<Card>(id_card);
+	}
+
 
 	auto &operator&=(const Cards &other) noexcept {
 		m_bits &= other.m_bits;
