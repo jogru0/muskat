@@ -97,6 +97,22 @@ using Deck = std::array<Card, 32>;
 	return result;
 }
 
+[[nodiscard]] inline auto to_vector(Cards cards) {
+	auto result = std::vector<Card>{};
+	result.reserve(cards.size());
+	while (!cards.empty()) {
+		result.push_back(cards.remove_next());
+	}
+	return result;
+}
+
+template<typename RNG>
+[[nodiscard]] auto get_shuffled(Cards cards, RNG &rng) -> std::vector<Card> {
+	auto result = to_vector(cards);
+	std::shuffle(RANGE(result), rng);
+	return result;
+}
+
 template<typename RNG>
 [[nodiscard]] constexpr auto get_shuffled_deck(RNG &rng) {
 	auto result = get_unshuffled_deck();
@@ -199,6 +215,27 @@ private:
 	}
 
 public:
+
+	explicit Situation(
+		Cards hand_declarer,
+		Cards hand_first_defender,
+		Cards hand_second_defender,
+		[[maybe_unused]] Cards gedrueckt,
+		Role active_role,
+		MaybeCard get_maybe_first_trick_card,
+		MaybeCard get_maybe_second_trick_card
+	) :
+		m_hand_declarer{hand_declarer},
+		m_hand_first_defender{hand_first_defender},
+		m_hand_second_defender{hand_second_defender},
+		m_maybe_first_trick_card{get_maybe_first_trick_card},
+		m_maybe_second_trick_card{get_maybe_second_trick_card},
+		m_active_role{active_role}
+	{
+		assert_invariants();
+	}
+
+
 	explicit Situation(
 		Cards hand_declarer,
 		Cards hand_first_defender,

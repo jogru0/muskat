@@ -9,6 +9,8 @@
 #include "cheater.h"
 #include "game.h"
 
+#include "world_simulation.h"
+
 #include <stdc/WATCH.h>
 
 #include <stdc/mathematics.h>
@@ -50,7 +52,7 @@ namespace perf {
 		numbers_of_nodes.push_back(static_cast<double>(solver.number_of_nodes()));
 	}
 
-	std::cout << "average possible_points: " << points / static_cast<double>(iters) << '\n';
+	std::cout << "average possible_points: " << static_cast<double>(points) / static_cast<double>(iters) << '\n';
 	return {numbers_of_nodes, times_in_ms};
 }
 [[nodiscard]] static auto find_threshold_3() -> std::array<std::vector<double>, 2> {
@@ -87,7 +89,7 @@ namespace perf {
 		numbers_of_nodes.push_back(static_cast<double>(solver.number_of_nodes()));
 	}
 
-	std::cout << "average possible_points: " << points / static_cast<double>(iters) << '\n';
+	std::cout << "average possible_points: " << static_cast<double>(points) / static_cast<double>(iters) << '\n';
 	return {numbers_of_nodes, times_in_ms};
 }
 
@@ -206,6 +208,71 @@ static void performance() {
 
 int main() {
 	assert(std::cout << "Wir asserten.\n");
+
+	//Hand: S7Z H789OZ E789
+	//Hinterhand plays -> we ware sdef.
+	//E is trump.
+	//We are Mittelhand in round 1.
+	//HA -> HZ -> HU
+	//S8 -> SA -> ???
+
+	auto known_about_unknown_dec_fdef_sdef_skat = std::array{
+		muskat::KnownUnknownInSet{
+			8, {true, false, true, true, true}
+		},
+		muskat::KnownUnknownInSet{
+			8, {true, true, true, true, true}
+		},
+		muskat::KnownUnknownInSet{
+			0, {true, true, true, true, true}
+		},
+		muskat::KnownUnknownInSet{
+			2, {true, true, true, true, true}
+		}
+	};
+
+	auto known_cards_dec_fdef_sdef_skat = std::array{
+		muskat::Cards{},
+		muskat::Cards{},
+		//                                    Z already played, so not here.
+		//                  E987...........H0--987    SZ--7
+		muskat::Cards{0b00000111'00000000'00100111'00001001u},
+		muskat::Cards{}
+	};
+
+	auto game = muskat::GameType::Eichel;
+	auto active_role = muskat::Role::SecondDefender;
+	auto maybe_first_trick_card = muskat::MaybeCard{muskat::Card::S8};
+	auto maybe_second_trick_card = muskat::MaybeCard{muskat::Card::SA};
+
+	auto known_cards = muskat::Cards{};
+	known_cards |= known_cards_dec_fdef_sdef_skat[2];
+	known_cards.add(muskat::Card::HA);
+	known_cards.add(muskat::Card::HZ);
+	known_cards.add(muskat::Card::HU);
+	known_cards.add(*maybe_first_trick_card);
+	known_cards.add(*maybe_second_trick_card);
+
+	auto unknown_cards = ~known_cards;
+
+	auto possible_worlds = muskat::PossibleWorlds{
+		known_about_unknown_dec_fdef_sdef_skat,
+		known_cards_dec_fdef_sdef_skat,
+		unknown_cards,
+		game,
+		active_role,
+		maybe_first_trick_card,
+		maybe_second_trick_card
+	};
+
+	auto rng = stdc::seeded_RNG(stdc::DeterministicSourceOfRandomness<0, 77'555'777>{});
+	auto one_situation = possible_worlds.get_one_uniformly_clever(rng);
+
+
+	return 0;
+
+	//Below is our perforamnce test code for the DDS.
+
 
 	std::cout << "size: " << sizeof(muskat::Card) << "\n";
 	std::cout << "size: " << sizeof(std::optional<muskat::Card>) << "\n";

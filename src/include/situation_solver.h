@@ -140,9 +140,10 @@ namespace muskat {
 			
 			auto bounds = current_bounds(sit);
 			if (!decides_threshold(bounds, threshold)) {
-				switch (sit.active_role() == Role::Declarer) {
-					case true: bounds = improve_bounds_to_decide_threshold<true>(bounds, sit, threshold); break;
-					case false: bounds = improve_bounds_to_decide_threshold<false>(bounds, sit, threshold);
+				if (sit.active_role() == Role::Declarer) {
+					bounds = improve_bounds_to_decide_threshold<true>(bounds, sit, threshold);
+				} else {
+					bounds = improve_bounds_to_decide_threshold<false>(bounds, sit, threshold);
 				}
 				assert(decides_threshold(bounds, threshold));
 				current_bounds(sit) = bounds;

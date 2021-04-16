@@ -43,12 +43,16 @@ private:
 	TrickType m_trick;
 
 public:
-	constexpr TrickAndGameType(Card card, GameType game) :
+	constexpr TrickAndGameType(TrickType trick, GameType game) :
 		m_game{game},
-		m_trick{get_trick_type(card, m_game)}
+		m_trick{trick}
 	{
 		assert(static_cast<size_t>(m_trick) != static_cast<size_t>(m_game));
 	}
+
+	constexpr TrickAndGameType(Card card, GameType game) :
+		TrickAndGameType{get_trick_type(card, game), game}
+	{}
 
 	[[nodiscard]] auto trick() const {return m_trick; }
 	[[nodiscard]] auto game() const {return m_game; }
@@ -141,6 +145,19 @@ using Power = int8_t;
 	return maybe_trick_game_type
 		? legal_response_cards(hand, *maybe_trick_game_type)
 		: hand;
+}
+
+[[nodiscard]] inline constexpr auto split_by_trick_type(Cards cards, GameType game)
+	-> std::array<Cards,  5>
+{
+	return std::array{
+		cards & cards_following_trick_type(TrickAndGameType{TrickType::Schell, game}),
+		cards & cards_following_trick_type(TrickAndGameType{TrickType::Herz, game}),
+		cards & cards_following_trick_type(TrickAndGameType{TrickType::Green, game}),
+		cards & cards_following_trick_type(TrickAndGameType{TrickType::Eichel, game}),
+		cards & cards_following_trick_type(TrickAndGameType{TrickType::Trump, game}),
+
+	};
 }
 
 } // namespace muskat

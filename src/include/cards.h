@@ -103,7 +103,7 @@ namespace std {
 
 namespace muskat {
 
-[[nodiscard]] inline auto operator&(Cards lhs, const Cards &rhs) noexcept {
+[[nodiscard]] inline constexpr auto operator&(Cards lhs, const Cards &rhs) noexcept {
 	return lhs &= rhs;
 }
 [[nodiscard]] inline auto operator|(Cards lhs, const Cards &rhs) noexcept {
@@ -165,7 +165,7 @@ inline constexpr auto cards_of_rank(Rank rank) {
 
 inline constexpr auto buben = cards_of_rank(Rank::U);
 
-inline constexpr auto trump_cards(GameType game) {
+[[nodiscard]] inline constexpr auto trump_cards(GameType game) {
 	switch (game) {
 		case GameType::Null:
 			return Cards{};
