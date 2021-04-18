@@ -5,7 +5,7 @@
 # general settings
 CXX      	 := clang++-11
 CXXFLAGS 	 := @Compilerflags
-LDFLAGS  	 :=
+LDFLAGS  	 := -lpthread
 INCLUDE  	 := -iquote src/include -isystem src/external
 SRC      	 := $(wildcard src/*.cpp)
 

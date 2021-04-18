@@ -150,14 +150,17 @@ using Power = int8_t;
 [[nodiscard]] inline constexpr auto split_by_trick_type(Cards cards, GameType game)
 	-> std::array<Cards,  5>
 {
-	return std::array{
-		cards & cards_following_trick_type(TrickAndGameType{TrickType::Schell, game}),
-		cards & cards_following_trick_type(TrickAndGameType{TrickType::Herz, game}),
-		cards & cards_following_trick_type(TrickAndGameType{TrickType::Green, game}),
-		cards & cards_following_trick_type(TrickAndGameType{TrickType::Eichel, game}),
-		cards & cards_following_trick_type(TrickAndGameType{TrickType::Trump, game}),
+	auto id_to_skip = static_cast<size_t>(game);
 
+	return std::array{
+		id_to_skip == 0 ? Cards{} : cards & cards_following_trick_type(TrickAndGameType{TrickType::Schell, game}),
+		id_to_skip == 1 ? Cards{} : cards & cards_following_trick_type(TrickAndGameType{TrickType::Herz, game}),
+		id_to_skip == 2 ? Cards{} : cards & cards_following_trick_type(TrickAndGameType{TrickType::Green, game}),
+		id_to_skip == 3 ? Cards{} : cards & cards_following_trick_type(TrickAndGameType{TrickType::Eichel, game}),
+		id_to_skip == 4 ? Cards{} : cards & cards_following_trick_type(TrickAndGameType{TrickType::Trump, game}),
 	};
 }
+
+
 
 } // namespace muskat

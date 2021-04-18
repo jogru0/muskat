@@ -15,6 +15,112 @@ struct KnownUnknownInSet {
 
 using TrickTypeSignature = std::array<uint8_t, 5>;
 
+[[nodiscard]] inline auto choose(
+	uint8_t n,
+	uint8_t k
+) -> uint64_t {
+	assert(n >= k);
+	k = std::min(k, uint8_t(n - k));
+	auto numerator = uint64_t{1};
+	auto denominator = uint64_t{1};
+	for (auto i = uint8_t{1}; i <= k; ++i) {
+		numerator *= n + 1 - i;
+		denominator *= i;
+	}
+	assert(numerator % denominator == 0);
+	return numerator / denominator;
+}
+
+[[nodiscard]] inline auto distribute(
+	std::array<KnownUnknownInSet, 4> known_about_remaining_dec_fdef_sdef_skat,
+	size_t number_to_distribute,
+	TrickType trick_type
+) {
+	//All cards to distribute are of one trick type.
+	assert(number_to_distribute <= 11);
+
+	auto result = std::vector<std::pair<
+		std::array<uint8_t, 4>, //distribution
+		uint64_t //possibilities
+	>>{};
+
+	auto remaining_0 = static_cast<uint8_t>(number_to_distribute);
+	const auto &[number_0, can_be_tt_0] = known_about_remaining_dec_fdef_sdef_skat[0];
+	auto max_0 = can_be_tt_0[static_cast<size_t>(trick_type)] ? std::min(number_0, remaining_0) : uint8_t{0};
+	for (auto i_0 = uint8_t{0}; i_0 <= max_0; ++i_0) {
+		auto pos_0 = choose(remaining_0, i_0);
+		auto remaining_1 = static_cast<uint8_t>(remaining_0 - i_0);
+		const auto &[number_1, can_be_tt_1] = known_about_remaining_dec_fdef_sdef_skat[1];
+		auto max_1 = can_be_tt_1[static_cast<size_t>(trick_type)] ? std::min(number_1, remaining_1) : uint8_t{0};
+		for (auto i_1 = uint8_t{0}; i_1 <= max_1; ++i_1) {
+			auto pos_1 = pos_0 * choose(remaining_1, i_1);
+			auto remaining_2 = static_cast<uint8_t>(remaining_1 - i_1);
+			const auto &[number_2, can_be_tt_2] = known_about_remaining_dec_fdef_sdef_skat[2];
+			auto max_2 = can_be_tt_2[static_cast<size_t>(trick_type)] ? std::min(number_2, remaining_2) : uint8_t{0};
+			for (auto i_2 = uint8_t{0}; i_2 <= max_2; ++i_2) {
+				auto pos_2 = pos_1 * choose(remaining_2, i_2);
+				auto remaining_3 = static_cast<uint8_t>(remaining_2 - i_2);
+				const auto &[number_3, can_be_tt_3] = known_about_remaining_dec_fdef_sdef_skat[3];
+				auto max_3_independent_of_remaining = can_be_tt_3[static_cast<size_t>(trick_type)] ? number_3 : uint8_t{0};
+				if (remaining_3 > max_3_independent_of_remaining) {
+					//Distributed too few cards of this trick type to the other sets
+					//(maybe this was unavoidable because of how we distributed cards of other trick types),
+					//so now we can't give all the rest to the last set.
+					continue;
+				}
+
+				//Have to give all remaining cards to the last set,
+				//otherwise not all cards of this trick type would have been distributed.
+				const auto &i_3 = remaining_3;
+				const auto &pos_3 = pos_2;
+
+				result.emplace_back(
+					std::array{i_0, i_1, i_2, i_3},
+					pos_3
+				);
+			}
+		}
+	}
+
+	return result;
+}
+
+[[nodiscard]] inline constexpr auto remaining_unknown_after_distributing(
+	std::array<KnownUnknownInSet, 4> known_about_unknown_dec_fdef_sdef_skat,
+	const std::array<uint8_t, 4> &distributed_numbers,
+	TrickType distributed_trick_type
+) {
+	using namespace stdc::literals;
+
+	for (auto set_id = 0_z; set_id < 4; ++set_id) {
+		auto &known_about_unknown = known_about_unknown_dec_fdef_sdef_skat[set_id];
+		const auto & distributed_number = distributed_numbers[set_id];
+		assert(IMPLIES(
+			distributed_number != 0,
+			known_about_unknown.can_be_trick_type[static_cast<size_t>(distributed_trick_type)]
+		));
+		assert(distributed_number <= known_about_unknown.number);
+		known_about_unknown.number -= distributed_number;
+	}
+
+	return known_about_unknown_dec_fdef_sdef_skat;
+}
+
+[[nodiscard]] inline constexpr auto is_nothing_unknown_left(
+	std::array<KnownUnknownInSet, 4> known_about_unknown_dec_fdef_sdef_skat
+) {
+	using namespace stdc::literals;
+
+	for (auto set_id = 0_z; set_id < 4; ++set_id) {
+		if (known_about_unknown_dec_fdef_sdef_skat[set_id].number != 0) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
+
 class PossibleWorlds {
 private:
 	std::array<KnownUnknownInSet, 4> known_about_unknown_dec_fdef_sdef_skat;
@@ -45,6 +151,11 @@ public:
 	{}
 
 public:
+
+	[[nodiscard]] auto get_game_type() const {
+		return game;
+	}
+
 	template<typename RNG>
 	[[nodiscard]] auto get_one_uniformly(RNG &rng) const -> Situation {
 		using namespace stdc::literals;
@@ -93,7 +204,67 @@ public:
 			uint64_t //Enough to hold the number of possible distributions when nothing is known.
 		>
 	> {
-		assert(false);
+
+		auto result = std::vector<std::pair<
+			std::array<TrickTypeSignature, 4>,
+			uint64_t
+		>>{};
+
+		//TODO: Also done in get_one_uniformly_clever.
+		auto unknown_cards_per_trick_type = split_by_trick_type(unknown_cards, game);
+		auto unknown_number_per_trick_type = std::array{
+			unknown_cards_per_trick_type[0].size(),
+			unknown_cards_per_trick_type[1].size(),
+			unknown_cards_per_trick_type[2].size(),
+			unknown_cards_per_trick_type[3].size(),
+			unknown_cards_per_trick_type[4].size()
+		};
+		
+		const auto &remaining_0 = known_about_unknown_dec_fdef_sdef_skat;
+		auto vec_distribution_and_possibilities_0 = distribute(remaining_0, unknown_number_per_trick_type[0], static_cast<TrickType>(0));
+		for (const auto &[dist_0, poss_0] : vec_distribution_and_possibilities_0) {
+			
+			auto remaining_1 = remaining_unknown_after_distributing(remaining_0, dist_0, static_cast<TrickType>(0));
+			auto vec_distribution_and_possibilities_1 = distribute(remaining_1, unknown_number_per_trick_type[1], static_cast<TrickType>(1));
+			for (const auto &[dist_1, poss_1] : vec_distribution_and_possibilities_1) {
+			
+				auto remaining_2 = remaining_unknown_after_distributing(remaining_1, dist_1, static_cast<TrickType>(1));
+				auto vec_distribution_and_possibilities_2 = distribute(remaining_2, unknown_number_per_trick_type[2], static_cast<TrickType>(2));
+				for (const auto &[dist_2, poss_2] : vec_distribution_and_possibilities_2) {
+				
+					auto remaining_3 = remaining_unknown_after_distributing(remaining_2, dist_2, static_cast<TrickType>(2));
+					auto vec_distribution_and_possibilities_3 = distribute(remaining_3, unknown_number_per_trick_type[3], static_cast<TrickType>(3));
+					for (const auto &[dist_3, poss_3] : vec_distribution_and_possibilities_3) {
+					
+						auto remaining_4 = remaining_unknown_after_distributing(remaining_3, dist_3, static_cast<TrickType>(3));
+						auto vec_distribution_and_possibilities_4 = distribute(remaining_4, unknown_number_per_trick_type[4], static_cast<TrickType>(4));
+						//Either all remaining cards can be trump, or not.
+						assert(vec_distribution_and_possibilities_4.size() <= 1);
+						for (const auto &[dist_4, poss_4] : vec_distribution_and_possibilities_4) {
+							auto remaining_after_all_is_distributed = remaining_unknown_after_distributing(remaining_4, dist_4, static_cast<TrickType>(4));
+							assert(is_nothing_unknown_left(remaining_after_all_is_distributed));
+
+							auto sig_0 = TrickTypeSignature{dist_0[0], dist_1[0], dist_2[0], dist_3[0], dist_4[0]};
+							auto sig_1 = TrickTypeSignature{dist_0[1], dist_1[1], dist_2[1], dist_3[1], dist_4[1]};
+							auto sig_2 = TrickTypeSignature{dist_0[2], dist_1[2], dist_2[2], dist_3[2], dist_4[2]};
+							auto sig_3 = TrickTypeSignature{dist_0[3], dist_1[3], dist_2[3], dist_3[3], dist_4[3]};
+
+							auto entropy = poss_0 * poss_1 * poss_2 * poss_3 * poss_4;
+
+							result.emplace_back(
+								std::array{sig_0, sig_1, sig_2, sig_3},
+								entropy
+							);
+						}
+					}
+				}
+			}
+		}
+
+		//At least one solution has to be there, because we only call this with inputs from actual skat games,
+		//which of course always have an actual concrete distribution of cards.
+		assert(!result.empty());
+		return result;
 	}
 
 
@@ -120,24 +291,24 @@ public:
 			auto number = dist(rng);
 			auto partial_sum = uint64_t{0_z};
 			for (;;) {
+				assert(sig_id < signatures_dec_fdef_sdef_skat_and_entropy.size());
 				partial_sum += signatures_dec_fdef_sdef_skat_and_entropy[sig_id].second;
 				if (partial_sum >= number) {
 					break;
 				}
 				++sig_id;
-				assert(sig_id < signatures_dec_fdef_sdef_skat_and_entropy.size());
 			}
 		}
 		const auto &selected_signature = signatures_dec_fdef_sdef_skat_and_entropy[sig_id].first;
 
 		auto unknown_cards_per_trick_type = split_by_trick_type(unknown_cards, game);
 		std::array<std::vector<Card>, 5> cards_to_distribute_by_trick_type;
-		for (auto tt = 0_z; tt <  5; ++tt) {
+		for (auto tt = 0_z; tt < 5; ++tt) {
 			cards_to_distribute_by_trick_type[tt] = get_shuffled(unknown_cards_per_trick_type[tt], rng);
 		}
 
-		//Not directly known_cards_dec_fdef_sdef_skat because we mutate it.
-		std::array<Cards, 4> cards_for_simulator = known_cards_dec_fdef_sdef_skat;
+		//Not just a reference to known_cards_dec_fdef_sdef_skat because we mutate it.
+		auto cards_for_simulator = known_cards_dec_fdef_sdef_skat;
 
 		for (auto i = 0_z; i < 4; ++i) {
 			const auto &selected_signature_this_set = selected_signature[i];
@@ -158,7 +329,7 @@ public:
 
 
 		for (auto tt = 0_z; tt < 5; ++tt) {
-			assert(!cards_to_distribute_by_trick_type[tt].empty());
+			assert(cards_to_distribute_by_trick_type[tt].empty());
 		}
 		
 		return Situation{

@@ -11,6 +11,8 @@
 
 #include "world_simulation.h"
 
+#include "concurrent_monte_carlo.h"
+
 #include <stdc/WATCH.h>
 
 #include <stdc/mathematics.h>
@@ -21,7 +23,7 @@ namespace perf {
 [[nodiscard]] static auto find_threshold_2() -> std::array<std::vector<double>, 2> {
 	using namespace stdc::literals;
 
-	auto rng = stdc::seeded_RNG(stdc::DeterministicSourceOfRandomness<33, 123'346>{});
+	auto rng = stdc::seeded_RNG(stdc::DeterministicSourceOfRandomness{33, 123'346});
 
 	auto game = muskat::GameType::Herz;
 	auto role_vorhand = muskat::Role::Declarer;
@@ -58,7 +60,7 @@ namespace perf {
 [[nodiscard]] static auto find_threshold_3() -> std::array<std::vector<double>, 2> {
 	using namespace stdc::literals;
 
-	auto rng = stdc::seeded_RNG(stdc::DeterministicSourceOfRandomness<33, 123'346>{});
+	auto rng = stdc::seeded_RNG(stdc::DeterministicSourceOfRandomness{33, 123'346});
 
 	auto game = muskat::GameType::Herz;
 	auto role_vorhand = muskat::Role::Declarer;
@@ -96,7 +98,7 @@ namespace perf {
 [[nodiscard]] static auto decide_winner_farbspiel() -> std::array<std::vector<double>, 2> {
 	using namespace stdc::literals;
 
-	auto rng = stdc::seeded_RNG(stdc::DeterministicSourceOfRandomness<0, 77'777'777>{});
+	auto rng = stdc::seeded_RNG(stdc::DeterministicSourceOfRandomness{0, 77'777'777});
 	// auto rng = stdc::seeded_RNG();
 
 	auto game = muskat::GameType::Herz;
@@ -265,11 +267,62 @@ int main() {
 		maybe_second_trick_card
 	};
 
-	auto rng = stdc::seeded_RNG(stdc::DeterministicSourceOfRandomness<0, 77'555'777>{});
-	auto one_situation = possible_worlds.get_one_uniformly_clever(rng);
+	WATCH("dfs").reset();
+	WATCH("dfs").start();
+	auto results = muskat::multithreaded_world_simulation(possible_worlds);
+	WATCH("dfs").stop();
+	std::cout << "\nTime spent to run the simulation: " << WATCH("dfs").elapsed<std::chrono::milliseconds>() << "ms.\n";
+	std::cout << "\nSamples calculated: " << results.size() << '\n';
+
+	if (results.size() == 0) {
+		//TODO
+		assert(false);
+	}
+
+	auto suggestions = std::array<size_t, 32>{};
+
+	using namespace stdc::literals;
+
+	for (auto result : results) {
+		auto min = *std::min_element(RANGE(result));
+		assert (min < 121);
+		for (auto i = 0_z; i < 32; ++i) {
+			if (result[i] == min) {
+				++suggestions[i];
+			}
+		}
+	}
+	
+	auto max = *std::max_element(RANGE(suggestions));
+	assert(max > 0);
+	auto sugg = std::vector<muskat::Card>{};
+	for (auto i = 0_z; i < 32; ++i) {
+		if (suggestions[i] == max) {
+			sugg.push_back(static_cast<muskat::Card>(i));
+		}
+	}
+
+	assert(!sugg.empty());
+	std::cout << (sugg.size() == 1 ? "Suggestion:" : "Suggestions:");
+	for (auto card : sugg) {
+		std::cout << ' ' << to_string(card);
+	}
+	std::cout << "\n\n";
+
+	for (auto i = 0_z; i < 32; ++i) {
+		if (results.front()[i] == 121) {
+			//Impossible to play.
+			assert (suggestions[i] == 0);
+			continue;
+		}
+		std::cout << to_string(static_cast<muskat::Card>(i)) << ": " << suggestions[i] << '\n';
+	}
+	std::cout << '\n';
 
 
-	return 0;
+
+
+	// return 0;
 
 	//Below is our perforamnce test code for the DDS.
 
