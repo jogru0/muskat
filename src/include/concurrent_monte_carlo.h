@@ -33,9 +33,11 @@ inline void execute_worker(
 	size_t worker_id
 ) try {
 	wa::watches_th[worker_id][wa::start].stop();
+	wa::watches_th[worker_id][wa::four].start();
 
 	auto rng = stdc::seeded_RNG(stdc::DeterministicSourceOfRandomness{0, static_cast<unsigned int>(worker_id)});
 
+	wa::watches_th[worker_id][wa::four].stop();
 	//Stop when the main thread signals that time is up via should_continue.
 	//It's not enough to just wait until the main thread locks the lock, because we coudn't be sure that we
 	//are always faster than the main thread by locking it, therefore blocking it forever.
@@ -43,7 +45,7 @@ inline void execute_worker(
 		auto situation = possible_worlds.get_one_uniformly_clever(rng);
 		auto solver = muskat::SituationSolver{possible_worlds.get_game_type()};
 
-		solver.calculate_potential_score_2(situation);
+		// solver.calculate_potential_score_2(situation);
 		auto points = solver.score_for_possible_plays(situation);
 
 		auto need_to_reallocate = result_ptr->size() == result_ptr->capacity();
@@ -120,7 +122,6 @@ inline void execute_worker(
 	for (auto thread_id = 0_z; thread_id < number_of_threads; ++thread_id) {
 		wa::watches_th[thread_id][wa::start].start();
 	}
-	
 
 	for (auto thread_id = 0_z; thread_id < number_of_threads; ++thread_id) {
 		threads.push_back(std::jthread{
@@ -162,7 +163,7 @@ inline void execute_worker(
 	auto results_obtained = 0_z;
 	auto results_obtained_th = std::vector(number_of_threads, false);
 
-	// auto results = std::vector<std::array<uint8_t, 32>>{};
+	auto results = std::vector<std::array<uint8_t, 32>>{};
 
 	while (results_obtained != number_of_threads) {
 		for (auto thread_id = 0_z; thread_id < number_of_threads; ++thread_id) {
@@ -175,7 +176,7 @@ inline void execute_worker(
 				continue;
 			}
 
-			// std::copy((results_th[thread_id])->begin(), (results_th[thread_id])->end(), std::back_inserter(results));
+			std::move((results_th[thread_id])->begin(), (results_th[thread_id])->end(), std::back_inserter(results));
 			
 			results_obtained_th[thread_id] = true;
 			++results_obtained;
@@ -185,7 +186,7 @@ inline void execute_worker(
 	WATCH("aftermath3").stop();
 
 	WATCH("aftermath").stop();
-	return results_th;
+	return results;
 }
 
 

@@ -4,6 +4,8 @@
 #include "cards.h"
 #include "situation.h"
 
+#include "perfect_information_sample_analysis.h"
+
 #include "human_player.h"
 #include "random_player.h"
 #include "cheater.h"
@@ -270,7 +272,7 @@ int main() {
 
 	WATCH("dfs").reset();
 	WATCH("dfs").start();
-	auto results_th = muskat::multithreaded_world_simulation(possible_worlds);
+	auto results = muskat::multithreaded_world_simulation(possible_worlds);
 	WATCH("dfs").stop();
 	std::cout << "\nTime spent to run the simulation: " << WATCH("dfs").elapsed<std::chrono::milliseconds>() << "ms.\n";
 	std::cout << "\nAftermath: " << WATCH("aftermath").elapsed<std::chrono::microseconds>() << "us.\n";
@@ -278,7 +280,7 @@ int main() {
 	std::cout << "\nAftermath2: " << WATCH("aftermath2").elapsed<std::chrono::microseconds>() << "us.\n";
 	std::cout << "\nAftermath3: " << WATCH("aftermath3").elapsed<std::chrono::microseconds>() << "us.\n";
 	
-	auto number = stdc::transform_accumulate(RANGE(results_th), [](const auto &results) { return results->size(); });
+	auto number = results.size();
 	std::cout << "\nSamples calculated: " << number << '\n';
 
 	if (number == 0) {
@@ -291,14 +293,12 @@ int main() {
 	using namespace stdc::literals;
 
 
-	for (const auto &results : results_th) {
-		for (auto result : *results) {
-			auto min = *std::min_element(RANGE(result));
-			assert (min < 121);
-			for (auto i = 0_z; i < 32; ++i) {
-				if (result[i] == min) {
-					++suggestions[i];
-				}
+	for (auto result : results) {
+		auto min = *std::min_element(RANGE(result));
+		assert (min < 121);
+		for (auto i = 0_z; i < 32; ++i) {
+			if (result[i] == min) {
+				++suggestions[i];
 			}
 		}
 	}
@@ -321,7 +321,7 @@ int main() {
 	std::cout << "\n\n";
 
 	for (auto i = 0_z; i < 32; ++i) {
-		if (results_th.front()->front()[i] == 121) {
+		if (results.front()[i] == 121) {
 			//Impossible to play.
 			assert (suggestions[i] == 0);
 			continue;
@@ -329,6 +329,11 @@ int main() {
 		std::cout << to_string(static_cast<muskat::Card>(i)) << ": " << suggestions[i] << '\n';
 	}
 	std::cout << '\n';
+
+	auto sample = muskat::to_sample(std::move(results));
+
+	std::cout << "Highest expected winrate declarer: " << to_string(muskat::highest_expected_winate_declarer(sample)) << "\n";
+	std::cout << "Highest expected winrate defender: " << to_string(muskat::highest_expected_winate_defender(sample)) << "\n";
 
 
 	std::cout << "Done threads:\n";
@@ -344,16 +349,20 @@ int main() {
 	} while (old_done != 12);
 	std::cout << '\n';
 
-	// std::cout << "Startup:\n";
-	// for (const auto &watches : wa::watches_th) {
-	// 	std::cout << '\t' << watches[wa::start].elapsed<std::chrono::microseconds>() << "us.\n";
-	// }
+	std::cout << "Startup:\n";
+	for (const auto &watches : wa::watches_th) {
+		std::cout << '\t' << watches[wa::start].elapsed<std::chrono::microseconds>() << "us.\n";
+	}
 
-	// std::cout << "Detatch:\n";
-	// for (const auto &watches : wa::watches_th) {
-	// 	std::cout << '\t' << watches[wa::three].elapsed<std::chrono::nanoseconds>() << "ns.\n";
-	// }
+	std::cout << "Detatch:\n";
+	for (const auto &watches : wa::watches_th) {
+		std::cout << '\t' << watches[wa::three].elapsed<std::chrono::nanoseconds>() << "ns.\n";
+	}
 
+	std::cout << "rng:\n";
+	for (const auto &watches : wa::watches_th) {
+		std::cout << '\t' << watches[wa::four].elapsed<std::chrono::microseconds>() << "us.\n";
+	}
 
 	// //Below is our perforamnce test code for the DDS.
 

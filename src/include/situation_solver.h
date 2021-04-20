@@ -92,6 +92,7 @@ namespace muskat {
 		}
 
 	private:
+		//This is the highly optimized one.
 		template<bool is_declarer>
 		[[nodiscard]] auto improve_bounds_to_decide_threshold(Bounds bounds, Situation sit, Points threshold) {
 			using namespace stdc::literals;
@@ -173,14 +174,6 @@ namespace muskat {
 		auto maybe_card_for_threshold(Situation sit, Points expected_points)
 			-> std::optional<Card>
 		{
-			// auto &[lower, upper] = current_bounds(sit);
-			// if (expected_points <= lower) {
-			// 	return true;
-			// }
-			// if (upper < expected_points) {
-			// 	return false;
-			// }
-
 			auto possible_plays = next_possible_plays(sit, m_game);
 			assert(!possible_plays.empty());
 
@@ -199,28 +192,16 @@ namespace muskat {
 
 				if (makes_it_child) {
 					if (sit.active_role() == Role::Declarer) {
-						// lower = expected_points;
 						return card;
 					}
 				} else {
 					if (sit.active_role() != Role::Declarer) {
 						assert(expected_points != 0);
-						// upper = expected_points - 1;
 						return card;
 					}
 				}
 			}
 
-			if (sit.active_role() == Role::Declarer) {
-				//No winning child.
-				// upper = expected_points - 1;
-				// return false;
-			} else {
-				//All childs win.
-				// lower = expected_points;
-				// return false;
-			}
-			
 			return std::nullopt;
 		}
 

@@ -6,6 +6,11 @@
 
 #include <robin_hood/robin_hood.h>
 
+
+//TODO: Verify with worst cases from paper that our clever algorithm does the right thing.
+//TODO: Assert that everything is known that the active player should know, and that
+//the possible plays don't depend on the specific situation created.
+
 namespace muskat {
 
 struct KnownUnknownInSet {
