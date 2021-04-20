@@ -18,6 +18,8 @@
 #include <stdc/mathematics.h>
 #include <stdc/utility.h>
 
+static_assert(std::atomic<bool>::is_always_lock_free);
+
 namespace perf {
 
 [[nodiscard]] static auto find_threshold_2() -> std::array<std::vector<double>, 2> {
@@ -207,7 +209,6 @@ static void performance() {
 
 }
 
-
 int main() {
 	assert(std::cout << "Wir asserten.\n");
 
@@ -269,12 +270,18 @@ int main() {
 
 	WATCH("dfs").reset();
 	WATCH("dfs").start();
-	auto results = muskat::multithreaded_world_simulation(possible_worlds);
+	auto results_th = muskat::multithreaded_world_simulation(possible_worlds);
 	WATCH("dfs").stop();
 	std::cout << "\nTime spent to run the simulation: " << WATCH("dfs").elapsed<std::chrono::milliseconds>() << "ms.\n";
-	std::cout << "\nSamples calculated: " << results.size() << '\n';
+	std::cout << "\nAftermath: " << WATCH("aftermath").elapsed<std::chrono::microseconds>() << "us.\n";
+	std::cout << "\nAftermath1: " << WATCH("aftermath1").elapsed<std::chrono::microseconds>() << "us.\n";
+	std::cout << "\nAftermath2: " << WATCH("aftermath2").elapsed<std::chrono::microseconds>() << "us.\n";
+	std::cout << "\nAftermath3: " << WATCH("aftermath3").elapsed<std::chrono::microseconds>() << "us.\n";
+	
+	auto number = stdc::transform_accumulate(RANGE(results_th), [](const auto &results) { return results->size(); });
+	std::cout << "\nSamples calculated: " << number << '\n';
 
-	if (results.size() == 0) {
+	if (number == 0) {
 		//TODO
 		assert(false);
 	}
@@ -283,15 +290,19 @@ int main() {
 
 	using namespace stdc::literals;
 
-	for (auto result : results) {
-		auto min = *std::min_element(RANGE(result));
-		assert (min < 121);
-		for (auto i = 0_z; i < 32; ++i) {
-			if (result[i] == min) {
-				++suggestions[i];
+
+	for (const auto &results : results_th) {
+		for (auto result : *results) {
+			auto min = *std::min_element(RANGE(result));
+			assert (min < 121);
+			for (auto i = 0_z; i < 32; ++i) {
+				if (result[i] == min) {
+					++suggestions[i];
+				}
 			}
 		}
 	}
+
 	
 	auto max = *std::max_element(RANGE(suggestions));
 	assert(max > 0);
@@ -310,7 +321,7 @@ int main() {
 	std::cout << "\n\n";
 
 	for (auto i = 0_z; i < 32; ++i) {
-		if (results.front()[i] == 121) {
+		if (results_th.front()->front()[i] == 121) {
 			//Impossible to play.
 			assert (suggestions[i] == 0);
 			continue;
@@ -320,26 +331,42 @@ int main() {
 	std::cout << '\n';
 
 
+	std::cout << "Done threads:\n";
+	auto old_done = int{-1};
+	do {
+		auto done = static_cast<int>(done_threads);
+		if (old_done == done) {
+			continue;
+		}
+
+		old_done = done;
+		std::cout << '\t' << done << std::flush;
+	} while (old_done != 12);
+	std::cout << '\n';
+
+	// std::cout << "Startup:\n";
+	// for (const auto &watches : wa::watches_th) {
+	// 	std::cout << '\t' << watches[wa::start].elapsed<std::chrono::microseconds>() << "us.\n";
+	// }
+
+	// std::cout << "Detatch:\n";
+	// for (const auto &watches : wa::watches_th) {
+	// 	std::cout << '\t' << watches[wa::three].elapsed<std::chrono::nanoseconds>() << "ns.\n";
+	// }
 
 
-	// return 0;
+	// //Below is our perforamnce test code for the DDS.
 
-	//Below is our perforamnce test code for the DDS.
-
-
-	std::cout << "size: " << sizeof(muskat::Card) << "\n";
-	std::cout << "size: " << sizeof(std::optional<muskat::Card>) << "\n";
-	std::cout << "size: " << sizeof(muskat::Cards) << "\n";
-	std::cout << "size: " << sizeof(muskat::Role) << "\n";
-	std::cout << "size: " << sizeof(muskat::Situation) << "\n";
+	// std::cout << "size: " << sizeof(muskat::Card) << "\n";
+	// std::cout << "size: " << sizeof(std::optional<muskat::Card>) << "\n";
+	// std::cout << "size: " << sizeof(muskat::Cards) << "\n";
+	// std::cout << "size: " << sizeof(muskat::Role) << "\n";
+	// std::cout << "size: " << sizeof(muskat::Situation) << "\n";
 	
-	
-	std::cout << "Hello Sailor!\n";
-	WATCH("perf").reset();
-	WATCH("perf").start();
-	performance();
-	WATCH("perf").stop();
-	std::cout << "\nMeasuring this took " << WATCH("perf").elapsed<std::chrono::seconds>() << "s.\n";
-	return 0;
-
+	// std::cout << "Hello Sailor!\n";
+	// WATCH("perf").reset();
+	// WATCH("perf").start();
+	// performance();
+	// WATCH("perf").stop();
+	// std::cout << "\nMeasuring this took " << WATCH("perf").elapsed<std::chrono::seconds>() << "s.\n";
 }

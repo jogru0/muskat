@@ -22,7 +22,7 @@ namespace detail {
 		}
 
 		template<typename Duration>
-		[[nodiscard]] auto elapsed() noexcept {
+		[[nodiscard]] auto elapsed() const noexcept {
 			return std::chrono::duration_cast<Duration>(elap).count();
 		}
 
