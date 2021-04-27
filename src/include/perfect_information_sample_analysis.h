@@ -97,6 +97,8 @@ namespace muskat {
 			}
 		}
 
+		std::cout << "Cards remaining: " << to_string(result) << '\n';
+
 		return result;
 	}
 
@@ -122,7 +124,7 @@ namespace muskat {
 		return result;
 	}
 
-	[[nodiscard]] inline auto highest_expected_winate_declarer(
+	[[nodiscard]] inline auto analyze_for_declarer(
 		const PerfectInformationSample &sample,
 		uint8_t threshold = 61
 	) {
@@ -130,11 +132,14 @@ namespace muskat {
 			sample,
 			[&](auto points) {
 				return static_cast<size_t>(points >= threshold);
+			},
+			[&](auto points) {
+				return static_cast<size_t>(points);
 			}
 		);
 	}
 
-	[[nodiscard]] inline auto highest_expected_winate_defender(
+	[[nodiscard]] inline auto analyze_for_defender(
 		const PerfectInformationSample &sample,
 		uint8_t threshold = 61
 	) {
@@ -142,6 +147,9 @@ namespace muskat {
 			sample,
 			[&](auto points) {
 				return static_cast<size_t>(points < threshold);
+			},
+			[&](auto points) {
+				return static_cast<size_t>(120 - points);
 			}
 		);
 	}

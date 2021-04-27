@@ -14,10 +14,12 @@
 namespace wa {
 inline constexpr auto start = size_t{0};
 inline constexpr auto loop = size_t{1};
-inline constexpr auto lock = size_t{2};
-inline constexpr auto three = size_t{3};
-inline constexpr auto four = size_t{4};
-static std::array<std::array<detail::Watch, 5>, 12> watches_th;
+// inline constexpr auto lock = size_t{2};
+inline constexpr auto detach = size_t{3};
+inline constexpr auto rng = size_t{4};
+static std::array<std::array<detail::Watch, 5>, 12> watches_th{};
+static std::array<size_t, 12> iterations{};
+
 } //namespace wa
 
 static auto done_threads = std::atomic<uint8_t>{0};
@@ -33,15 +35,19 @@ inline void execute_worker(
 	size_t worker_id
 ) try {
 	wa::watches_th[worker_id][wa::start].stop();
-	wa::watches_th[worker_id][wa::four].start();
+	wa::watches_th[worker_id][wa::rng].start();
 
 	auto rng = stdc::seeded_RNG(stdc::DeterministicSourceOfRandomness{0, static_cast<unsigned int>(worker_id)});
 
-	wa::watches_th[worker_id][wa::four].stop();
+	wa::watches_th[worker_id][wa::rng].stop();
 	//Stop when the main thread signals that time is up via should_continue.
 	//It's not enough to just wait until the main thread locks the lock, because we coudn't be sure that we
 	//are always faster than the main thread by locking it, therefore blocking it forever.
+	wa::watches_th[worker_id][wa::loop].start();
+	
 	while (!stoken.stop_requested()) {
+
+		
 		auto situation = possible_worlds.get_one_uniformly_clever(rng);
 		auto solver = muskat::SituationSolver{possible_worlds.get_game_type()};
 
@@ -56,23 +62,32 @@ inline void execute_worker(
 				assert(stoken.stop_requested());
 				break;
 			}
-			result_ptr->push_back(points);
+			{ //LOCKED 
+				result_ptr->push_back(points);
+			}
 			result_write_lock_ptr->unlock();
-			continue;
-		}	
-
-		auto result_copy = std::vector<std::array<uint8_t, 32>>{};
-		result_copy.reserve(2 * (result_ptr->capacity() + 1));
-		result_copy = *result_ptr;
-		result_copy.push_back(points);
-		
-		if (!result_write_lock_ptr->try_lock()) {
-			//TODO: Is this guaranteed to be observed in this order when the main thread does it in this order?
-			assert(stoken.stop_requested());
-			break;
+		} else {
+			auto result_copy = std::vector<std::array<uint8_t, 32>>{};
+			result_copy.reserve(2 * (result_ptr->capacity() + 1));
+			result_copy = *result_ptr;
+			result_copy.push_back(points);
+			
+			if (!result_write_lock_ptr->try_lock()) {
+				//TODO: Is this guaranteed to be observed in this order when the main thread does it in this order?
+				assert(stoken.stop_requested());
+				break;
+			}
+			
+			{ //LOCKED 
+				*result_ptr = std::move(result_copy);
+			}
+			result_write_lock_ptr->unlock();
 		}
-		*result_ptr = std::move(result_copy);
-		result_write_lock_ptr->unlock();
+
+		wa::watches_th[worker_id][wa::loop].stop();
+		++wa::iterations[worker_id];
+		wa::watches_th[worker_id][wa::loop].start();
+		
 	}
 
 	++done_threads;
@@ -151,9 +166,9 @@ inline void execute_worker(
 	WATCH("aftermath2").start();
 
 	for (auto thread_id = 0_z; thread_id < number_of_threads; ++thread_id) {
-		wa::watches_th[thread_id][wa::three].start();
+		wa::watches_th[thread_id][wa::detach].start();
 		threads[thread_id].detach();
-		wa::watches_th[thread_id][wa::three].stop();
+		wa::watches_th[thread_id][wa::detach].stop();
 	}
 
 	WATCH("aftermath2").stop();
