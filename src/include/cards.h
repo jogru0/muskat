@@ -40,6 +40,7 @@ public:
 		m_bits &= ~detail::to_bit(card);
 	}
 
+	//ddd dsddsd
 	[[nodiscard]] auto empty() const {
 		return m_bits == 0;
 	}

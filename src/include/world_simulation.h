@@ -14,9 +14,14 @@
 namespace muskat {
 
 struct KnownUnknownInSet {
-	uint8_t number;
-	std::array<bool, 5> can_be_trick_type;
+	uint8_t number = 0;
+	std::array<bool, 5> can_be_trick_type = {true, true, true, true, true};
 };
+
+[[nodiscard]] inline constexpr auto operator==(KnownUnknownInSet l, KnownUnknownInSet r) -> bool {
+	return l.number == r.number &&
+		l.can_be_trick_type == r.can_be_trick_type;
+}
 
 using TrickTypeSignature = std::array<uint8_t, 5>;
 
@@ -125,18 +130,147 @@ using TrickTypeSignature = std::array<uint8_t, 5>;
 	return true;
 }
 
-
 class PossibleWorlds {
 private:
+
+	//Trick Types are excluded as soon as we witness that the player couldn't follow suit.
+	//Other reasons (no such cards remaining) it can't be a certain trick type are ignored,
+	//because this is only used to generate possible worlds, and there we don't distribute
+	//cards that are already played or known to be somewhere else anyway.
+	
+	//These two are tightly coupled, as we only model actual knowledge of actual games,
+	//so either all cards of a group are open for us, or all are hidden.
+	//TODO: Make explicit which one, then we can strengthen assert_invariants.
+	//This includes checking if skat knowledge makes sense.
 	std::array<KnownUnknownInSet, 4> known_about_unknown_dec_fdef_sdef_skat;
 	std::array<Cards, 4> known_cards_dec_fdef_sdef_skat;
+	
 	Cards unknown_cards;
 	GameType game;
 	Role active_role;
 	MaybeCard maybe_first_trick_card;
 	MaybeCard maybe_second_trick_card;
 
+	Cards gone_cards;
+
+	void assert_invariants() const {
+		//We don't check if so many trick types of unknown cards are restricted that
+		//no possible situation exists anymore, but we also assume that as an invariant.
+		//THIS INVARIANT IS ONLY GUARANTEED if the class is constructed as initial knowledge
+		//about a game and play_card is called to model what ACTUALLY happens during that game.
+		//(Then, at each time, the situation describing the state of the actual game is possible.)
+	
+		using namespace stdc::literals;
+		
+		auto number_unknown = 0_z;
+		auto number_known = 0_z;
+		auto known_cards = Cards{};
+		auto number_cards_of = std::array<size_t, 4>{};
+
+		for (auto i = 0_z; i < 4; ++i) {
+			if (!known_cards_dec_fdef_sdef_skat[i].empty()) {
+				assert(known_about_unknown_dec_fdef_sdef_skat[i] == KnownUnknownInSet{});
+				number_known += known_cards_dec_fdef_sdef_skat[i].size();
+				number_cards_of[i] = known_cards_dec_fdef_sdef_skat[i].size();
+				known_cards |= known_cards_dec_fdef_sdef_skat[i];
+			} else {
+				number_unknown += known_about_unknown_dec_fdef_sdef_skat[i].number;
+				number_cards_of[i] = known_about_unknown_dec_fdef_sdef_skat[i].number;
+			}
+		}
+
+	
+		auto id_np = static_cast<size_t>(next(active_role));
+		auto id_nnp = static_cast<size_t>(next(next(active_role)));
+
+		if (maybe_first_trick_card) {
+			++number_known;
+			known_cards.add(*maybe_first_trick_card);
+			++number_cards_of[id_nnp];
+		}
+		if (maybe_second_trick_card) {
+			assert(maybe_first_trick_card);
+			++number_known;
+			known_cards.add(*maybe_second_trick_card);
+			++number_cards_of[id_np];
+		}
+
+		known_cards |= gone_cards;
+		number_known += gone_cards.size();
+		
+		assert(number_unknown + number_known == 32);
+		assert(unknown_cards.size() == number_unknown);
+		assert(known_cards.size() == number_known);
+		assert((unknown_cards & known_cards) == Cards{});
+		assert((unknown_cards | known_cards) == ~Cards{}); //Should follow from the other asserts.
+
+		assert(std::accumulate(RANGE(number_cards_of), gone_cards.size()) == 32);
+		assert(stdc::are_all_equal(number_cards_of[0], number_cards_of[1], number_cards_of[2]));
+		assert(number_cards_of[3] == 2);
+		assert(gone_cards.size() % 3 == 0); //Should follow.
+	}
+
 public:
+
+	[[nodiscard]] auto operator==(const PossibleWorlds &other) const -> bool {
+		return known_about_unknown_dec_fdef_sdef_skat == other.known_about_unknown_dec_fdef_sdef_skat &&
+			known_cards_dec_fdef_sdef_skat == other.known_cards_dec_fdef_sdef_skat &&
+			unknown_cards == other.unknown_cards &&
+			game == other.game &&
+			active_role == other.active_role &&
+			maybe_first_trick_card == other.maybe_first_trick_card &&
+			maybe_second_trick_card == other.maybe_second_trick_card;
+	}
+
+
+	PossibleWorlds(
+		Cards my_hand,
+		Role my_role,
+		std::optional<Cards> maybe_skat,
+		GameType a_game,
+		Role a_active_role
+	) :
+		known_about_unknown_dec_fdef_sdef_skat{},
+		known_cards_dec_fdef_sdef_skat{Cards{}, Cards{}, Cards{}, Cards{}},
+		unknown_cards{},
+		game{std::move(a_game)},
+		active_role{std::move(a_active_role)},
+		maybe_first_trick_card{},
+		maybe_second_trick_card{},
+		gone_cards{}
+	{
+		using namespace stdc::literals;
+
+		//TODO: assert_invariants should do this as soon as we introduce hidden/open explicitly for groups of cards.
+		assert(static_cast<bool>(maybe_skat) == (my_role == Role::Declarer));
+		//TODO: Double check that overlapping skat or wrong initial hand/skat size etc would
+		//all be catched by check_invariants already.
+
+		known_cards_dec_fdef_sdef_skat[static_cast<size_t>(my_role)] = my_hand;
+		for (auto i = 0_z; i < 3; ++i) {
+			if (i == static_cast<size_t>(my_role)) {
+				continue;
+			}
+			known_about_unknown_dec_fdef_sdef_skat[i].number = 10;
+		}
+		
+		auto known_cards = my_hand;
+		if (maybe_skat) {
+			known_cards |= *maybe_skat;
+			known_cards_dec_fdef_sdef_skat[3] = *maybe_skat;
+		} else {
+			known_about_unknown_dec_fdef_sdef_skat[3].number = 2;
+		}
+
+		unknown_cards = ~known_cards;
+
+		assert_invariants();
+		//TODO: Check for initial position, because other positions
+		//we probably want to do with a partial replay anayway.
+	}
+
+
+
 	PossibleWorlds(
 		std::array<KnownUnknownInSet, 4> a_known_about_unknown_dec_fdef_sdef_skat,
 		std::array<Cards, 4> a_known_cards_dec_fdef_sdef_skat,
@@ -144,7 +278,8 @@ public:
 		GameType a_game,
 		Role a_active_role,
 		MaybeCard a_maybe_first_trick_card,
-		MaybeCard a_maybe_second_trick_card
+		MaybeCard a_maybe_second_trick_card,
+		Cards a_gone_cards
 	) :
 		known_about_unknown_dec_fdef_sdef_skat{std::move(a_known_about_unknown_dec_fdef_sdef_skat)},
 		known_cards_dec_fdef_sdef_skat{std::move(a_known_cards_dec_fdef_sdef_skat)},
@@ -152,8 +287,13 @@ public:
 		game{std::move(a_game)},
 		active_role{std::move(a_active_role)},
 		maybe_first_trick_card{std::move(a_maybe_first_trick_card)},
-		maybe_second_trick_card{std::move(a_maybe_second_trick_card)}
-	{}
+		maybe_second_trick_card{std::move(a_maybe_second_trick_card)},
+		gone_cards{a_gone_cards}
+	{
+		assert_invariants();
+		//TODO: Check for initial position, because other positions
+		//we probably want to do with a partial replay anayway.
+	}
 
 public:
 
@@ -347,10 +487,98 @@ public:
 			maybe_second_trick_card
 		};
 	}
+
+	//Returns what points the declarer makes with this move.
+	[[nodiscard]] auto play_card(Card card) -> Points {
+		
+		auto id = static_cast<size_t>(active_role);
+
+		auto maybe_forced_trick_game_type = [&]() -> std::optional<TrickAndGameType> {
+			if (maybe_first_trick_card) {
+				return TrickAndGameType{*maybe_first_trick_card, game};
+			}
+
+			return std::nullopt;
+		}();
+
+
+		if (!known_cards_dec_fdef_sdef_skat[id].empty()) {
+			
+			//Check that playing this card was allowed with this known hand.
+			assert(known_about_unknown_dec_fdef_sdef_skat[id].number == 0);
+			assert(get_legal_cards(
+				known_cards_dec_fdef_sdef_skat[id],
+				maybe_forced_trick_game_type
+			).contains(card));
+
+			//Update our knowledge.
+			known_cards_dec_fdef_sdef_skat[id].remove(card);
+
+		} else {
+			auto trick_type_played_card = get_trick_type(card, game);
+			
+			//Check that playing this card was consistent with what we knew so far.
+			assert(unknown_cards.contains(card));
+			assert(known_about_unknown_dec_fdef_sdef_skat[id].number);
+			assert(known_about_unknown_dec_fdef_sdef_skat[id].can_be_trick_type[static_cast<size_t>(trick_type_played_card)]);
+		
+			//Update our knowledge.
+			--known_about_unknown_dec_fdef_sdef_skat[id].number;
+			unknown_cards.remove(card);
+			//Did we learn something because a forced suite wasn't followed?
+			if (
+				maybe_forced_trick_game_type &&
+				maybe_forced_trick_game_type->trick() != trick_type_played_card
+			) {
+				known_about_unknown_dec_fdef_sdef_skat[id].can_be_trick_type[static_cast<size_t>(maybe_forced_trick_game_type->trick())] = false;
+			}
+		}
+
+		
+		active_role = next(active_role);
+
+		auto result = Points{};
+
+		if (!maybe_first_trick_card) {
+			maybe_first_trick_card = card;
+		} else if (!maybe_second_trick_card) {
+			maybe_second_trick_card = card;
+		} else {
+			gone_cards.add(*maybe_first_trick_card);
+			gone_cards.add(*maybe_second_trick_card);
+			gone_cards.add(card);
+			
+			
+			auto trick = Trick{
+				*maybe_first_trick_card,
+				*maybe_second_trick_card,
+				card
+			};
+			assert(maybe_forced_trick_game_type);
+			auto pos = trick_winner_position(trick, *maybe_forced_trick_game_type);
+
+			//Active role currently is Vorhand.
+			switch (pos) {
+				case Position::Vorhand: break;
+				case Position::Mittelhand: active_role = next(active_role); break;
+				case Position::Hinterhand: active_role = next(next(active_role));
+			}
+
+			if (active_role == Role::Declarer) {
+				result += to_points(trick, game);
+			}
+			
+			maybe_first_trick_card = nocard;
+			maybe_second_trick_card = nocard;
+		}
+
+		assert_invariants();
+		return result;
+	}
 };
 
 // [[nodiscard]] auto partition_by_trick_type(Cards cards, GameType game) {
-// 	auto heart_cards = cards & cards_following_trick_type(TrickAndGameType{TrickType::Herz, game}
+// 	auto heart_cards = cards & get_cards_following_trick_type(TrickAndGameType{TrickType::Herz, game}
 // }
 
 

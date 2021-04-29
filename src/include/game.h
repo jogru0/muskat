@@ -2,7 +2,7 @@
 
 #include "situation.h"
 
-#include "abstract_player.h"
+#include "player/abstract_player.h"
 
 namespace muskat {
 

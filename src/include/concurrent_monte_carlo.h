@@ -13,12 +13,14 @@
 
 namespace wa {
 inline constexpr auto start = size_t{0};
-inline constexpr auto loop = size_t{1};
-// inline constexpr auto lock = size_t{2};
-inline constexpr auto detach = size_t{3};
+inline constexpr auto loop_pre = size_t{1};
+inline constexpr auto loop_main = size_t{2};
+inline constexpr auto loop_post = size_t{3};
 inline constexpr auto rng = size_t{4};
 static std::array<std::array<detail::Watch, 5>, 12> watches_th{};
-static std::array<size_t, 12> iterations{};
+static std::array<size_t, 12> iterations_pre{};
+static std::array<size_t, 12> iterations_main{};
+static std::array<size_t, 12> iterations_post{};
 
 } //namespace wa
 
@@ -43,7 +45,7 @@ inline void execute_worker(
 	//Stop when the main thread signals that time is up via should_continue.
 	//It's not enough to just wait until the main thread locks the lock, because we coudn't be sure that we
 	//are always faster than the main thread by locking it, therefore blocking it forever.
-	wa::watches_th[worker_id][wa::loop].start();
+	wa::watches_th[worker_id][wa::loop_pre].start();
 	
 	while (!stoken.stop_requested()) {
 
@@ -51,8 +53,15 @@ inline void execute_worker(
 		auto situation = possible_worlds.get_one_uniformly_clever(rng);
 		auto solver = muskat::SituationSolver{possible_worlds.get_game_type()};
 
-		// solver.calculate_potential_score_2(situation);
+		wa::watches_th[worker_id][wa::loop_pre].stop();
+		++wa::iterations_pre[worker_id];
+		wa::watches_th[worker_id][wa::loop_main].start();
 		auto points = solver.score_for_possible_plays(situation);
+		
+		wa::watches_th[worker_id][wa::loop_main].stop();
+		++wa::iterations_main[worker_id];
+		wa::watches_th[worker_id][wa::loop_post].start();
+		
 
 		auto need_to_reallocate = result_ptr->size() == result_ptr->capacity();
 
@@ -84,10 +93,9 @@ inline void execute_worker(
 			result_write_lock_ptr->unlock();
 		}
 
-		wa::watches_th[worker_id][wa::loop].stop();
-		++wa::iterations[worker_id];
-		wa::watches_th[worker_id][wa::loop].start();
-		
+		wa::watches_th[worker_id][wa::loop_post].stop();
+		++wa::iterations_post[worker_id];
+		wa::watches_th[worker_id][wa::loop_pre].start();
 	}
 
 	++done_threads;
@@ -166,9 +174,9 @@ inline void execute_worker(
 	WATCH("aftermath2").start();
 
 	for (auto thread_id = 0_z; thread_id < number_of_threads; ++thread_id) {
-		wa::watches_th[thread_id][wa::detach].start();
+		// wa::watches_th[thread_id][wa::detach].start();
 		threads[thread_id].detach();
-		wa::watches_th[thread_id][wa::detach].stop();
+		// wa::watches_th[thread_id][wa::detach].stop();
 	}
 
 	WATCH("aftermath2").stop();

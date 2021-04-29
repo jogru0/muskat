@@ -13,11 +13,19 @@ enum class Position {
 	Vorhand, Mittelhand, Hinterhand
 };
 
-[[nodiscard]] inline constexpr auto to_string(Position position) {
+[[nodiscard]] inline auto to_string(Position position) -> std::string {
 	switch (position) {
 		case Position::Vorhand: return "Vorhand";
 		case Position::Mittelhand: return "Mittelhand";
 		case Position::Hinterhand: return "Hinterhand";
+	}
+}
+
+[[nodiscard]] constexpr auto next(Position position) {
+	switch (position) {
+		case Position::Vorhand: return Position::Mittelhand;
+		case Position::Mittelhand: return Position::Hinterhand;
+		case Position::Hinterhand: return Position::Vorhand;
 	}
 }
 
@@ -64,7 +72,7 @@ public:
 		to_points(trick[2], game);
 }
 
-inline constexpr auto cards_following_trick_type(TrickAndGameType type) {
+inline constexpr auto get_cards_following_trick_type(TrickAndGameType type) {
 auto current_trump_cards = trump_cards(type.game());
 
 return type.trick() == TrickType::Trump
@@ -76,7 +84,7 @@ using Power = int8_t;
 
 [[nodiscard]] inline auto to_power(Card card, TrickAndGameType type) -> Power {
 	auto card_is_trump = trump_cards(type.game()).contains(card);
-	auto card_follows_trick_type = cards_following_trick_type(type).contains(card);
+	auto card_follows_trick_type = get_cards_following_trick_type(type).contains(card);
 	
 	if (!card_is_trump && !card_follows_trick_type) {
 		return -1;
@@ -128,11 +136,11 @@ using Power = int8_t;
 [[nodiscard]] inline auto legal_response_cards(Cards hand, TrickAndGameType type) {
 	assert(!hand.empty());
 	
-	auto possible_cards_following_trick_type = hand & cards_following_trick_type(type);
+	auto possible_get_cards_following_trick_type = hand & get_cards_following_trick_type(type);
 
-	auto result = possible_cards_following_trick_type.empty()
+	auto result = possible_get_cards_following_trick_type.empty()
 		? hand
-		: possible_cards_following_trick_type;
+		: possible_get_cards_following_trick_type;
 
 	assert(!result.empty());
 	return result;
@@ -153,11 +161,11 @@ using Power = int8_t;
 	auto id_to_skip = static_cast<size_t>(game);
 
 	return std::array{
-		id_to_skip == 0 ? Cards{} : cards & cards_following_trick_type(TrickAndGameType{TrickType::Schell, game}),
-		id_to_skip == 1 ? Cards{} : cards & cards_following_trick_type(TrickAndGameType{TrickType::Herz, game}),
-		id_to_skip == 2 ? Cards{} : cards & cards_following_trick_type(TrickAndGameType{TrickType::Green, game}),
-		id_to_skip == 3 ? Cards{} : cards & cards_following_trick_type(TrickAndGameType{TrickType::Eichel, game}),
-		id_to_skip == 4 ? Cards{} : cards & cards_following_trick_type(TrickAndGameType{TrickType::Trump, game}),
+		id_to_skip == 0 ? Cards{} : cards & get_cards_following_trick_type(TrickAndGameType{TrickType::Schell, game}),
+		id_to_skip == 1 ? Cards{} : cards & get_cards_following_trick_type(TrickAndGameType{TrickType::Herz, game}),
+		id_to_skip == 2 ? Cards{} : cards & get_cards_following_trick_type(TrickAndGameType{TrickType::Green, game}),
+		id_to_skip == 3 ? Cards{} : cards & get_cards_following_trick_type(TrickAndGameType{TrickType::Eichel, game}),
+		id_to_skip == 4 ? Cards{} : cards & get_cards_following_trick_type(TrickAndGameType{TrickType::Trump, game}),
 	};
 }
 

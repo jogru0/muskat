@@ -15,7 +15,7 @@ namespace muskat {
 
 enum class Role : uint8_t {Declarer, FirstDefender, SecondDefender};
 
-[[nodiscard]] inline constexpr auto to_string(Role role) {
+[[nodiscard]] inline auto to_string(Role role) -> std::string {
 	switch (role) {
 		case Role::Declarer: return "Declarer";
 		case Role::FirstDefender: return "First Defender";
@@ -291,7 +291,7 @@ private:
 		assert(stdc::are_all_equal(number_cards_belonging_to_p, number_cards_belonging_to_np, number_cards_belonging_to_nnp));
 	}
 public:
-	//Returns what points the declarer makes  with this move.
+	//Returns what points the declarer makes with this move.
 	[[nodiscard]] auto play_card(Card card, GameType game) -> Points {
 		assert(next_possible_plays(*this, game).contains(card));
 		auto &hand = mutable_hand(m_active_role);
@@ -396,7 +396,6 @@ namespace muskat {
 	}
 
 	return std::nullopt;
-	
 }
 
 [[nodiscard]] inline auto next_possible_plays(Situation &sit, GameType game) -> Cards {

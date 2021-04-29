@@ -18,6 +18,6 @@ TEST(cards, size) {
 	set = muskat::cards_of_suit(muskat::Suit::H);
 	ASSERT_EQ(set.size(), 8);
 
-	set = muskat::cards_following_trick_type(muskat::TrickAndGameType{muskat::Card::SO, muskat::GameType::Herz});
+	set = muskat::get_cards_following_trick_type(muskat::TrickAndGameType{muskat::Card::SO, muskat::GameType::Herz});
 	ASSERT_EQ(set.size(), 7);
 }

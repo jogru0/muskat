@@ -6,9 +6,9 @@
 
 #include "perfect_information_sample_analysis.h"
 
-#include "human_player.h"
-#include "random_player.h"
-#include "cheater.h"
+#include "player/human_player.h"
+#include "player/random_player.h"
+#include "player/cheater.h"
 #include "game.h"
 
 #include "world_simulation.h"
@@ -215,9 +215,9 @@ int main() {
 	assert(std::cout << "Wir asserten.\n");
 
 	//Hand: S7Z H789OZ E789
+	//We are Mittelhand in round 1.
 	//Hinterhand plays -> we ware sdef.
 	//E is trump.
-	//We are Mittelhand in round 1.
 	//HA -> HZ -> HU
 	//S8 -> SA -> ???
 
@@ -236,14 +236,23 @@ int main() {
 		}
 	};
 
+	//                                 E987...........H0-Z987    SZ--7
+	auto my_hand = muskat::Cards{0b00000111'00000000'00101111'00001001u};
+	auto my_hand_after_turn_one = my_hand;
+	my_hand_after_turn_one.remove(muskat::Card::HZ);
+
+
 	auto known_cards_dec_fdef_sdef_skat = std::array{
 		muskat::Cards{},
 		muskat::Cards{},
-		//                                    Z already played, so not here.
-		//                  E987...........H0--987    SZ--7
-		muskat::Cards{0b00000111'00000000'00100111'00001001u},
+		my_hand_after_turn_one,
 		muskat::Cards{}
 	};
+
+	auto gone_cards = muskat::Cards{};
+	gone_cards.add(muskat::Card::HA);
+	gone_cards.add(muskat::Card::HZ);
+	gone_cards.add(muskat::Card::HU);
 
 	auto game = muskat::GameType::Eichel;
 	auto active_role = muskat::Role::SecondDefender;
@@ -267,8 +276,25 @@ int main() {
 		game,
 		active_role,
 		maybe_first_trick_card,
-		maybe_second_trick_card
+		maybe_second_trick_card,
+		gone_cards
 	};
+
+	auto initial_possible_worlds = muskat::PossibleWorlds(
+		my_hand,
+		muskat::Role::SecondDefender,
+		std::nullopt,
+		muskat::GameType::Eichel,
+		muskat::Role::FirstDefender
+	);
+	auto score = initial_possible_worlds.play_card(muskat::Card::HA);
+	score += initial_possible_worlds.play_card(muskat::Card::HZ);
+	score += initial_possible_worlds.play_card(muskat::Card::HU);
+	score += initial_possible_worlds.play_card(muskat::Card::S8);
+	score += initial_possible_worlds.play_card(muskat::Card::SA);
+
+	assert(possible_worlds == initial_possible_worlds);
+	assert(score == 23);
 
 	WATCH("dfs").reset();
 	WATCH("dfs").start();
@@ -308,10 +334,16 @@ int main() {
 	std::cout << "Performance:\n";
 	for (auto th_id = 0_z; th_id < 12; ++th_id){ 
 		const auto &watches = wa::watches_th[th_id];
-		const auto &iterations = wa::iterations[th_id];
-		auto total_ms = static_cast<double>(watches[wa::loop].elapsed<std::chrono::nanoseconds>()) / 1'000'000.;
-		auto loop_ms = total_ms / static_cast<double>(iterations);
-		std::cout << '\t' << iterations << '\t' << loop_ms << "ms\t" << total_ms << "ms\n";
+		const auto &iterations_pre = wa::iterations_pre[th_id];
+		const auto &iterations_main = wa::iterations_main[th_id];
+		const auto &iterations_post = wa::iterations_post[th_id];
+		auto total_pre_ms = static_cast<double>(watches[wa::loop_pre].elapsed<std::chrono::nanoseconds>()) / 1'000'000.;
+		auto total_main_ms = static_cast<double>(watches[wa::loop_main].elapsed<std::chrono::nanoseconds>()) / 1'000'000.;
+		auto total_post_ms = static_cast<double>(watches[wa::loop_post].elapsed<std::chrono::nanoseconds>()) / 1'000'000.;
+		auto pre_ms = total_pre_ms / static_cast<double>(iterations_pre);
+		auto main_ms = total_main_ms / static_cast<double>(iterations_main);
+		auto post_ms = total_post_ms / static_cast<double>(iterations_post);
+		std::cout << '\t' << pre_ms << "ms\t" << main_ms << "ms\t" << post_ms << "ms\n";
 	}
 
 
@@ -344,4 +376,33 @@ int main() {
 	// performance();
 	// WATCH("perf").stop();
 	// std::cout << "\nMeasuring this took " << WATCH("perf").elapsed<std::chrono::seconds>() << "s.\n";
+
+	// //Below is an example game with perfect information.
+
+	// auto geber = muskat::Cheater{
+	// 	"Celine",
+	// 	stdc::seeded_RNG(stdc::DeterministicSourceOfRandomness{7, 77'777'777})
+	// };
+	// auto hoerer = muskat::Cheater{
+	// 	"Anon",
+	// 	stdc::seeded_RNG(stdc::DeterministicSourceOfRandomness{22, 123'457})
+	// };
+	// auto sager = muskat::Cheater{
+	// 	"Bernd",
+	// 	stdc::seeded_RNG(stdc::DeterministicSourceOfRandomness{1, 444})
+	// };
+
+	// auto rng = stdc::seeded_RNG(stdc::DeterministicSourceOfRandomness{1, 33});
+
+	// auto deck = muskat::get_shuffled_deck(rng);
+
+	// auto result = muskat::play_one_game(
+	// 	geber,
+	// 	hoerer,
+	// 	sager,
+	// 	deck
+	// );
+
+	// std::cout << "Result: " << static_cast<size_t>(result) << '\n';
+
 }
