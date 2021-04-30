@@ -131,7 +131,7 @@ using TrickTypeSignature = std::array<uint8_t, 5>;
 }
 
 class PossibleWorlds {
-private:
+public: //!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 	//Trick Types are excluded as soon as we witness that the player couldn't follow suit.
 	//Other reasons (no such cards remaining) it can't be a certain trick type are ignored,
@@ -242,7 +242,7 @@ public:
 		using namespace stdc::literals;
 
 		//TODO: assert_invariants should do this as soon as we introduce hidden/open explicitly for groups of cards.
-		assert(static_cast<bool>(maybe_skat) == (my_role == Role::Declarer));
+		assert(maybe_skat.has_value() == (my_role == Role::Declarer));
 		//TODO: Double check that overlapping skat or wrong initial hand/skat size etc would
 		//all be catched by check_invariants already.
 
@@ -299,6 +299,10 @@ public:
 
 	[[nodiscard]] auto get_game_type() const {
 		return game;
+	}
+
+	[[nodiscard]] auto is_at_game_end() const -> bool {
+		return gone_cards.size() == 32;
 	}
 
 	template<typename RNG>
@@ -413,7 +417,8 @@ public:
 	}
 
 
-	//Many things can be calculated independently of the RNG.
+	//TODO: Many things can be calculated independently of the RNG.
+	//TODO: Precalc and separate from PossibleWorlds per se.
 	template<typename RNG>
 	[[nodiscard]] auto get_one_uniformly_clever(RNG &rng) const -> Situation {
 		using namespace stdc::literals;
@@ -576,55 +581,5 @@ public:
 		return result;
 	}
 };
-
-// [[nodiscard]] auto partition_by_trick_type(Cards cards, GameType game) {
-// 	auto heart_cards = cards & get_cards_following_trick_type(TrickAndGameType{TrickType::Herz, game}
-// }
-
-
-// [[nodiscard]] auto distribute_missing_cards(Cards known_cards, std::vector<UnknownCards> vec_of_unknown_cards) {
-// 	auto number_of_unknown_cards = stdc::transform_accumulate(RANGE(vec_of_unknown_cards), [](auto unknown_cards) {
-// 		return unknown_cards.number;
-// 	});
-// 	assert(known_cards.size() + number_of_unknown_cards == 32);
-
-// 	auto known_by_trick_types = partition_by_trick_type(known_cards);
-// }
-
-// [[nodiscard]] auto fake_
-
-
-// [[nodiscard]] auto multithreaded_world_simulation(Situation sit) {
-// 	auto number_of_threads = std::thread::hardware_concurrency();
-// 	if (number_of_threads == 0) {
-// 		throw std::runtime_error{"Could not determine best number of threads."};
-// 	}
-
-// 	std::cout << "Number of threads: " << number_of_threads << ".\n";
-
-// 	auto do_stuff = [] (std::stop_token stoken, std::vector<std::array<Points, 32>> &results) {
-// 		assert(results.empty());
-		
-// 		auto rng = stdc::seeded_RNG();
-		
-// 		while(!stoken.stop_requested()) {
-// 			auto deck = muskat::get_shuffled_deck(rng);
-// 			auto [hand_geber, hand_hoerer, hand_sager, skat] = deal_deck(deck);
-// 			auto initial_situation = muskat::Situation{hand_geber, hand_hoerer, hand_sager, skat, role_vorhand};
-		
-			
-// 		}
-// 		for(int i=0; i < 10; i++) {
-// 			std::this_thread::sleep_for(300ms);
-// 			if() {
-// 				std::cout << "Sleepy worker is requested to stop\n";
-// 				return;
-// 			}
-// 			std::cout << "Sleepy worker goes back to sleep\n";
-// 		}
-// 	}
-
-// }
-
 
 } // namespace muskat

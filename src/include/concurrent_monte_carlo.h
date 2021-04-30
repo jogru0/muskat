@@ -4,6 +4,7 @@
 #include "situation_solver.h"
 #include "spinlock.h"
 
+#include <stdc/swatch.h>
 #include <stdc/WATCH.h>
 
 #include <thread>
@@ -111,7 +112,7 @@ inline void execute_worker(
 }
 
 
-[[nodiscard]] inline auto multithreaded_world_simulation(const PossibleWorlds &possible_worlds) {
+[[nodiscard]] inline auto multithreaded_world_simulation(const PossibleWorlds &possible_worlds, std::chrono::milliseconds time) {
 	using namespace stdc::literals;
 	
 	auto number_of_threads = std::thread::hardware_concurrency();
@@ -119,7 +120,7 @@ inline void execute_worker(
 		throw std::runtime_error{"Could not determine best number of threads."};
 	}
 
-	std::cout << "Number of threads: " << number_of_threads << ".\n";
+	std::cout << "Simulating with " << number_of_threads << " threads.\n";
 
 	assert(number_of_threads == 12);
 	for (auto &watches : wa::watches_th) {
@@ -156,7 +157,7 @@ inline void execute_worker(
 		});
 	}
 
-	std::this_thread::sleep_for(std::chrono::seconds(10));
+	std::this_thread::sleep_for(time);
 	
 
 	WATCH("aftermath").reset();
@@ -210,6 +211,94 @@ inline void execute_worker(
 
 	WATCH("aftermath").stop();
 	return results;
+}
+
+
+[[nodiscard]] inline auto pick_best_card(
+	const PossibleWorlds &worlds,
+	//TODO: Track in worlds!!!!!!
+	uint8_t current_score,
+	std::chrono::milliseconds time
+) -> Card {
+	auto swatch = stdc::SWatch{};
+	swatch.start();
+
+	WATCH("simulation").reset();
+	WATCH("simulation").start();
+	auto results = muskat::multithreaded_world_simulation(worlds, time);
+	
+	//TODO: Empty -> Assert triggert.
+	auto sample = muskat::to_sample(std::move(results));
+	WATCH("simulation").stop();
+	std::cout << "Samples calculated: " << sample.points_for_situations().size() << '\n';
+	std::cout << "Time spent to run the simulations: " << WATCH("simulation").elapsed<std::chrono::milliseconds>() << "ms.\n";
+
+	std::cout << "\nUsing these samples to make an informed choice now.\n";
+	std::cout << "Legal moves to choose from: " << to_string(sample.playable_cards()) << '\n';
+
+	WATCH("ana").reset();
+	WATCH("ana").start();
+	auto picks = analyze(sample, current_score, worlds.active_role);
+	WATCH("ana").stop();
+	assert(!picks.empty());
+	auto result = picks.remove_next();
+	std::cout << "Arbitrary final choice: " << to_string(result) << '\n';
+	std::cout << "Time spent to do these choices: " << WATCH("ana").elapsed<std::chrono::milliseconds>() << "ms.\n";
+
+	swatch.stop();
+
+	std::cout << "\nTotal time allowed to use: " << time.count() << "ms.\n";
+	std::cout << "Total time used: " << swatch.elapsed<std::chrono::milliseconds>() << "ms.\n\n";
+
+	return result;
+
+	//Below is code to look at the performance in the main loop of the threads.
+
+	// std::cout << "Done threads:\n";
+	// auto old_done = int{-1};
+	// do {
+	// 	auto done = static_cast<int>(done_threads);
+	// 	if (old_done == done) {
+	// 		continue;
+	// 	}
+
+	// 	old_done = done;
+	// 	std::cout << '\t' << done << std::flush;
+	// } while (old_done != 12);
+	// std::cout << '\n';
+
+	// using namespace stdc::literals;
+
+	// std::cout << "Performance:\n";
+	// for (auto th_id = 0_z; th_id < 12; ++th_id){ 
+	// 	const auto &watches = wa::watches_th[th_id];
+	// 	const auto &iterations_pre = wa::iterations_pre[th_id];
+	// 	const auto &iterations_main = wa::iterations_main[th_id];
+	// 	const auto &iterations_post = wa::iterations_post[th_id];
+	// 	auto total_pre_ms = static_cast<double>(watches[wa::loop_pre].elapsed<std::chrono::nanoseconds>()) / 1'000'000.;
+	// 	auto total_main_ms = static_cast<double>(watches[wa::loop_main].elapsed<std::chrono::nanoseconds>()) / 1'000'000.;
+	// 	auto total_post_ms = static_cast<double>(watches[wa::loop_post].elapsed<std::chrono::nanoseconds>()) / 1'000'000.;
+	// 	auto pre_ms = total_pre_ms / static_cast<double>(iterations_pre);
+	// 	auto main_ms = total_main_ms / static_cast<double>(iterations_main);
+	// 	auto post_ms = total_post_ms / static_cast<double>(iterations_post);
+	// 	std::cout << '\t' << pre_ms << "ms\t" << main_ms << "ms\t" << post_ms << "ms\n";
+	// }
+
+
+	// std::cout << "Startup:\n";
+	// for (const auto &watches : wa::watches_th) {
+	// 	std::cout << '\t' << watches[wa::start].elapsed<std::chrono::microseconds>() << "us.\n";
+	// }
+
+	// std::cout << "Detatch:\n";
+	// for (const auto &watches : wa::watches_th) {
+	// 	std::cout << '\t' << watches[wa::detach].elapsed<std::chrono::nanoseconds>() << "ns.\n";
+	// }
+
+	// std::cout << "rng:\n";
+	// for (const auto &watches : wa::watches_th) {
+	// 	std::cout << '\t' << watches[wa::rng].elapsed<std::chrono::microseconds>() << "us.\n";
+	// }
 }
 
 

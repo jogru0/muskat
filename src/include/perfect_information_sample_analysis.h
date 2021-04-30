@@ -97,7 +97,7 @@ namespace muskat {
 			}
 		}
 
-		std::cout << "Cards remaining: " << to_string(result) << '\n';
+		std::cout << "Reducing choice to: " << to_string(result) << '\n';
 
 		return result;
 	}
@@ -126,7 +126,7 @@ namespace muskat {
 
 	[[nodiscard]] inline auto analyze_for_declarer(
 		const PerfectInformationSample &sample,
-		uint8_t threshold = 61
+		uint8_t threshold
 	) {
 		return highest_additive_score(
 			sample,
@@ -141,7 +141,7 @@ namespace muskat {
 
 	[[nodiscard]] inline auto analyze_for_defender(
 		const PerfectInformationSample &sample,
-		uint8_t threshold = 61
+		uint8_t threshold
 	) {
 		return highest_additive_score(
 			sample,
@@ -153,6 +153,24 @@ namespace muskat {
 			}
 		);
 	}
+
+	[[nodiscard]] inline auto analyze(
+		const PerfectInformationSample &sample,
+		uint8_t current_score,
+		Role active_role 
+	) {
+		
+		//We primarily optimize proability getting over/staying under this threshold.
+		auto threshold = current_score < 61
+			? static_cast<uint8_t>(61 - current_score)
+			: uint8_t{0};
+
+		return active_role == Role::Declarer
+			? analyze_for_declarer(sample, threshold)
+			: analyze_for_defender(sample, threshold);
+	}
+
+	
 
 
 } // namespace muskat

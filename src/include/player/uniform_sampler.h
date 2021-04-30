@@ -2,6 +2,7 @@
 
 #include "abstract_player.h"
 #include "world_simulation.h"
+#include "concurrent_monte_carlo.h"
 
 #include <stdc/literals.h>
 #include <stdc/WATCH.h>
@@ -18,8 +19,7 @@ namespace muskat {
 			std::cout << '[' << m_name << "]: " << string << '\n';
 		}
 
-		PossibleWorlds m_current_information;
-		GameType m_game;
+		std::optional<PossibleWorlds> m_current_information;
 		std::mt19937 m_rng;
 		Points m_points_declarer;
 
@@ -27,7 +27,7 @@ namespace muskat {
 		//Hopefully there when we get informed about the game …
 		Role m_role;
 		Cards m_hand;
-		Cards m_skat; //Only exception: This is not there if we are not the declarer.
+		std::optional<Cards> m_skat; //Only exception: This is not there if we are not the declarer.
 		Position m_my_first_position;
 
 	public:
@@ -45,7 +45,8 @@ namespace muskat {
 			m_role = role;
 		}
 
-
+		//Because this is the last call, this is where all the magic happens …
+		//TODO: How to architect this?
 		virtual void inform_about_game(GameType game) final {
 			using namespace stdc::literals;
 			say("We play "s + to_string(game) + ".");
@@ -53,8 +54,9 @@ namespace muskat {
 			say("For debugging: I think my role is " + to_string(m_role) + ".");
 			say("For debugging: I think my position is " + to_string(m_my_first_position) + ".");
 			say("For debugging: I think my hand is " + to_string(m_hand) + ".");
+			assert(m_skat.has_value() == (m_role == Role::Declarer));
 			if (m_role == Role::Declarer) {
-				say("For debugging: I think the skat is " + to_string(m_skat) + ".");
+				say("For debugging: I think the skat is " + to_string(stdc::surely(m_skat)) + ".");
 			}
 
 			auto known_about_unknown_dec_fdef_sdef_skat = std::array{
@@ -88,7 +90,7 @@ namespace muskat {
 			known_cards_dec_fdef_sdef_skat[static_cast<size_t>(m_role)] = m_hand;
 
 			if (m_role == Role::Declarer) {
-				known_cards_dec_fdef_sdef_skat[3] = m_skat;
+				known_cards_dec_fdef_sdef_skat[3] = stdc::surely(m_skat);
 			}
 
 			auto role_position_match = std::pair{m_role, m_my_first_position};
@@ -101,20 +103,22 @@ namespace muskat {
 			
 			auto known_cards = m_hand;
 			if (m_role == Role::Declarer) {
-				known_cards |= m_skat;
+				known_cards |= stdc::surely(m_skat);
 			}
 			say("For debugging: I think my known cards are " + to_string(known_cards) + ".");
 			auto unknown_cards = ~known_cards;
 
 			m_current_information = muskat::PossibleWorlds{
-				known_about_unknown_dec_fdef_sdef_skat,
-				known_cards_dec_fdef_sdef_skat,
-				unknown_cards,
+				m_hand,
+				m_role,
+				m_skat,
 				game,
-				active_role,
-				muskat::MaybeCard{},
-				muskat::MaybeCard{}
+				active_role
 			};
+
+			assert(known_about_unknown_dec_fdef_sdef_skat == m_current_information->known_about_unknown_dec_fdef_sdef_skat);
+			assert(known_cards_dec_fdef_sdef_skat == m_current_information->known_cards_dec_fdef_sdef_skat);
+			assert(unknown_cards == m_current_information->unknown_cards);
 		}
 
 		virtual void inform_about_deal(Cards cards) final {
@@ -132,27 +136,23 @@ namespace muskat {
 		virtual void inform_about_move(Card card) final {
 			using namespace stdc::literals;
 			say("Card "s + to_string(card) + " was played.");
-			m_points_declarer += m_current_information.play_card(card, m_game);
+			m_points_declarer += stdc::surely(m_current_information).play_card(card);
 		}
 
 		virtual auto request_move() -> Card final {
-			assert(m_current_situation.active_role() == m_role);
-			assert(!is_at_game_end(m_current_situation));
-			WATCH("decide").reset();
-			WATCH("decide").start();
-			auto card = m_solver.pick_best_card(m_current_situation);
-			WATCH("decide").stop();
-			std::cout << "I thought for " << WATCH("decide").elapsed<std::chrono::milliseconds>() << " ms.\n";
+			assert(m_current_information->active_role == m_role);
+			assert(!m_current_information->is_at_game_end());
+			say("Deciding my next move …\n");
+			auto card = pick_best_card(stdc::surely(m_current_information), m_points_declarer, std::chrono::seconds{10});
 			return card;
 		}
 
-		Cheater(
+		UniformSampler(
 			std::string name,
 			std::mt19937 &&rng
 		) :
 			m_name{std::move(name)},
-			m_rng{std::move(rng)},
-			m_solver{GameType::Eichel} //TODO
+			m_rng{std::move(rng)}
 		{}
 	};
 } // namespace muskat

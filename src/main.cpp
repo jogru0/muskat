@@ -9,6 +9,7 @@
 #include "player/human_player.h"
 #include "player/random_player.h"
 #include "player/cheater.h"
+#include "player/uniform_sampler.h"
 #include "game.h"
 
 #include "world_simulation.h"
@@ -212,139 +213,139 @@ static void performance() {
 }
 
 int main() {
-	assert(std::cout << "Wir asserten.\n");
+	// assert(std::cout << "Wir asserten.\n");
 
-	//Hand: S7Z H789OZ E789
-	//We are Mittelhand in round 1.
-	//Hinterhand plays -> we ware sdef.
-	//E is trump.
-	//HA -> HZ -> HU
-	//S8 -> SA -> ???
+	// //Hand: S7Z H789OZ E789
+	// //We are Mittelhand in round 1.
+	// //Hinterhand plays -> we ware sdef.
+	// //E is trump.
+	// //HA -> HZ -> HU
+	// //S8 -> SA -> ???
 
-	auto known_about_unknown_dec_fdef_sdef_skat = std::array{
-		muskat::KnownUnknownInSet{
-			8, {true, false, true, true, true}
-		},
-		muskat::KnownUnknownInSet{
-			8, {true, true, true, true, true}
-		},
-		muskat::KnownUnknownInSet{
-			0, {true, true, true, true, true}
-		},
-		muskat::KnownUnknownInSet{
-			2, {true, true, true, true, true}
-		}
-	};
+	// auto known_about_unknown_dec_fdef_sdef_skat = std::array{
+	// 	muskat::KnownUnknownInSet{
+	// 		8, {true, false, true, true, true}
+	// 	},
+	// 	muskat::KnownUnknownInSet{
+	// 		8, {true, true, true, true, true}
+	// 	},
+	// 	muskat::KnownUnknownInSet{
+	// 		0, {true, true, true, true, true}
+	// 	},
+	// 	muskat::KnownUnknownInSet{
+	// 		2, {true, true, true, true, true}
+	// 	}
+	// };
 
-	//                                 E987...........H0-Z987    SZ--7
-	auto my_hand = muskat::Cards{0b00000111'00000000'00101111'00001001u};
-	auto my_hand_after_turn_one = my_hand;
-	my_hand_after_turn_one.remove(muskat::Card::HZ);
+	// //                                 E987...........H0-Z987    SZ--7
+	// auto my_hand = muskat::Cards{0b00000111'00000000'00101111'00001001u};
+	// auto my_hand_after_turn_one = my_hand;
+	// my_hand_after_turn_one.remove(muskat::Card::HZ);
 
 
-	auto known_cards_dec_fdef_sdef_skat = std::array{
-		muskat::Cards{},
-		muskat::Cards{},
-		my_hand_after_turn_one,
-		muskat::Cards{}
-	};
+	// auto known_cards_dec_fdef_sdef_skat = std::array{
+	// 	muskat::Cards{},
+	// 	muskat::Cards{},
+	// 	my_hand_after_turn_one,
+	// 	muskat::Cards{}
+	// };
 
-	auto gone_cards = muskat::Cards{};
-	gone_cards.add(muskat::Card::HA);
-	gone_cards.add(muskat::Card::HZ);
-	gone_cards.add(muskat::Card::HU);
+	// auto gone_cards = muskat::Cards{};
+	// gone_cards.add(muskat::Card::HA);
+	// gone_cards.add(muskat::Card::HZ);
+	// gone_cards.add(muskat::Card::HU);
 
-	auto game = muskat::GameType::Eichel;
-	auto active_role = muskat::Role::SecondDefender;
-	auto maybe_first_trick_card = muskat::MaybeCard{muskat::Card::S8};
-	auto maybe_second_trick_card = muskat::MaybeCard{muskat::Card::SA};
+	// auto game = muskat::GameType::Eichel;
+	// auto active_role = muskat::Role::SecondDefender;
+	// auto maybe_first_trick_card = muskat::MaybeCard{muskat::Card::S8};
+	// auto maybe_second_trick_card = muskat::MaybeCard{muskat::Card::SA};
 
-	auto known_cards = muskat::Cards{};
-	known_cards |= known_cards_dec_fdef_sdef_skat[2];
-	known_cards.add(muskat::Card::HA);
-	known_cards.add(muskat::Card::HZ);
-	known_cards.add(muskat::Card::HU);
-	known_cards.add(*maybe_first_trick_card);
-	known_cards.add(*maybe_second_trick_card);
+	// auto known_cards = muskat::Cards{};
+	// known_cards |= known_cards_dec_fdef_sdef_skat[2];
+	// known_cards.add(muskat::Card::HA);
+	// known_cards.add(muskat::Card::HZ);
+	// known_cards.add(muskat::Card::HU);
+	// known_cards.add(*maybe_first_trick_card);
+	// known_cards.add(*maybe_second_trick_card);
 
-	auto unknown_cards = ~known_cards;
+	// auto unknown_cards = ~known_cards;
 
-	auto possible_worlds = muskat::PossibleWorlds{
-		known_about_unknown_dec_fdef_sdef_skat,
-		known_cards_dec_fdef_sdef_skat,
-		unknown_cards,
-		game,
-		active_role,
-		maybe_first_trick_card,
-		maybe_second_trick_card,
-		gone_cards
-	};
+	// auto possible_worlds = muskat::PossibleWorlds{
+	// 	known_about_unknown_dec_fdef_sdef_skat,
+	// 	known_cards_dec_fdef_sdef_skat,
+	// 	unknown_cards,
+	// 	game,
+	// 	active_role,
+	// 	maybe_first_trick_card,
+	// 	maybe_second_trick_card,
+	// 	gone_cards
+	// };
 
-	auto initial_possible_worlds = muskat::PossibleWorlds(
-		my_hand,
-		muskat::Role::SecondDefender,
-		std::nullopt,
-		muskat::GameType::Eichel,
-		muskat::Role::FirstDefender
-	);
-	auto score = initial_possible_worlds.play_card(muskat::Card::HA);
-	score += initial_possible_worlds.play_card(muskat::Card::HZ);
-	score += initial_possible_worlds.play_card(muskat::Card::HU);
-	score += initial_possible_worlds.play_card(muskat::Card::S8);
-	score += initial_possible_worlds.play_card(muskat::Card::SA);
+	// auto initial_possible_worlds = muskat::PossibleWorlds(
+	// 	my_hand,
+	// 	muskat::Role::SecondDefender,
+	// 	std::nullopt,
+	// 	muskat::GameType::Eichel,
+	// 	muskat::Role::FirstDefender
+	// );
+	// auto score = initial_possible_worlds.play_card(muskat::Card::HA);
+	// score += initial_possible_worlds.play_card(muskat::Card::HZ);
+	// score += initial_possible_worlds.play_card(muskat::Card::HU);
+	// score += initial_possible_worlds.play_card(muskat::Card::S8);
+	// score += initial_possible_worlds.play_card(muskat::Card::SA);
 
-	assert(possible_worlds == initial_possible_worlds);
-	assert(score == 23);
+	// assert(possible_worlds == initial_possible_worlds);
+	// assert(score == 23);
 
-	WATCH("dfs").reset();
-	WATCH("dfs").start();
-	auto results = muskat::multithreaded_world_simulation(possible_worlds);
-	//TODO: Empty -> Assert triggert.
-	auto sample = muskat::to_sample(std::move(results));
-	WATCH("dfs").stop();
-	std::cout << "\nTime spent to run the simulation: " << WATCH("dfs").elapsed<std::chrono::milliseconds>() << "ms.\n";
+	// WATCH("dfs").reset();
+	// WATCH("dfs").start();
+	// auto results = muskat::multithreaded_world_simulation(possible_worlds);
+	// //TODO: Empty -> Assert triggert.
+	// auto sample = muskat::to_sample(std::move(results));
+	// WATCH("dfs").stop();
+	// std::cout << "\nTime spent to run the simulation: " << WATCH("dfs").elapsed<std::chrono::milliseconds>() << "ms.\n";
 	
-	std::cout << "\nSamples calculated: " << sample.points_for_situations().size() << '\n';
+	// std::cout << "\nSamples calculated: " << sample.points_for_situations().size() << '\n';
 
-	WATCH("ana").reset();
-	WATCH("ana").start();
-	std::cout << "\nTime spent to run the simulation: " << WATCH("dfs").elapsed<std::chrono::milliseconds>() << "ms.\n";
-	std::cout << "Highest expected winrate declarer: " << to_string(muskat::analyze_for_declarer(sample)) << "\n";
-	std::cout << "Highest expected winrate defender: " << to_string(muskat::analyze_for_defender(sample)) << "\n";
-	WATCH("ana").stop();
+	// WATCH("ana").reset();
+	// WATCH("ana").start();
+	// std::cout << "\nTime spent to run the simulation: " << WATCH("dfs").elapsed<std::chrono::milliseconds>() << "ms.\n";
+	// std::cout << "Highest expected winrate declarer: " << to_string(muskat::analyze_for_declarer(sample)) << "\n";
+	// std::cout << "Highest expected winrate defender: " << to_string(muskat::analyze_for_defender(sample)) << "\n";
+	// WATCH("ana").stop();
 
-	std::cout << "\nTime spent to analyze the sample: " << WATCH("ana").elapsed<std::chrono::milliseconds>() << "ms.\n";
+	// std::cout << "\nTime spent to analyze the sample: " << WATCH("ana").elapsed<std::chrono::milliseconds>() << "ms.\n";
 
 
-	std::cout << "Done threads:\n";
-	auto old_done = int{-1};
-	do {
-		auto done = static_cast<int>(done_threads);
-		if (old_done == done) {
-			continue;
-		}
+	// std::cout << "Done threads:\n";
+	// auto old_done = int{-1};
+	// do {
+	// 	auto done = static_cast<int>(done_threads);
+	// 	if (old_done == done) {
+	// 		continue;
+	// 	}
 
-		old_done = done;
-		std::cout << '\t' << done << std::flush;
-	} while (old_done != 12);
-	std::cout << '\n';
+	// 	old_done = done;
+	// 	std::cout << '\t' << done << std::flush;
+	// } while (old_done != 12);
+	// std::cout << '\n';
 
-	using namespace stdc::literals;
+	// using namespace stdc::literals;
 
-	std::cout << "Performance:\n";
-	for (auto th_id = 0_z; th_id < 12; ++th_id){ 
-		const auto &watches = wa::watches_th[th_id];
-		const auto &iterations_pre = wa::iterations_pre[th_id];
-		const auto &iterations_main = wa::iterations_main[th_id];
-		const auto &iterations_post = wa::iterations_post[th_id];
-		auto total_pre_ms = static_cast<double>(watches[wa::loop_pre].elapsed<std::chrono::nanoseconds>()) / 1'000'000.;
-		auto total_main_ms = static_cast<double>(watches[wa::loop_main].elapsed<std::chrono::nanoseconds>()) / 1'000'000.;
-		auto total_post_ms = static_cast<double>(watches[wa::loop_post].elapsed<std::chrono::nanoseconds>()) / 1'000'000.;
-		auto pre_ms = total_pre_ms / static_cast<double>(iterations_pre);
-		auto main_ms = total_main_ms / static_cast<double>(iterations_main);
-		auto post_ms = total_post_ms / static_cast<double>(iterations_post);
-		std::cout << '\t' << pre_ms << "ms\t" << main_ms << "ms\t" << post_ms << "ms\n";
-	}
+	// std::cout << "Performance:\n";
+	// for (auto th_id = 0_z; th_id < 12; ++th_id){ 
+	// 	const auto &watches = wa::watches_th[th_id];
+	// 	const auto &iterations_pre = wa::iterations_pre[th_id];
+	// 	const auto &iterations_main = wa::iterations_main[th_id];
+	// 	const auto &iterations_post = wa::iterations_post[th_id];
+	// 	auto total_pre_ms = static_cast<double>(watches[wa::loop_pre].elapsed<std::chrono::nanoseconds>()) / 1'000'000.;
+	// 	auto total_main_ms = static_cast<double>(watches[wa::loop_main].elapsed<std::chrono::nanoseconds>()) / 1'000'000.;
+	// 	auto total_post_ms = static_cast<double>(watches[wa::loop_post].elapsed<std::chrono::nanoseconds>()) / 1'000'000.;
+	// 	auto pre_ms = total_pre_ms / static_cast<double>(iterations_pre);
+	// 	auto main_ms = total_main_ms / static_cast<double>(iterations_main);
+	// 	auto post_ms = total_post_ms / static_cast<double>(iterations_post);
+	// 	std::cout << '\t' << pre_ms << "ms\t" << main_ms << "ms\t" << post_ms << "ms\n";
+	// }
 
 
 	// std::cout << "Startup:\n";
@@ -377,32 +378,32 @@ int main() {
 	// WATCH("perf").stop();
 	// std::cout << "\nMeasuring this took " << WATCH("perf").elapsed<std::chrono::seconds>() << "s.\n";
 
-	// //Below is an example game with perfect information.
+	//Below is an example game with perfect information.
 
-	// auto geber = muskat::Cheater{
-	// 	"Celine",
-	// 	stdc::seeded_RNG(stdc::DeterministicSourceOfRandomness{7, 77'777'777})
-	// };
-	// auto hoerer = muskat::Cheater{
-	// 	"Anon",
-	// 	stdc::seeded_RNG(stdc::DeterministicSourceOfRandomness{22, 123'457})
-	// };
-	// auto sager = muskat::Cheater{
-	// 	"Bernd",
-	// 	stdc::seeded_RNG(stdc::DeterministicSourceOfRandomness{1, 444})
-	// };
+	auto geber = muskat::Cheater{
+		"Celine",
+		stdc::seeded_RNG(stdc::DeterministicSourceOfRandomness{7, 77'777'777})
+	};
+	auto hoerer = muskat::UniformSampler{
+		"Anon",
+		stdc::seeded_RNG(stdc::DeterministicSourceOfRandomness{22, 123'457})
+	};
+	auto sager = muskat::Cheater{
+		"Bernd",
+		stdc::seeded_RNG(stdc::DeterministicSourceOfRandomness{1, 444})
+	};
 
-	// auto rng = stdc::seeded_RNG(stdc::DeterministicSourceOfRandomness{1, 33});
+	auto rng = stdc::seeded_RNG(stdc::DeterministicSourceOfRandomness{1, 33});
 
-	// auto deck = muskat::get_shuffled_deck(rng);
+	auto deck = muskat::get_shuffled_deck(rng);
 
-	// auto result = muskat::play_one_game(
-	// 	geber,
-	// 	hoerer,
-	// 	sager,
-	// 	deck
-	// );
+	auto result = muskat::play_one_game(
+		geber,
+		hoerer,
+		sager,
+		deck
+	);
 
-	// std::cout << "Result: " << static_cast<size_t>(result) << '\n';
+	std::cout << "Result: " << static_cast<size_t>(result) << '\n';
 
 }

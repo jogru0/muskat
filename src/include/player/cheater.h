@@ -29,6 +29,18 @@ namespace muskat {
 		void cheat(const Situation &situation) override {
 			m_current_situation = situation;
 			m_solver = SituationSolver{m_game}; //Let's free some memory.
+
+			say("Secretly peeking at hidden cards to cheat later.");
+			WATCH("decide").reset();
+			WATCH("decide").start();
+			auto [card, worst_case_score_from_here] = m_solver.pick_best_card(m_current_situation);
+			WATCH("decide").stop();
+			say(
+				"This already tells me that for perfect play with no hidden information, the final score would be " +
+				std::to_string(static_cast<size_t>(worst_case_score_from_here)) +
+				'.'
+			);
+			say("Thinking this through took " + std::to_string(WATCH("decide").elapsed<std::chrono::milliseconds>()) + " ms.");
 		}
 
 		void inform_about_first_position(Position position) final {
@@ -70,11 +82,20 @@ namespace muskat {
 		virtual auto request_move() -> Card final {
 			assert(m_current_situation.active_role() == m_role);
 			assert(!is_at_game_end(m_current_situation));
+			say("Cheating to find the perfect move …");
 			WATCH("decide").reset();
 			WATCH("decide").start();
-			auto card = m_solver.pick_best_card(m_current_situation);
+			auto [card, worst_case_score_from_here] = m_solver.pick_best_card(m_current_situation);
 			WATCH("decide").stop();
-			std::cout << "I thought for " << WATCH("decide").elapsed<std::chrono::milliseconds>() << " ms.\n";
+			auto end_of_sentence = m_role == Role::Declarer ? std::string{" or more."} : std::string{" or less."};
+			say(
+				"Decided on " +
+				to_string(card) +
+				" to force score " +
+				std::to_string(static_cast<size_t>(m_points_declarer + worst_case_score_from_here)) +
+				end_of_sentence
+			);
+			say("Cheating took " + std::to_string(WATCH("decide").elapsed<std::chrono::milliseconds>()) + " ms.");
 			return card;
 		}
 

@@ -205,6 +205,7 @@ namespace muskat {
 			return std::nullopt;
 		}
 
+		//If everyone plays perfect, this is the score still made from here.
 		auto calculate_potential_score_2(Situation sit) -> Points {
 			auto goal = Points{};
 			while (still_makes_at_least(sit, goal)) {
@@ -228,16 +229,16 @@ namespace muskat {
 		}
 
 		//Undefined if no card is left.
-		auto pick_best_card(Situation sit) -> Card {
-			auto threshold = calculate_potential_score_2(sit);
+		auto pick_best_card(Situation sit) -> std::pair<Card, uint8_t> {
+			auto final_additional_score_to_reach = calculate_potential_score_2(sit);
 
 			if (sit.active_role() == Role::Declarer) {
-				std::cout << "Picking card to reach at least " << threshold << ".\n";
-				return stdc::surely(maybe_card_for_threshold(sit, threshold));
+				//Pick a card that forces at least this value.
+				return {stdc::surely(maybe_card_for_threshold(sit, final_additional_score_to_reach)), final_additional_score_to_reach};
 			}
 
-			std::cout << "Picking card to not let him reach " << threshold + 1 << ".\n";
-			return stdc::surely(maybe_card_for_threshold(sit, threshold + 1));
+			//Pick a card that forces at most this value (so less than this value + 1).
+			return {stdc::surely(maybe_card_for_threshold(sit, final_additional_score_to_reach + 1)), final_additional_score_to_reach};
 		}
 
 		auto score_for_possible_plays(Situation sit) {
