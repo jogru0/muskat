@@ -12,12 +12,16 @@
 #include "player/uniform_sampler.h"
 #include "game.h"
 
+#include "analyze_game.h"
+
+
 #include "world_simulation.h"
 
 #include "concurrent_monte_carlo.h"
 
 #include <stdc/WATCH.h>
 
+#include <stdc/arguments.h>
 #include <stdc/mathematics.h>
 #include <stdc/utility.h>
 
@@ -174,7 +178,7 @@ static void display_statistics(std::vector<double> data) {
 	std::cout << "\tmedian: " << sample_median << '\n';
 }
 
-static void performance() {
+inline void performance() {
 	// assert(false); //ONLY RUN IN RELEASE MODE
 	{
 	auto [numbers_of_nodes, times_in_ms] = perf::decide_winner_farbspiel();
@@ -212,8 +216,103 @@ static void performance() {
 
 }
 
-int main() {
-	// assert(std::cout << "Wir asserten.\n");
+
+namespace detail {
+	[[noreturn]] inline void non_valid_input_exit() {
+		std::cout << "\n\n"
+			<< "USAGE: -a [valid_json]\n"
+			<< "Exiting, please try again." << std::endl;
+		exit(1);
+	}
+
+	namespace detail {
+		inline void warn_about_ignored_flag(const char option, const std::string_view& flag) {
+			std::cout << "ATTENTION: Option '" << option << "' does not apply flag '" << flag << "'!" << "\n";
+		}
+
+		[[noreturn]] inline void apply_flag(const char /*option*/, const std::string_view& flag)
+		{
+			// //plotting ignores this flag, but no reason to issue a warning
+			// if (flag == "-plot") {
+			// 	turn::config::do_plot = true;
+			// 	return;
+			// }
+
+			// if (flag == "-write_expected" or flag == "-write_new") {
+			// 	if (option != 't') {
+			// 		detail::warn_about_ignored_flag(option, flag);
+			// 		return;
+			// 	}
+
+			// 	turn::config::write_diff_for_validation_files = true;
+
+			// 	if (flag == "-write_expected") {
+			// 		turn::config::write_expected_file_for_CI = true;
+			// 	}
+			// 	else {
+			// 		turn::config::write_new_expected_file_for_comparison = true;
+			// 	}		
+			// 	return;
+			// }
+
+			std::cout << "Unknown flag '" << flag << "'" << std::endl;
+			non_valid_input_exit();
+		}
+	} //namespace detail
+
+	inline void check_number_of_inputs_and_apply_flags(
+		const stdc::arguments& args, const char /*option*/, size_t arguments_needed_by_option
+	)
+	{
+		size_t argument_without_flags_size = 2 + arguments_needed_by_option;
+		if (args.size() < argument_without_flags_size) {
+			std::cout << "Wrong number of arguments" << "\n";
+			non_valid_input_exit();
+		}
+
+		// for (size_t i = argument_without_flags_size; i < args.size(); ++i) {
+		// 	detail::apply_flag(option, args[i]);
+		// }
+	}
+
+	inline auto is_equal(const char* a, const char* b)
+	{
+		return strncmp(a, b, std::strlen(a)) == 0;
+	}
+} //namespace detail
+
+
+//At the moment, noreturn
+auto main(int argc, char **argv) -> int try {
+	assert(std::cout << "Asserts active.\n");
+	
+	auto args = stdc::arguments{argc, argv};
+	
+	if (args.size() < 2) { detail::non_valid_input_exit(); }
+
+	auto option = args[1].size() == 2 && args[1][0] == '-' ? args[1][1] : '\0';
+	
+	switch (option) {
+		case 'a':
+			detail::check_number_of_inputs_and_apply_flags(args, option, 1);
+			muskat::analyze_game(std::filesystem::path{args[2]});
+			break;
+		//plot initial state if simulator constructor does not throw
+		default:
+			std::cout << "Unknown argument '" << args[1] << "'" << std::endl;
+			detail::non_valid_input_exit();
+	}
+
+	std::cout << "\nThank you for using muskat.\n";
+	exit(0);
+} catch(const std::exception &e) {
+	std::cout << "Could not recover from exception '" << e.what() << "'. Exiting.\n";
+	exit(1);
+} catch (...) {
+	std::cout << "oh no";
+	exit(111);
+
+	assert(std::cout << "Wir asserten.\n");
 
 	// //Hand: S7Z H789OZ E789
 	// //We are Mittelhand in round 1.
