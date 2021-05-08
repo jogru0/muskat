@@ -10,3 +10,4 @@
 -Wno-weak-vtables
 -Wno-ctad-maybe-unsupported
 -Wno-non-virtual-dtor
+-Wno-exit-time-destructors

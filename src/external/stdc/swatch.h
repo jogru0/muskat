@@ -26,13 +26,12 @@ public:
 		assert((running_DEBUG = false, true));
 	}
 	
-	template<typename Duration>
-	[[nodiscard]] auto peek() const noexcept {
-		auto now = std::chrono::high_resolution_clock::now();
-		assert(running_DEBUG);
-		return elap + (now - old_now);
-		
-	}
+	// template<typename Duration>
+	// [[nodiscard]] auto peek() const noexcept {
+	// 	auto now = std::chrono::high_resolution_clock::now();
+	// 	assert(running_DEBUG);
+	// 	return elap + (now - old_now);
+	// }
 
 	template<typename Duration>
 	[[nodiscard]] auto elapsed() const noexcept {
@@ -40,9 +39,16 @@ public:
 		return std::chrono::duration_cast<Duration>(elap).count();
 	}
 
-	void reset() noexcept {
+	[[nodiscard]] auto elapsed() const noexcept {
 		assert(!running_DEBUG);
-		elap = std::chrono::nanoseconds{};
+		return elap;
 	}
+
+	
+
+	// void reset() noexcept {
+	// 	assert(!running_DEBUG);
+	// 	elap = std::chrono::nanoseconds{};
+	// }
 };
 } //namespace stdc

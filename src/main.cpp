@@ -14,6 +14,7 @@
 
 #include "analyze_game.h"
 
+#include "logger.h"
 
 #include "world_simulation.h"
 
@@ -286,6 +287,8 @@ namespace detail {
 auto main(int argc, char **argv) -> int try {
 	assert(std::cout << "Asserts active.\n");
 	
+	stdc::log("=====================================");
+
 	auto args = stdc::arguments{argc, argv};
 	
 	if (args.size() < 2) { detail::non_valid_input_exit(); }

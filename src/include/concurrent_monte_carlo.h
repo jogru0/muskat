@@ -4,13 +4,18 @@
 #include "situation_solver.h"
 #include "spinlock.h"
 
+#include "logger.h"
+
 #include <stdc/swatch.h>
 #include <stdc/WATCH.h>
 
 #include <thread>
 
+#include <fmt/core.h>
+#include <fmt/chrono.h>
 
 #include <stdc/mathematics.h>
+#include <stdc/bool_for_vector.h>
 
 namespace wa {
 inline constexpr auto start = size_t{0};
@@ -130,9 +135,9 @@ inline void execute_worker(
 	}
 
 
-	//This way, threads are joined before the results are destructed, guranteeing that the results exists while threads exist.
+	//Uses shared_ptr because threads might be finished before or after this function returns.
 	auto results_th = std::vector<std::shared_ptr<std::vector<std::array<uint8_t, 32>>>>(number_of_threads);
-	//Same for the locks
+	//Same here.
 	auto locks_th = std::vector<std::shared_ptr<stdc::SpinLock>>(number_of_threads);
 
 	for (auto i = 0_z; i < number_of_threads; ++i) {
@@ -214,24 +219,164 @@ inline void execute_worker(
 }
 
 
+
+inline void execute_worker_2(
+	std::stop_token stoken,
+	GameType game,
+	const std::vector<Situation> &inputs,
+	stdc::ConcurrentResultVector<std::array<uint8_t, 32>> &results,
+	size_t worker_id
+) try {
+	wa::watches_th[worker_id][wa::start].stop();
+
+	wa::watches_th[worker_id][wa::loop_pre].reset();
+	wa::watches_th[worker_id][wa::loop_pre].start();
+	
+	//Stop when the main thread signals that time is up via should_continue.
+	while (!stoken.stop_requested()) {
+
+	
+		auto maybe_result_id = results.maybe_pull_a_number();
+		if (!maybe_result_id) {
+			break;
+		}
+		auto result_id = *maybe_result_id;
+
+		auto situation = inputs[result_id];
+		auto solver = muskat::SituationSolver{game};
+
+		wa::watches_th[worker_id][wa::loop_pre].stop();
+		++wa::iterations_pre[worker_id];
+		wa::watches_th[worker_id][wa::loop_main].start();
+		auto points = solver.score_for_possible_plays(situation);
+		
+		wa::watches_th[worker_id][wa::loop_main].stop();
+		++wa::iterations_main[worker_id];
+		wa::watches_th[worker_id][wa::loop_post].start();
+		
+		results.report_a_result(result_id, points);
+		
+		wa::watches_th[worker_id][wa::loop_post].stop();
+		++wa::iterations_post[worker_id];
+		wa::watches_th[worker_id][wa::loop_pre].start();
+	}
+
+	++done_threads;
+
+} catch (const std::exception &e) {
+	//Something happened. Probably out of memory?
+	//Anyway, the result calculated so far has to be valid, so lets just log it and stop this thread.
+	//TODO: Needs a lock …
+	std::cerr << "There was a problem in thread " << worker_id << ": " << e.what() << '\n';
+
+	++done_threads;
+
+	//Not okay while measuring.
+	throw;
+}
+
+[[nodiscard]] inline auto multithreaded_world_simulation_2(
+	const PossibleWorlds &possible_worlds,
+	size_t number_samples
+) {
+	using namespace stdc::literals;
+	
+	auto number_of_threads = std::thread::hardware_concurrency();
+	if (number_of_threads == 0) {
+		throw std::runtime_error{"Could not determine best number of threads."};
+	}
+
+	stdc::log_debug("Simulating with {} threads.", number_of_threads);
+
+	assert(number_of_threads == 12);
+	for (auto &watches : wa::watches_th) {
+		watches = std::array{
+			::detail::Watch{}, ::detail::Watch{}, ::detail::Watch{}, ::detail::Watch{}, ::detail::Watch{}
+		};
+	}
+
+
+	//Uses shared_ptr because threads might be finished before or after this function returns.
+	auto results = stdc::ConcurrentResultVector<std::array<uint8_t, 32>>{number_samples};
+	
+	auto rng = stdc::seeded_RNG(stdc::DeterministicSourceOfRandomness{3, 123'361});
+
+	auto inputs = std::vector<Situation>{};
+	inputs.reserve(number_samples);
+	std::generate_n(std::back_inserter(inputs), number_samples, [&](){
+		return possible_worlds.get_one_uniformly_clever(rng);
+	});
+	
+	auto threads = std::vector<std::jthread>{};
+	threads.reserve(number_of_threads);
+
+	for (auto thread_id = 0_z; thread_id < number_of_threads; ++thread_id) {
+		wa::watches_th[thread_id][wa::start].start();
+	}
+
+	for (auto thread_id = 0_z; thread_id < number_of_threads; ++thread_id) {
+		threads.push_back(std::jthread{
+			execute_worker_2,
+			possible_worlds.get_game_type(),
+			std::cref(inputs),
+			std::ref(results),
+			thread_id
+		});
+	}
+
+	for (auto thread_id = 0_z; thread_id < number_of_threads; ++thread_id) {
+		threads[thread_id].join();
+	}
+
+
+	// auto sleep_time = std::chrono::milliseconds{10};
+	// auto max_sleep_time = std::chrono::milliseconds{10'000};
+	// while (done_threads != number_of_threads) {
+	// 	std::cout << "\rCurrent progress: " << results.get_current_progress() << "/" << number_samples << std::flush;
+	// 	std::this_thread::sleep_for(sleep_time);
+	// 	sleep_time *= 2;
+	// 	stdc::minimize(sleep_time, max_sleep_time);
+	// }
+	// std::cout << "\nDone.\n";
+
+	auto result = results.collect_all_results_so_far();
+	assert(result.size() == number_samples);
+	return result;
+}
+
 [[nodiscard]] inline auto pick_best_card(
 	const PossibleWorlds &worlds,
 	//TODO: Track in worlds!!!!!!
 	uint8_t current_score,
 	std::chrono::milliseconds time
 ) -> Card {
-	auto swatch = stdc::SWatch{};
-	swatch.start();
+	using namespace stdc::literals;
+	
+	auto number_samples_to_do = 100_z;
 
-	WATCH("simulation").reset();
-	WATCH("simulation").start();
-	auto results = muskat::multithreaded_world_simulation(worlds, time);
+	stdc::log("Start pick_best_card.");
+	auto watch_whole = stdc::SWatch{};
+	watch_whole.start();
+
+	stdc::log(fmt::format("Start simulation of {} worlds.", number_samples_to_do));
+	auto watch_simulation = stdc::SWatch{};
+	watch_simulation.start();
+	
+	// auto results = muskat::multithreaded_world_simulation(worlds, std::chrono::seconds(100));
+	auto results = muskat::multithreaded_world_simulation_2(worlds, number_samples_to_do);
 	
 	//TODO: Empty -> Assert triggert.
 	auto sample = muskat::to_sample(std::move(results));
-	WATCH("simulation").stop();
-	std::cout << "Samples calculated: " << sample.points_for_situations().size() << '\n';
-	std::cout << "Time spent to run the simulations: " << WATCH("simulation").elapsed<std::chrono::milliseconds>() << "ms.\n";
+	
+	watch_simulation.stop();
+	assert(sample.points_for_situations().size() == number_samples_to_do);
+
+	auto elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(watch_simulation.elapsed());
+	stdc::log(
+		"Simulations took {}, to do this single threaded, a simulation has to take {}.",
+		elapsed_ms,
+		elapsed_ms / number_samples_to_do
+	);
 
 	std::cout << "\nUsing these samples to make an informed choice now.\n";
 	std::cout << "Legal moves to choose from: " << to_string(sample.playable_cards()) << '\n';
@@ -245,10 +390,12 @@ inline void execute_worker(
 	std::cout << "Arbitrary final choice: " << to_string(result) << '\n';
 	std::cout << "Time spent to do these choices: " << WATCH("ana").elapsed<std::chrono::milliseconds>() << "ms.\n";
 
-	swatch.stop();
+	watch_whole.stop();
 
 	std::cout << "\nTotal time allowed to use: " << time.count() << "ms.\n";
-	std::cout << "Total time used: " << swatch.elapsed<std::chrono::milliseconds>() << "ms.\n\n";
+	std::cout << "Total time used: " << watch_whole.elapsed<std::chrono::milliseconds>() << "ms.\n\n";
+
+	stdc::detail::log.flush();
 
 	return result;
 
