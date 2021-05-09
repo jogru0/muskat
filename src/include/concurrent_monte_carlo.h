@@ -348,12 +348,10 @@ inline void execute_worker_2(
 	const PossibleWorlds &worlds,
 	//TODO: Track in worlds!!!!!!
 	uint8_t current_score,
-	std::chrono::milliseconds time
+	size_t number_samples_to_do
 ) -> Card {
 	using namespace stdc::literals;
 	
-	auto number_samples_to_do = 100_z;
-
 	stdc::log("Start pick_best_card.");
 	auto watch_whole = stdc::SWatch{};
 	watch_whole.start();
@@ -378,8 +376,8 @@ inline void execute_worker_2(
 		elapsed_ms / number_samples_to_do
 	);
 
+
 	std::cout << "\nUsing these samples to make an informed choice now.\n";
-	std::cout << "Legal moves to choose from: " << to_string(sample.playable_cards()) << '\n';
 
 	WATCH("ana").reset();
 	WATCH("ana").start();
@@ -387,15 +385,15 @@ inline void execute_worker_2(
 	WATCH("ana").stop();
 	assert(!picks.empty());
 	auto result = picks.remove_next();
-	std::cout << "Arbitrary final choice: " << to_string(result) << '\n';
 	std::cout << "Time spent to do these choices: " << WATCH("ana").elapsed<std::chrono::milliseconds>() << "ms.\n";
 
 	watch_whole.stop();
 
-	std::cout << "\nTotal time allowed to use: " << time.count() << "ms.\n";
-	std::cout << "Total time used: " << watch_whole.elapsed<std::chrono::milliseconds>() << "ms.\n\n";
-
+	std::cout << "\nTotal time used: " << watch_whole.elapsed<std::chrono::milliseconds>() << "ms.\n\n";
 	stdc::detail::log.flush();
+
+	show_statistics(sample, current_score, worlds.active_role, result);
+
 
 	return result;
 

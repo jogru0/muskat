@@ -1,32 +1,18 @@
-
-=====================================
 Start pick_best_card.
-Start simulation of 100 worlds.
-Simulations took 14895ms, to do this single threaded, a simulation has to take 148ms.
+Start simulation of 12 worlds.
+Simulations took 23403ms, to do this single threaded, a simulation has to take 1950ms.
 Start pick_best_card.
-Start simulation of 100 worlds.
-Simulations took 14566ms, to do this single threaded, a simulation has to take 145ms.
+Start simulation of 12 worlds.
+Simulations took 5592ms, to do this single threaded, a simulation has to take 466ms.
 Start pick_best_card.
-Start simulation of 100 worlds.
-Simulations took 461ms, to do this single threaded, a simulation has to take 4ms.
+Start simulation of 12 worlds.
+Simulations took 43ms, to do this single threaded, a simulation has to take 3ms.
 Start pick_best_card.
-Start simulation of 100 worlds.
-Simulations took 136ms, to do this single threaded, a simulation has to take 1ms.
+Start simulation of 12 worlds.
+Simulations took 35ms, to do this single threaded, a simulation has to take 2ms.
 Start pick_best_card.
-Start simulation of 100 worlds.
-Simulations took 17ms, to do this single threaded, a simulation has to take 0ms.
+Start simulation of 12 worlds.
+Simulations took 3ms, to do this single threaded, a simulation has to take 0ms.
 Start pick_best_card.
-Start simulation of 100 worlds.
-Simulations took 5ms, to do this single threaded, a simulation has to take 0ms.
-Start pick_best_card.
-Start simulation of 100 worlds.
-Simulations took 1ms, to do this single threaded, a simulation has to take 0ms.
-Start pick_best_card.
-Start simulation of 100 worlds.
-Simulations took 0ms, to do this single threaded, a simulation has to take 0ms.
-Start pick_best_card.
-Start simulation of 100 worlds.
-Simulations took 0ms, to do this single threaded, a simulation has to take 0ms.
-Start pick_best_card.
-Start simulation of 100 worlds.
-Simulations took 0ms, to do this single threaded, a simulation has to take 0ms.
+Start simulation of 12 worlds.
+Simulations took 3ms, to do this single threaded, a simulation has to take 0ms.

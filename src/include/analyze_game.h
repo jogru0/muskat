@@ -50,7 +50,7 @@ namespace muskat {
 			if (str == "GO") { return Card::GO; }
 			if (str == "GK") { return Card::GK; }
 			if (str == "GA") { return Card::GA; }
-
+			std::cout << "THIS DOES NOT EXIST: " << str << std::endl;
 			assert(false);
 		}
 
@@ -114,7 +114,7 @@ namespace muskat {
 		}
 	} //namespace parse
 
-	inline void analyze_game(const stdc::fs::path &path_to_json) {
+	inline void analyze_game(const stdc::fs::path &path_to_json, size_t iterations) {
 		
 		auto fs = stdc::IO::open_file_with_checks_for_reading(path_to_json.string());
 		
@@ -162,27 +162,33 @@ namespace muskat {
 
 		auto score = uint8_t{};
 
-		for (auto played_card : moves) {
-			
-			if (worlds.active_role == my_role) {
+		auto next_to_play_it = moves.begin();
+
+		for (;;) {
+
+			if (worlds.active_role == my_role) {	
 				auto remaining_cards = worlds.known_cards_dec_fdef_sdef_skat[static_cast<size_t>(my_role)];
-				assert(!remaining_cards.empty());
-				auto card = pick_best_card(worlds, score, std::chrono::seconds{10 * remaining_cards.size()});
+				if (remaining_cards.empty()) {
+					break;
+				}
+				
+				auto card = pick_best_card(
+					worlds,
+					score,
+					iterations
+				);
 				std::cout << "\nRecommendation: " << to_string(card) << ".\n";
 			}
+
+			if (next_to_play_it == moves.end()) {
+				break;
+			}
+			
+			auto played_card = *next_to_play_it;
+			++next_to_play_it;
 
 			score += worlds.play_card(played_card);
 			std::cout << "Played: " << to_string(played_card) << ".\n\n";
 		}
-
-		if (worlds.active_role == my_role) {
-			auto remaining_cards = worlds.known_cards_dec_fdef_sdef_skat[static_cast<size_t>(my_role)];
-			if (!remaining_cards.empty()) {
-				auto card = pick_best_card(worlds, score, std::chrono::seconds{10 * remaining_cards.size()});
-				std::cout << "\nRecommendation: " << to_string(card) << ".\n\n";
-			}
-		}
 	}
-
-
 } // namespace muskat

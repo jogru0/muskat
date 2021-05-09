@@ -143,7 +143,7 @@ namespace muskat {
 			assert(m_current_information->active_role == m_role);
 			assert(!m_current_information->is_at_game_end());
 			say("Deciding my next move …\n");
-			auto card = pick_best_card(stdc::surely(m_current_information), m_points_declarer, std::chrono::seconds{10});
+			auto card = pick_best_card(stdc::surely(m_current_information), m_points_declarer, 200);
 			return card;
 		}
 

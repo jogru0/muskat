@@ -221,7 +221,7 @@ inline void performance() {
 namespace detail {
 	[[noreturn]] inline void non_valid_input_exit() {
 		std::cout << "\n\n"
-			<< "USAGE: -a [valid_json]\n"
+			<< "USAGE: -a [valid_json] [number of iterations]\n"
 			<< "Exiting, please try again." << std::endl;
 		exit(1);
 	}
@@ -280,6 +280,16 @@ namespace detail {
 	{
 		return strncmp(a, b, std::strlen(a)) == 0;
 	}
+
+	inline auto parse_iterations_or_exit(std::string_view sv) {
+		auto maybe_number_simulation = stdc::maybe_parse_chars<size_t>(sv);
+		if (!maybe_number_simulation) {
+			std::cout << "Unable to read number of iterations from input." << std::endl;
+			non_valid_input_exit();
+		}
+		return *maybe_number_simulation;
+	}
+
 } //namespace detail
 
 
@@ -297,8 +307,11 @@ auto main(int argc, char **argv) -> int try {
 	
 	switch (option) {
 		case 'a':
-			detail::check_number_of_inputs_and_apply_flags(args, option, 1);
-			muskat::analyze_game(std::filesystem::path{args[2]});
+			detail::check_number_of_inputs_and_apply_flags(args, option, 2);
+			muskat::analyze_game(
+				std::filesystem::path{args[2]},
+				detail::parse_iterations_or_exit(args[3])
+			);
 			break;
 		//plot initial state if simulator constructor does not throw
 		default:
