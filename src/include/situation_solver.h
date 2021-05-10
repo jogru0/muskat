@@ -266,13 +266,57 @@ namespace muskat {
 
 				auto child = sit;
 				auto points_to_get_to_child = child.play_card(card, m_game);
-				auto points_as_child = calculate_potential_score_2(child);
+				auto points_as_child = calculate_potential_score_3(child);
 				result[i] = points_as_child + points_to_get_to_child;
 			}
 
 			return result;
 		}
 
+
+
 	};
+
+
+	inline auto score_for_possible_plays_separate(Situation sit, GameType game) {
+		using namespace stdc::literals;
+		
+		auto result = std::array<uint8_t, 32>{
+			121, 121, 121, 121, 
+			121, 121, 121, 121, 
+			121, 121, 121, 121, 
+			121, 121, 121, 121, 
+			121, 121, 121, 121, 
+			121, 121, 121, 121, 
+			121, 121, 121, 121, 
+			121, 121, 121, 121
+		};
+
+
+		auto possible_plays = next_possible_plays(sit, game);
+		assert(!possible_plays.empty());
+
+		auto nodes = std::vector<double>{};
+		nodes.reserve(possible_plays.size());
+
+		for (auto i = 0_z; i < 32; ++i) {
+			auto card = static_cast<Card>(i);
+			
+			if (!possible_plays.contains(card)) {
+				continue;
+			}
+
+			auto solver = SituationSolver{game};
+
+			auto child = sit;
+			auto points_to_get_to_child = child.play_card(card, game);
+			auto points_as_child = solver.calculate_potential_score_3(child);
+			result[i] = points_as_child + points_to_get_to_child;
+			nodes.push_back(static_cast<double>(solver.number_of_nodes()) / 1000.);
+		}
+
+		return std::pair{result, nodes};
+	}
+
 
 } // namespace muskat

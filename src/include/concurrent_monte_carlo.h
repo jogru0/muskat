@@ -6,6 +6,8 @@
 
 #include "logger.h"
 
+#include "statistics.h"
+
 #include <stdc/swatch.h>
 #include <stdc/WATCH.h>
 
@@ -34,198 +36,14 @@ static auto done_threads = std::atomic<uint8_t>{0};
 
 namespace muskat {
 
-
-inline void execute_worker(
-	std::stop_token stoken,
-	PossibleWorlds possible_worlds, //TODO: Not a reference, so not every thread has to access the same memory there?
-	const std::shared_ptr<std::vector<std::array<uint8_t, 32>>> result_ptr,
-	const std::shared_ptr<stdc::SpinLock> result_write_lock_ptr, //Reading is always allowed, since noone else writes.
-	size_t worker_id
-) try {
-	wa::watches_th[worker_id][wa::start].stop();
-	wa::watches_th[worker_id][wa::rng].start();
-
-	auto rng = stdc::seeded_RNG(stdc::DeterministicSourceOfRandomness{0, static_cast<unsigned int>(worker_id)});
-
-	wa::watches_th[worker_id][wa::rng].stop();
-	//Stop when the main thread signals that time is up via should_continue.
-	//It's not enough to just wait until the main thread locks the lock, because we coudn't be sure that we
-	//are always faster than the main thread by locking it, therefore blocking it forever.
-	wa::watches_th[worker_id][wa::loop_pre].start();
-	
-	while (!stoken.stop_requested()) {
-
-		
-		auto situation = possible_worlds.get_one_uniformly_clever(rng);
-		auto solver = muskat::SituationSolver{possible_worlds.get_game_type()};
-
-		wa::watches_th[worker_id][wa::loop_pre].stop();
-		++wa::iterations_pre[worker_id];
-		wa::watches_th[worker_id][wa::loop_main].start();
-		auto points = solver.score_for_possible_plays(situation);
-		
-		wa::watches_th[worker_id][wa::loop_main].stop();
-		++wa::iterations_main[worker_id];
-		wa::watches_th[worker_id][wa::loop_post].start();
-		
-
-		auto need_to_reallocate = result_ptr->size() == result_ptr->capacity();
-
-		if (!need_to_reallocate) {
-			if (!result_write_lock_ptr->try_lock()) {
-				//TODO: Is this guaranteed to be observed in this order when the main thread does it in this order?
-				assert(stoken.stop_requested());
-				break;
-			}
-			{ //LOCKED 
-				result_ptr->push_back(points);
-			}
-			result_write_lock_ptr->unlock();
-		} else {
-			auto result_copy = std::vector<std::array<uint8_t, 32>>{};
-			result_copy.reserve(2 * (result_ptr->capacity() + 1));
-			result_copy = *result_ptr;
-			result_copy.push_back(points);
-			
-			if (!result_write_lock_ptr->try_lock()) {
-				//TODO: Is this guaranteed to be observed in this order when the main thread does it in this order?
-				assert(stoken.stop_requested());
-				break;
-			}
-			
-			{ //LOCKED 
-				*result_ptr = std::move(result_copy);
-			}
-			result_write_lock_ptr->unlock();
-		}
-
-		wa::watches_th[worker_id][wa::loop_post].stop();
-		++wa::iterations_post[worker_id];
-		wa::watches_th[worker_id][wa::loop_pre].start();
-	}
-
-	++done_threads;
-
-} catch (const std::exception &e) {
-	//Something happened. Probably out of memory?
-	//Anyway, the result calculated so far has to be valid, so lets just log it and stop this thread.
-	//TODO: Needs a lock …
-	std::cerr << "There was a problem in thread " << worker_id << ": " << e.what() << '\n';
-
-	//Not okay while measuring.
-	throw;
-}
-
-
-[[nodiscard]] inline auto multithreaded_world_simulation(const PossibleWorlds &possible_worlds, std::chrono::milliseconds time) {
-	using namespace stdc::literals;
-	
-	auto number_of_threads = std::thread::hardware_concurrency();
-	if (number_of_threads == 0) {
-		throw std::runtime_error{"Could not determine best number of threads."};
-	}
-
-	std::cout << "Simulating with " << number_of_threads << " threads.\n";
-
-	assert(number_of_threads == 12);
-	for (auto &watches : wa::watches_th) {
-		watches = std::array{
-			::detail::Watch{}, ::detail::Watch{}, ::detail::Watch{}, ::detail::Watch{}, ::detail::Watch{}
-		};
-	}
-
-
-	//Uses shared_ptr because threads might be finished before or after this function returns.
-	auto results_th = std::vector<std::shared_ptr<std::vector<std::array<uint8_t, 32>>>>(number_of_threads);
-	//Same here.
-	auto locks_th = std::vector<std::shared_ptr<stdc::SpinLock>>(number_of_threads);
-
-	for (auto i = 0_z; i < number_of_threads; ++i) {
-		results_th[i] = std::make_shared<std::vector<std::array<uint8_t, 32>>>();
-		locks_th[i] = std::make_shared<stdc::SpinLock>();
-	}
-	
-	auto threads = std::vector<std::jthread>{};
-	threads.reserve(number_of_threads);
-
-	for (auto thread_id = 0_z; thread_id < number_of_threads; ++thread_id) {
-		wa::watches_th[thread_id][wa::start].start();
-	}
-
-	for (auto thread_id = 0_z; thread_id < number_of_threads; ++thread_id) {
-		threads.push_back(std::jthread{
-			execute_worker,
-			possible_worlds,
-			results_th[thread_id],
-			locks_th[thread_id],
-			thread_id
-		});
-	}
-
-	std::this_thread::sleep_for(time);
-	
-
-	WATCH("aftermath").reset();
-	WATCH("aftermath").start();
-
-	WATCH("aftermath1").reset();
-	WATCH("aftermath1").start();
-
-	for (auto thread_id = 0_z; thread_id < number_of_threads; ++thread_id) {
-		threads[thread_id].request_stop();
-	}
-
-	WATCH("aftermath1").stop();
-	WATCH("aftermath2").reset();
-	WATCH("aftermath2").start();
-
-	for (auto thread_id = 0_z; thread_id < number_of_threads; ++thread_id) {
-		// wa::watches_th[thread_id][wa::detach].start();
-		threads[thread_id].detach();
-		// wa::watches_th[thread_id][wa::detach].stop();
-	}
-
-	WATCH("aftermath2").stop();
-	WATCH("aftermath3").reset();
-	WATCH("aftermath3").start();
-
-	auto results_obtained = 0_z;
-	auto results_obtained_th = std::vector(number_of_threads, false);
-
-	auto results = std::vector<std::array<uint8_t, 32>>{};
-
-	while (results_obtained != number_of_threads) {
-		for (auto thread_id = 0_z; thread_id < number_of_threads; ++thread_id) {
-			if (results_obtained_th[thread_id]) {
-				continue;
-			}
-
-			//Lock forever.
-			if (!locks_th[thread_id]->try_lock()) {
-				continue;
-			}
-
-			std::move((results_th[thread_id])->begin(), (results_th[thread_id])->end(), std::back_inserter(results));
-			
-			results_obtained_th[thread_id] = true;
-			++results_obtained;
-		}
-	}
-
-	WATCH("aftermath3").stop();
-
-	WATCH("aftermath").stop();
-	return results;
-}
-
-
-
 inline void execute_worker_2(
 	std::stop_token stoken,
 	GameType game,
 	const std::vector<Situation> &inputs,
 	stdc::ConcurrentResultVector<std::array<uint8_t, 32>> &results,
-	size_t worker_id
+	size_t worker_id,
+	std::vector<double> &times_in_ms,
+	std::vector<std::vector<double>> &numbers_of_nodes
 ) try {
 	wa::watches_th[worker_id][wa::start].stop();
 
@@ -243,17 +61,31 @@ inline void execute_worker_2(
 		auto result_id = *maybe_result_id;
 
 		auto situation = inputs[result_id];
-		auto solver = muskat::SituationSolver{game};
 
 		wa::watches_th[worker_id][wa::loop_pre].stop();
 		++wa::iterations_pre[worker_id];
 		wa::watches_th[worker_id][wa::loop_main].start();
-		auto points = solver.score_for_possible_plays(situation);
+		
+		auto watch_solve = stdc::SWatch{};
+		watch_solve.start();
+		
+		//MEASURE BEGIN
+		// auto solver = muskat::SituationSolver{game};
+		// auto points = solver.score_for_possible_plays(situation);
+		auto [points, nodes] = score_for_possible_plays_separate(situation, game);
+		
+		//MEASURE END
+		
+		watch_solve.stop();
 		
 		wa::watches_th[worker_id][wa::loop_main].stop();
 		++wa::iterations_main[worker_id];
 		wa::watches_th[worker_id][wa::loop_post].start();
-		
+
+
+		times_in_ms[result_id] = (static_cast<double>(watch_solve.elapsed<std::chrono::nanoseconds>()) + .5) / 1'000'000.;
+		numbers_of_nodes[result_id] = nodes;
+
 		results.report_a_result(result_id, points);
 		
 		wa::watches_th[worker_id][wa::loop_post].stop();
@@ -298,6 +130,9 @@ inline void execute_worker_2(
 
 	//Uses shared_ptr because threads might be finished before or after this function returns.
 	auto results = stdc::ConcurrentResultVector<std::array<uint8_t, 32>>{number_samples};
+
+	auto times_in_ms = std::vector<double>(number_samples);
+	auto numbers_of_nodes = std::vector<std::vector<double>>(number_samples);
 	
 	auto rng = stdc::seeded_RNG(stdc::DeterministicSourceOfRandomness{3, 123'361});
 
@@ -320,7 +155,9 @@ inline void execute_worker_2(
 			possible_worlds.get_game_type(),
 			std::cref(inputs),
 			std::ref(results),
-			thread_id
+			thread_id,
+			std::ref(times_in_ms),
+			std::ref(numbers_of_nodes)
 		});
 	}
 
@@ -341,6 +178,19 @@ inline void execute_worker_2(
 
 	auto result = results.collect_all_results_so_far();
 	assert(result.size() == number_samples);
+
+	//Since all results are there, all measurements are also there.
+
+	stdc::log("Number of 1000 nodes:");
+	auto actual = std::vector<double>();
+	for (const auto &part : numbers_of_nodes) {
+		std::copy(RANGE(part), std::back_inserter(actual));
+	}
+	stdc::display_statistics(actual);
+	
+	stdc::log("Run time in ms:");
+	stdc::display_statistics(times_in_ms);
+
 	return result;
 }
 

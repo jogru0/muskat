@@ -149,46 +149,16 @@ namespace perf {
 }
 } //namespace perf
 
-static void display_statistics(std::vector<double> data) {
-	auto size = data.size();
-	assert(2 <= size);
-	
-	auto sum = std::accumulate(RANGE(data), 0.);
-	auto sample_mean = sum / static_cast<double>(size);
-
-	auto sum_of_squared_distances = stdc::transform_accumulate(RANGE(data), [&](auto x) {
-		auto dist = std::abs(x - sample_mean);
-		return dist * dist;
-	});
-	auto unbiased_sample_variance = sum_of_squared_distances / static_cast<double>(size - 1);
-	auto corrected_sample_standard_deviation = std::sqrt(unbiased_sample_variance);
-
-	auto index_median_l = (size - 1) / 2;
-	auto index_median_r = size / 2;
-
-	std::nth_element(data.begin(), stdc::to_it(data, index_median_l), data.end());
-	auto median_l = data[index_median_l];
-	
-	std::nth_element(data.begin(), stdc::to_it(data, index_median_r), data.end());
-	auto median_r = data[index_median_l];
-
-	auto sample_median = std::midpoint(median_l, median_r);
-
-	std::cout << "\tmean:   " << sample_mean << '\n';
-	std::cout << "\tstddev: " << corrected_sample_standard_deviation << '\n';
-	std::cout << "\tmedian: " << sample_median << '\n';
-}
-
 inline void performance() {
 	// assert(false); //ONLY RUN IN RELEASE MODE
 	{
 	auto [numbers_of_nodes, times_in_ms] = perf::decide_winner_farbspiel();
 
 	std::cout << "Number of nodes:\n";
-	display_statistics(numbers_of_nodes);
+	stdc::display_statistics(numbers_of_nodes);
 	
 	std::cout << "Run time in ms:\n";
-	display_statistics(times_in_ms);
+	stdc::display_statistics(times_in_ms);
 	}
 	
 	std::cout << "\n\n\n";
@@ -197,10 +167,10 @@ inline void performance() {
 	auto [numbers_of_nodes, times_in_ms] = perf::find_threshold_2();
 
 	std::cout << "Number of nodes:\n";
-	display_statistics(numbers_of_nodes);
+	stdc::display_statistics(numbers_of_nodes);
 	
 	std::cout << "Run time in ms:\n";
-	display_statistics(times_in_ms);
+	stdc::display_statistics(times_in_ms);
 	}
 	
 	std::cout << "\n\n\n";
@@ -209,10 +179,10 @@ inline void performance() {
 	auto [numbers_of_nodes, times_in_ms] = perf::find_threshold_3();
 
 	std::cout << "Number of nodes:\n";
-	display_statistics(numbers_of_nodes);
+	stdc::display_statistics(numbers_of_nodes);
 	
 	std::cout << "Run time in ms:\n";
-	display_statistics(times_in_ms);
+	stdc::display_statistics(times_in_ms);
 	}
 
 }
@@ -296,6 +266,16 @@ namespace detail {
 //At the moment, noreturn
 auto main(int argc, char **argv) -> int try {
 	assert(std::cout << "Asserts active.\n");
+
+	std::cout << "Card:      " << sizeof(muskat::Card) << "\n";
+	std::cout << "op<Card>:  " << sizeof(std::optional<muskat::Card>) << "\n";
+	std::cout << "OpCard:    " << sizeof(muskat::MaybeCard) << "\n";
+	std::cout << "Role:      " << sizeof(muskat::Role) << "\n";
+	std::cout << "Sit:       " << sizeof(muskat::Situation) << "\n";
+	std::cout << "B:         " << sizeof(muskat::Bounds) << "\n";
+	std::cout << "(B, OpC):  " << sizeof(std::pair<muskat::Bounds, muskat::MaybeCard>) << "\n";
+	std::cout << "(OpC, B):  " << sizeof(std::pair<muskat::MaybeCard, muskat::Bounds>) << "\n";
+	
 	
 	stdc::log("=====================================");
 
