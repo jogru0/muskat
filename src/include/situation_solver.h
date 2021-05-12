@@ -27,7 +27,6 @@ namespace muskat {
 
 		auto next_index = 0_z;
 		if (maybe_preference) {
-			std::cout << to_string(*maybe_preference) << '\n';
 			// result[next_index] = *maybe_preference;
 			// cards.remove(*maybe_preference);
 			// ++next_index;
@@ -236,8 +235,26 @@ namespace muskat {
 
 	public:
 		[[nodiscard]] auto bounds_deciding_threshold(Situation sit, Points threshold) -> Bounds {
-			
-			auto bounds_pref = current_bounds(sit);
+
+			if (!sit.get_maybe_first_trick_card()) {
+				//Old path.
+				auto bounds_pref = current_bounds(sit);
+				if (!decides_threshold(bounds_pref.first, threshold)) {
+					if (sit.active_role() == Role::Declarer) {
+						bounds_pref = improve_bounds_to_decide_threshold<true>(bounds_pref, sit, threshold);
+					} else {
+						bounds_pref = improve_bounds_to_decide_threshold<false>(bounds_pref, sit, threshold);
+					}
+					assert(decides_threshold(bounds_pref.first, threshold));
+					
+					//TODO: Surely existing, no?
+					current_bounds(sit) = bounds_pref;
+				}
+				return bounds_pref.first;
+			}
+
+			//New path.
+			auto bounds_pref = quick_bounds(sit, m_game);
 			if (!decides_threshold(bounds_pref.first, threshold)) {
 				if (sit.active_role() == Role::Declarer) {
 					bounds_pref = improve_bounds_to_decide_threshold<true>(bounds_pref, sit, threshold);
@@ -245,11 +262,9 @@ namespace muskat {
 					bounds_pref = improve_bounds_to_decide_threshold<false>(bounds_pref, sit, threshold);
 				}
 				assert(decides_threshold(bounds_pref.first, threshold));
-				
-				//TODO: Surely existing, no?
-				current_bounds(sit) = bounds_pref;
 			}
 			return bounds_pref.first;
+
 		}
 
 		[[nodiscard]] auto still_makes_at_least(Situation sit, Points expected_points) {

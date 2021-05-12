@@ -3,62 +3,72 @@
 Start pick_best_card.
 Start simulation of 1000 worlds.
 Number of 1000 nodes:
-	mean:     1496.3030322999914
-	median:   503.095
+	mean:     194.42628499999887
+	median:   78.951
 Run time in ms:
-	mean:     7923.868849728001
-	median:   2260.4930545
-Simulations took 734345ms, to do this single threaded, a simulation has to take 734ms.
+	mean:     3750.159541555999
+	median:   1191.5300345
+Simulations took 348221ms, to do this single threaded, a simulation has to take 348ms.
 Start pick_best_card.
 Start simulation of 1000 worlds.
 Number of 1000 nodes:
-	mean:     313.6258738888903
-	median:   130.359
+	mean:     45.39968933333308
+	median:   21.72
 Run time in ms:
-	mean:     1194.701090293001
-	median:   348.6628215
-Simulations took 103458ms, to do this single threaded, a simulation has to take 103ms.
+	mean:     607.1919551149999
+	median:   229.4015725
+Simulations took 52430ms, to do this single threaded, a simulation has to take 52ms.
 Start pick_best_card.
 Start simulation of 1000 worlds.
 Number of 1000 nodes:
-	mean:     14.417599000000022
-	median:   5.859
+	mean:     2.9374259999999968
+	median:   1.313
 Run time in ms:
-	mean:     3.479026925999999
-	median:   1.4376065
-Simulations took 311ms, to do this single threaded, a simulation has to take 0ms.
+	mean:     3.083648524
+	median:   1.2551395
+Simulations took 273ms, to do this single threaded, a simulation has to take 0ms.
 Start pick_best_card.
 Start simulation of 1000 worlds.
 Number of 1000 nodes:
-	mean:     6.27183242857141
-	median:   4.731
+	mean:     1.3140397142857019
+	median:   1.0655000000000001
 Run time in ms:
-	mean:     9.633724548
-	median:   8.0375555
-Simulations took 830ms, to do this single threaded, a simulation has to take 0ms.
+	mean:     8.234716926999997
+	median:   6.8200245
+Simulations took 714ms, to do this single threaded, a simulation has to take 0ms.
 Start pick_best_card.
 Start simulation of 1000 worlds.
 Number of 1000 nodes:
-	mean:     0.9902909999999823
-	median:   0.884
+	mean:     0.24134933333333458
+	median:   0.22
 Run time in ms:
-	mean:     1.2881771749999997
-	median:   0.8693915
-Simulations took 109ms, to do this single threaded, a simulation has to take 0ms.
+	mean:     1.1611137790000008
+	median:   0.7174835
+Simulations took 99ms, to do this single threaded, a simulation has to take 0ms.
 Start pick_best_card.
 Start simulation of 1000 worlds.
 Number of 1000 nodes:
-	mean:     0.5838963999999983
-	median:   0.515
+	mean:     0.15101040000000263
+	median:   0.148
 Run time in ms:
-	mean:     0.6132214549999997
-	median:   0.3639225
-Simulations took 54ms, to do this single threaded, a simulation has to take 0ms.
+	mean:     0.5352651289999998
+	median:   0.3175455
+Simulations took 46ms, to do this single threaded, a simulation has to take 0ms.
 
+Asserts active.
+Card:      1
+op<Card>:  2
+OpCard:    1
+Role:      1
+Sit:       16
+B:         2
+(B, OpC):  3
+(OpC, B):  3
+^O
 Using these samples to make an informed choice now.
 Time spent to do these choices: 0ms.
 
-Total time used: 734345ms.
+Total time used: 348221ms.
 
 Current Score: 0
 
@@ -80,7 +90,7 @@ Played: EK.
 Using these samples to make an informed choice now.
 Time spent to do these choices: 0ms.
 
-Total time used: 103458ms.
+Total time used: 52430ms.
 
 Current Score: 9
 
@@ -106,7 +116,7 @@ Played: HA.
 Using these samples to make an informed choice now.
 Time spent to do these choices: 0ms.
 
-Total time used: 311ms.
+Total time used: 273ms.
 
 Current Score: 9
 
@@ -126,7 +136,7 @@ Played: HZ.
 Using these samples to make an informed choice now.
 Time spent to do these choices: 0ms.
 
-Total time used: 830ms.
+Total time used: 714ms.
 
 Current Score: 9
 
@@ -150,7 +160,7 @@ Played: GA.
 Using these samples to make an informed choice now.
 Time spent to do these choices: 0ms.
 
-Total time used: 109ms.
+Total time used: 99ms.
 
 Current Score: 9
 
@@ -168,7 +178,7 @@ Played: E8.
 Using these samples to make an informed choice now.
 Time spent to do these choices: 0ms.
 
-Total time used: 54ms.
+Total time used: 46ms.
 
 Current Score: 23
 
