@@ -27,9 +27,9 @@ namespace muskat {
 
 		auto next_index = 0_z;
 		if (maybe_preference) {
-			// result[next_index] = *maybe_preference;
-			// cards.remove(*maybe_preference);
-			// ++next_index;
+			result[next_index] = *maybe_preference;
+			cards.remove(*maybe_preference);
+			++next_index;
 		}
 
 		auto maybe_forced_tt = [&]() -> std::optional<TrickAndGameType> {
