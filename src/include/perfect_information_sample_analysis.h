@@ -52,6 +52,7 @@ namespace muskat {
 		using namespace stdc::literals;
 		
 		assert(!points_for_situations.empty());
+		
 		auto cards = Cards{};
 		for (auto i = 0_z; i < 32; ++i) {
 			if (points_for_situations.front()[i] != 121) {

@@ -1,6 +1,10 @@
 #pragma once
 
 #include "world_simulation.h"
+#include "uniform_sit_distribution.h"
+
+#include <pcg/pcg_random.hpp>
+
 #include "situation_solver.h"
 #include "spinlock.h"
 
@@ -113,7 +117,9 @@ inline void execute_worker_2(
 [[nodiscard]] inline auto multithreaded_world_simulation_2(
 	const PossibleWorlds &possible_worlds,
 	size_t number_samples
-) {
+)
+	-> std::vector<PerfectInformationResult>
+{
 	using namespace stdc::literals;
 	
 	auto number_of_threads = std::thread::hardware_concurrency();
@@ -137,13 +143,53 @@ inline void execute_worker_2(
 	auto times_in_ms = std::vector<double>(number_samples);
 	auto numbers_of_nodes = std::vector<std::vector<double>>(number_samples);
 	
-	auto rng = stdc::seeded_RNG(stdc::DeterministicSourceOfRandomness{3, 123'361});
+	auto watch_rng = stdc::SWatch{};
+	watch_rng.start();
+	
+	// Seed with a real random value, if available
+	// auto seed_source = pcg_extras::seed_seq_from<std::random_device>{};
 
+	// Make a random number engine
+	auto rng = pcg32(/*seed_source*/);
+	
+	watch_rng.stop();
+	stdc::log(
+		"Creation of the rng took {:.0f}us.",
+		watch_rng.elapsed().count() / 1'000.0
+	);
+	
 	auto inputs = std::vector<std::tuple<Situation, Card, Card>>{};
 	inputs.reserve(number_samples);
+
+
+	auto watch_dist_generation = stdc::SWatch{};
+	watch_dist_generation.start();
+	auto dist = UniformSitDistribution{possible_worlds};
+	watch_dist_generation.stop();
+	stdc::log(
+		"Creation of the uniform sit distribution took {:.0f}us.",
+		watch_dist_generation.elapsed().count() / 1'000.0
+	);
+
+
+	auto watch_sampling = stdc::SWatch{};
+	watch_sampling.start();
 	std::generate_n(std::back_inserter(inputs), number_samples, [&](){
-		return possible_worlds.get_one_uniformly_clever(rng);
+		return dist(rng);
 	});
+	watch_sampling.stop();
+	stdc::log(
+		"Sampling of {} situations took {:.0f}us.",
+		number_samples,
+		watch_sampling.elapsed().count() / 1'000.0
+	);
+
+	return {PerfectInformationResult{
+		0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0
+	}};
 	
 	auto threads = std::vector<std::jthread>{};
 	threads.reserve(number_of_threads);
@@ -209,7 +255,7 @@ inline void execute_worker_2(
 	auto watch_whole = stdc::SWatch{};
 	watch_whole.start();
 
-	stdc::log(fmt::format("Start simulation of {} worlds.", number_samples_to_do));
+	// stdc::log(fmt::format("Start simulation of {} worlds.", number_samples_to_do));
 	auto watch_simulation = stdc::SWatch{};
 	watch_simulation.start();
 	
@@ -220,14 +266,14 @@ inline void execute_worker_2(
 	auto sample = muskat::to_sample(std::move(results));
 	
 	watch_simulation.stop();
-	assert(sample.points_for_situations().size() == number_samples_to_do);
+	// assert(sample.points_for_situations().size() == number_samples_to_do);
 
 	auto elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(watch_simulation.elapsed());
-	stdc::log(
-		"Simulations took {:.1f}s -> perceived time per sample: {:.0f}ms.",
-		elapsed_ms.count() / 1000.0,
-		(elapsed_ms.count() * 12.0) / number_samples_to_do
-	);
+	// stdc::log(
+	// 	"Simulations took {:.1f}s -> perceived time per sample: {:.0f}ms.",
+	// 	elapsed_ms.count() / 1000.0,
+	// 	(elapsed_ms.count() * 12.0) / number_samples_to_do
+	// );
 
 
 	std::cout << "\nUsing these samples to make an informed choice now.\n";

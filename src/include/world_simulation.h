@@ -306,7 +306,7 @@ public:
 	}
 
 	template<typename RNG>
-	[[nodiscard]] auto get_one_uniformly(RNG &rng) const -> Situation {
+	[[nodiscard]] auto get_one_uniformly(RNG &rng) const -> std::tuple<Situation, Card, Card> {
 		using namespace stdc::literals;
 		
 		//Not directly known_cards_dec_fdef_sdef_skat because we mutate it.
@@ -336,7 +336,13 @@ public:
 			}();
 		}
 
-		return Situation{
+
+		auto skat = cards_for_simulator[3];
+		assert(skat.size() == 2);
+		auto skat_0 = skat.remove_next();
+		auto skat_1 = skat.remove_next();
+
+		return {Situation{
 			cards_for_simulator[0],
 			cards_for_simulator[1],
 			cards_for_simulator[2],
@@ -344,7 +350,7 @@ public:
 			active_role,
 			maybe_first_trick_card,
 			maybe_second_trick_card
-		};
+		}, skat_0, skat_1};
 	}
 
 	[[nodiscard]] auto get_all_signatures_dec_fdef_sdef_skat_and_entropy() const -> std::vector<

@@ -21,7 +21,7 @@ namespace detail {
 class Logger {
 private:
 	std::mutex mut{};
-	std::ofstream out{"log.log", std::ios::app | std::ios::out};
+	std::ofstream out{"log.log", /* std::ios::app | */ std::ios::out};
 
 public:
 	template<typename ...Args>
