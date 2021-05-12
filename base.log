@@ -3,182 +3,54 @@
 Start pick_best_card.
 Start simulation of 1000 worlds.
 Number of 1000 nodes:
-	mean:     787.7406349999993
-	median:   388.064
+	mean:     788
+	median:   388
 Run time in ms:
-	mean:     1494.3972884130005
-	median:   505.5440485
-Simulations took 139110ms, to do this single threaded, a simulation has to take 139ms.
+	mean:     1480
+	median:   498
+Simulations took 137.6s -> perceived time per sample: 1651ms.
 Start pick_best_card.
 Start simulation of 1000 worlds.
 Number of 1000 nodes:
-	mean:     182.68646699999994
-	median:   93.399
+	mean:     183
+	median:   93
 Run time in ms:
-	mean:     254.28027377499973
-	median:   100.2081005
-Simulations took 22054ms, to do this single threaded, a simulation has to take 22ms.
+	mean:     251
+	median:   98
+Simulations took 21.8s -> perceived time per sample: 261ms.
 Start pick_best_card.
 Start simulation of 1000 worlds.
 Number of 1000 nodes:
-	mean:     2.894460999999997
-	median:   1.307
+	mean:     3
+	median:   1
 Run time in ms:
-	mean:     2.396735798999998
-	median:   1.0999185
-Simulations took 216ms, to do this single threaded, a simulation has to take 0ms.
+	mean:     2
+	median:   1
+Simulations took 0.2s -> perceived time per sample: 3ms.
 Start pick_best_card.
 Start simulation of 1000 worlds.
 Number of 1000 nodes:
-	mean:     5.119532000000001
-	median:   3.8565
+	mean:     5
+	median:   4
 Run time in ms:
-	mean:     4.182806836000002
-	median:   3.2739205
-Simulations took 361ms, to do this single threaded, a simulation has to take 0ms.
+	mean:     4
+	median:   3
+Simulations took 0.4s -> perceived time per sample: 4ms.
 Start pick_best_card.
 Start simulation of 1000 worlds.
 Number of 1000 nodes:
-	mean:     0.7638669999999945
-	median:   0.729
+	mean:     1
+	median:   1
 Run time in ms:
-	mean:     0.5320321299999997
-	median:   0.30362
-Simulations took 46ms, to do this single threaded, a simulation has to take 0ms.
+	mean:     1
+	median:   0
+Simulations took 0.0s -> perceived time per sample: 1ms.
 Start pick_best_card.
 Start simulation of 1000 worlds.
 Number of 1000 nodes:
-	mean:     0.4786390000000048
-	median:   0.369
+	mean:     0
+	median:   0
 Run time in ms:
-	mean:     0.30955798000000023
-	median:   0.19309199999999999
-Simulations took 28ms, to do this single threaded, a simulation has to take 0ms.
-
-Using these samples to make an informed choice now.
-Time spent to do these choices: 0ms.
-
-Total time used: 139110ms.
-
-Current Score: 0
-
-31   |  99.1%  99.2%  99.0%  99.1%  99.7%  99.1%  99.1%  99.1%  99.1%  99.2% 
-61   |  60.1%  45.8%  46.1%  56.4%  64.2%  60.1%  43.1%  43.1%  43.1%  70.3% 
-90   |   2.8%   0.0%   0.0%   1.1%   2.0%   2.8%   1.0%   1.0%   1.0%   2.5% 
-avg. |  63.65  59.61  59.24  63.28  64.48  63.65  58.03  58.03  58.03  66.31 
---------------------------------------------------------
-     |     SU     SO     SK     SA     H8     HU     E7     E8     E9     EU 
-
-Recommendation: EU.
-Played: EU.
-
-Played: EO.
-
-Played: EK.
-
-
-Using these samples to make an informed choice now.
-Time spent to do these choices: 0ms.
-
-Total time used: 22054ms.
-
-Current Score: 9
-
-31   | 100.0%  99.9%  99.9%  99.9% 100.0% 100.0% 100.0% 100.0% 100.0% 
-61   |  64.4%  48.6%  48.5%  56.3%  63.1%  64.4%  34.2%  34.2%  34.2% 
-90   |   2.9%   0.0%   0.0%   2.0%   2.4%   2.9%   1.0%   1.0%   1.0% 
-avg. |  66.33  61.21  60.77  63.82  65.29  66.33  57.36  57.36  57.36 
---------------------------------------------------------
-     |     SU     SO     SK     SA     H8     HU     E7     E8     E9 
-
-Recommendation: SU.
-Played: HU.
-
-Played: GU.
-
-Played: EA.
-
-Played: HO.
-
-Played: HA.
-
-
-Using these samples to make an informed choice now.
-Time spent to do these choices: 0ms.
-
-Total time used: 216ms.
-
-Current Score: 9
-
-31   | 100.0% 
-61   |  92.6% 
-90   |  12.2% 
-avg. |  73.70 
---------------------------------------------------------
-     |     H8 
-
-Recommendation: H8.
-Played: H8.
-
-Played: HZ.
-
-
-Using these samples to make an informed choice now.
-Time spent to do these choices: 0ms.
-
-Total time used: 361ms.
-
-Current Score: 9
-
-31   | 100.0% 100.0% 100.0%  93.1% 100.0% 100.0% 100.0% 
-61   |  23.5%  16.5%  16.5%   0.0%  88.8%  88.8%  88.8% 
-90   |   0.0%   0.0%   0.0%   0.0%  11.0%  11.0%  11.0% 
-avg. |  58.53  55.99  55.84  41.59  72.52  72.52  72.52 
---------------------------------------------------------
-     |     SU     SO     SK     SA     E7     E8     E9 
-
-Recommendation: E7.
-Played: E7.
-
-Played: EZ.
-
-Played: GO.
-
-Played: GA.
-
-
-Using these samples to make an informed choice now.
-Time spent to do these choices: 0ms.
-
-Total time used: 46ms.
-
-Current Score: 9
-
-31   | 100.0% 100.0% 100.0%  34.3% 100.0% 100.0% 
-61   |  10.7%   0.0%   0.0%   0.0%  10.7%  10.7% 
-90   |   0.0%   0.0%   0.0%   0.0%   0.0%   0.0% 
-avg. |  55.91  41.01  40.90  27.52  55.91  55.91 
---------------------------------------------------------
-     |     SU     SO     SK     SA     E8     E9 
-
-Recommendation: SU.
-Played: E8.
-
-
-Using these samples to make an informed choice now.
-Time spent to do these choices: 0ms.
-
-Total time used: 28ms.
-
-Current Score: 23
-
-31   | 100.0% 100.0% 100.0% 100.0% 100.0% 
-61   |  10.7%   0.0%   0.0%  10.7%  10.7% 
-90   |   0.0%   0.0%   0.0%   0.0%   0.0% 
-avg. |  55.52  54.13  53.98  55.52  55.52 
---------------------------------------------------------
-     |     SU     SO     SK     SA     E9 
-
-Recommendation: SU.
-
-Thank you for using muskat.
+	mean:     0
+	median:   0
+Simulations took 0.0s -> perceived time per sample: 0ms.

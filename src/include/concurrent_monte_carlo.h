@@ -224,9 +224,9 @@ inline void execute_worker_2(
 
 	auto elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(watch_simulation.elapsed());
 	stdc::log(
-		"Simulations took {}, to do this single threaded, a simulation has to take {}.",
-		elapsed_ms,
-		elapsed_ms / number_samples_to_do
+		"Simulations took {:.1f}s -> perceived time per sample: {:.0f}ms.",
+		elapsed_ms.count() / 1000.0,
+		(elapsed_ms.count() * 12.0) / number_samples_to_do
 	);
 
 
