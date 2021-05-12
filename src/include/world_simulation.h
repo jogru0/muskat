@@ -420,7 +420,7 @@ public:
 	//TODO: Many things can be calculated independently of the RNG.
 	//TODO: Precalc and separate from PossibleWorlds per se.
 	template<typename RNG>
-	[[nodiscard]] auto get_one_uniformly_clever(RNG &rng) const -> Situation {
+	[[nodiscard]] auto get_one_uniformly_clever(RNG &rng) const -> std::tuple<Situation, Card, Card> {
 		using namespace stdc::literals;
 		
 		auto signatures_dec_fdef_sdef_skat_and_entropy = get_all_signatures_dec_fdef_sdef_skat_and_entropy();
@@ -481,8 +481,13 @@ public:
 		for (auto tt = 0_z; tt < 5; ++tt) {
 			assert(cards_to_distribute_by_trick_type[tt].empty());
 		}
+
+		auto skat = cards_for_simulator[3];
+		assert(skat.size() == 2);
+		auto skat_0 = skat.remove_next();
+		auto skat_1 = skat.remove_next();
 		
-		return Situation{
+		return {Situation{
 			cards_for_simulator[0],
 			cards_for_simulator[1],
 			cards_for_simulator[2],
@@ -490,7 +495,7 @@ public:
 			active_role,
 			maybe_first_trick_card,
 			maybe_second_trick_card
-		};
+		}, skat_0, skat_1};
 	}
 
 	//Returns what points the declarer makes with this move.

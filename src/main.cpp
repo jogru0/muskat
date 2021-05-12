@@ -53,7 +53,13 @@ namespace perf {
 		auto initial_situation = muskat::Situation{hand_geber, hand_hoerer, hand_sager, skat, role_vorhand};
 
 
-		auto solver = muskat::SituationSolver{game};
+		auto skat_sit = initial_situation.cellar();
+		assert(skat_sit == skat);
+		assert(skat.size() == 2);
+		auto skat_0 = skat.remove_next();
+		auto skat_1 = skat.remove_next();
+		
+		auto solver = muskat::SituationSolver{initial_situation, game, skat_0, skat_1};
 
 		auto watch_solve = detail::Watch{};
 		watch_solve.start();
@@ -89,8 +95,13 @@ namespace perf {
 		auto [hand_geber, hand_hoerer, hand_sager, skat] = deal_deck(deck);
 		auto initial_situation = muskat::Situation{hand_geber, hand_hoerer, hand_sager, skat, role_vorhand};
 
+		auto skat_sit = initial_situation.cellar();
+		assert(skat_sit == skat);
+		assert(skat.size() == 2);
+		auto skat_0 = skat.remove_next();
+		auto skat_1 = skat.remove_next();
 
-		auto solver = muskat::SituationSolver{game};
+		auto solver = muskat::SituationSolver{initial_situation, game, skat_0, skat_1};
 
 		auto watch_solve = detail::Watch{};
 		watch_solve.start();
@@ -128,8 +139,13 @@ namespace perf {
 		auto [hand_geber, hand_hoerer, hand_sager, skat] = deal_deck(deck);
 		auto initial_situation = muskat::Situation{hand_geber, hand_hoerer, hand_sager, skat, role_vorhand};
 
+		auto skat_sit = initial_situation.cellar();
+		assert(skat_sit == skat);
+		assert(skat.size() == 2);
+		auto skat_0 = skat.remove_next();
+		auto skat_1 = skat.remove_next();
 
-		auto solver = muskat::SituationSolver{game};
+		auto solver = muskat::SituationSolver{initial_situation, game, skat_0, skat_1};
 
 		auto watch_solve = detail::Watch{};
 		watch_solve.start();

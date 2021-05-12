@@ -28,7 +28,13 @@ namespace muskat {
 	public:
 		void cheat(const Situation &situation) override {
 			m_current_situation = situation;
-			m_solver = SituationSolver{m_game}; //Let's free some memory.
+
+			auto skat = m_current_situation.cellar();
+			assert(skat.size() == 2);
+			auto skat_0 = skat.remove_next();
+			auto skat_1 = skat.remove_next();
+
+			m_solver = SituationSolver{m_current_situation, m_game, skat_0, skat_1}; //Let's free some memory.
 
 			say("Secretly peeking at hidden cards to cheat later.");
 			WATCH("decide").reset();
@@ -105,7 +111,7 @@ namespace muskat {
 		) :
 			m_name{std::move(name)},
 			m_rng{std::move(rng)},
-			m_solver{GameType::Eichel} //TODO
+			m_solver{Situation{Role::Declarer}, GameType::Eichel, Card::E7, Card::E8} //TODO
 		{}
 	};
 } // namespace muskat

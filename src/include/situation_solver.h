@@ -122,41 +122,81 @@ namespace muskat {
 	class SituationSolver {
 	private:
 		using LookUpTable = robin_hood::unordered_flat_map<
-			Situation,
+			Cards,
 			std::pair<Bounds, MaybeCard>
 		>;
 
 		LookUpTable m_look_up;
 		GameType m_game;
+		Card m_skat_0;
+		Card m_skat_1;
+		Cards m_h_dec;
+		Cards m_h_fd;
+		Cards m_h_sd;
 
 		[[nodiscard]] auto &current_bounds(Situation sit) {
+			auto key = sit.hand(Role::Declarer) |
+				sit.hand(Role::FirstDefender) |
+				sit.hand(Role::SecondDefender);
+			switch (sit.active_role()) {
+				case Role::Declarer: break;
+				case Role::FirstDefender: key.add(m_skat_0); break;
+				case Role::SecondDefender: key.add(m_skat_1); break;
+			}
+				
 			if (
-				auto it = m_look_up.find(sit);
+				auto it = m_look_up.find(key);
 				it != m_look_up.end()
 			) {
 				return it->second;
 			}
 
-			auto [it, succ] = m_look_up.emplace(sit, quick_bounds(sit, m_game));
+			auto [it, succ] = m_look_up.emplace(key, quick_bounds(sit, m_game));
 			assert(succ);
 			return it->second;
 		}
 
-		[[nodiscard]] auto &surely_existing_current_bounds(Situation sit) const {
-			auto it = m_look_up.find(sit);
+		[[nodiscard]] auto &surely_existing_current_bounds(Situation sit) {
+			auto key = sit.hand(Role::Declarer) |
+				sit.hand(Role::FirstDefender) |
+				sit.hand(Role::SecondDefender);
+			switch (sit.active_role()) {
+				case Role::Declarer: break;
+				case Role::FirstDefender: key.add(m_skat_0); break;
+				case Role::SecondDefender: key.add(m_skat_1); break;
+			}
+			
+			auto it = m_look_up.find(key);
 			assert(it != m_look_up.end());
 			return it->second;
 		}
 	
 	public:
-		SituationSolver(GameType game) : m_look_up{}, m_game{game} {
+		SituationSolver(
+			Situation sit,
+			GameType game,
+			Card skat_0,
+			Card skat_1
+		) :
+			m_look_up{},
+			m_game{game},
+			m_skat_0{skat_0},
+			m_skat_1{skat_1},
+			m_h_dec{sit.hand(Role::Declarer)},
+			m_h_fd{sit.hand(Role::FirstDefender)},
+			m_h_sd{sit.hand(Role::SecondDefender)}
+		{
 			[[maybe_unused]] auto strict_bounds_childs = std::pair{
 				Bounds{},
 				MaybeCard{}
 			};
-			m_look_up[Situation{Role::Declarer}] = strict_bounds_childs;
-			m_look_up[Situation{Role::FirstDefender}] = strict_bounds_childs;
-			m_look_up[Situation{Role::SecondDefender}] = strict_bounds_childs;
+			m_look_up[Cards{}] = strict_bounds_childs;
+			auto c = Cards{};
+			c.add(skat_0);
+			m_look_up[c] = strict_bounds_childs;
+			c = Cards{};
+			c.add(skat_1);
+			m_look_up[c] = strict_bounds_childs;
 			assert(m_look_up.size() == 3);
 		}
 
@@ -247,8 +287,7 @@ namespace muskat {
 					}
 					assert(decides_threshold(bounds_pref.first, threshold));
 					
-					//TODO: Surely existing, no?
-					current_bounds(sit) = bounds_pref;
+					surely_existing_current_bounds(sit) = bounds_pref;
 				}
 				return bounds_pref.first;
 			}
@@ -387,7 +426,7 @@ namespace muskat {
 	};
 
 
-	inline auto score_for_possible_plays_separate(Situation sit, GameType game) {
+	inline auto score_for_possible_plays_separate(Situation sit, GameType game, Card skat_0, Card skat_1) {
 		using namespace stdc::literals;
 		
 		auto result = std::array<uint8_t, 32>{
@@ -415,7 +454,7 @@ namespace muskat {
 				continue;
 			}
 
-			auto solver = SituationSolver{game};
+			auto solver = SituationSolver{sit, game, skat_0, skat_1};
 
 			auto child = sit;
 			auto points_to_get_to_child = child.play_card(card, game);

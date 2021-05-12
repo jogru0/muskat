@@ -39,7 +39,7 @@ namespace muskat {
 inline void execute_worker_2(
 	std::stop_token stoken,
 	GameType game,
-	const std::vector<Situation> &inputs,
+	const std::vector<std::tuple<Situation, Card, Card>> &inputs,
 	stdc::ConcurrentResultVector<std::array<uint8_t, 32>> &results,
 	size_t worker_id,
 	std::vector<double> &times_in_ms,
@@ -60,7 +60,7 @@ inline void execute_worker_2(
 		}
 		auto result_id = *maybe_result_id;
 
-		auto situation = inputs[result_id];
+		auto [situation, skat_0, skat_1] = inputs[result_id];
 
 		wa::watches_th[worker_id][wa::loop_pre].stop();
 		++wa::iterations_pre[worker_id];
@@ -71,7 +71,7 @@ inline void execute_worker_2(
 		
 		//MEASURE BEGIN
 		
-		auto solver = muskat::SituationSolver{game};
+		auto solver = muskat::SituationSolver{situation, game, skat_0, skat_1};
 		auto points = solver.score_for_possible_plays(situation);
 		auto nodes = std::vector{static_cast<double>(solver.number_of_nodes()) / 1000.};
 		
@@ -139,7 +139,7 @@ inline void execute_worker_2(
 	
 	auto rng = stdc::seeded_RNG(stdc::DeterministicSourceOfRandomness{3, 123'361});
 
-	auto inputs = std::vector<Situation>{};
+	auto inputs = std::vector<std::tuple<Situation, Card, Card>>{};
 	inputs.reserve(number_samples);
 	std::generate_n(std::back_inserter(inputs), number_samples, [&](){
 		return possible_worlds.get_one_uniformly_clever(rng);

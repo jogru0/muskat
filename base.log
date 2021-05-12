@@ -6,59 +6,59 @@ Number of 1000 nodes:
 	mean:     787.7406349999993
 	median:   388.064
 Run time in ms:
-	mean:     1649.8045410969964
-	median:   568.1327025
-Simulations took 152960ms, to do this single threaded, a simulation has to take 152ms.
+	mean:     1494.3972884130005
+	median:   505.5440485
+Simulations took 139110ms, to do this single threaded, a simulation has to take 139ms.
 Start pick_best_card.
 Start simulation of 1000 worlds.
 Number of 1000 nodes:
 	mean:     182.68646699999994
 	median:   93.399
 Run time in ms:
-	mean:     282.8843704669999
-	median:   106.8571095
-Simulations took 24500ms, to do this single threaded, a simulation has to take 24ms.
+	mean:     254.28027377499973
+	median:   100.2081005
+Simulations took 22054ms, to do this single threaded, a simulation has to take 22ms.
 Start pick_best_card.
 Start simulation of 1000 worlds.
 Number of 1000 nodes:
 	mean:     2.894460999999997
 	median:   1.307
 Run time in ms:
-	mean:     2.4449442579999983
-	median:   1.0569995
-Simulations took 219ms, to do this single threaded, a simulation has to take 0ms.
+	mean:     2.396735798999998
+	median:   1.0999185
+Simulations took 216ms, to do this single threaded, a simulation has to take 0ms.
 Start pick_best_card.
 Start simulation of 1000 worlds.
 Number of 1000 nodes:
 	mean:     5.119532000000001
 	median:   3.8565
 Run time in ms:
-	mean:     4.267981471000002
-	median:   3.4259845
-Simulations took 369ms, to do this single threaded, a simulation has to take 0ms.
+	mean:     4.182806836000002
+	median:   3.2739205
+Simulations took 361ms, to do this single threaded, a simulation has to take 0ms.
 Start pick_best_card.
 Start simulation of 1000 worlds.
 Number of 1000 nodes:
 	mean:     0.7638669999999945
 	median:   0.729
 Run time in ms:
-	mean:     0.5617200320000004
-	median:   0.4197665
-Simulations took 48ms, to do this single threaded, a simulation has to take 0ms.
+	mean:     0.5320321299999997
+	median:   0.30362
+Simulations took 46ms, to do this single threaded, a simulation has to take 0ms.
 Start pick_best_card.
 Start simulation of 1000 worlds.
 Number of 1000 nodes:
 	mean:     0.4786390000000048
 	median:   0.369
 Run time in ms:
-	mean:     0.31518569099999977
-	median:   0.2074285
+	mean:     0.30955798000000023
+	median:   0.19309199999999999
 Simulations took 28ms, to do this single threaded, a simulation has to take 0ms.
 
 Using these samples to make an informed choice now.
 Time spent to do these choices: 0ms.
 
-Total time used: 152960ms.
+Total time used: 139110ms.
 
 Current Score: 0
 
@@ -80,7 +80,7 @@ Played: EK.
 Using these samples to make an informed choice now.
 Time spent to do these choices: 0ms.
 
-Total time used: 24500ms.
+Total time used: 22054ms.
 
 Current Score: 9
 
@@ -106,7 +106,7 @@ Played: HA.
 Using these samples to make an informed choice now.
 Time spent to do these choices: 0ms.
 
-Total time used: 219ms.
+Total time used: 216ms.
 
 Current Score: 9
 
@@ -126,7 +126,7 @@ Played: HZ.
 Using these samples to make an informed choice now.
 Time spent to do these choices: 0ms.
 
-Total time used: 369ms.
+Total time used: 361ms.
 
 Current Score: 9
 
@@ -150,7 +150,7 @@ Played: GA.
 Using these samples to make an informed choice now.
 Time spent to do these choices: 0ms.
 
-Total time used: 48ms.
+Total time used: 46ms.
 
 Current Score: 9
 
