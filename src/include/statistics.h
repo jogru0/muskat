@@ -34,7 +34,7 @@ inline void display_statistics(std::vector<double> data) {
 	auto sample_median = std::midpoint(median_l, median_r);
 
 	stdc::log("\tmean:     {}", sample_mean);
-	stdc::log("\tstddev:   {}", corrected_sample_standard_deviation);
+	// stdc::log("\tstddev:   {}", corrected_sample_standard_deviation);
 	stdc::log("\tmedian:   {}", sample_median);
 }
 

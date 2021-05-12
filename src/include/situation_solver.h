@@ -27,9 +27,10 @@ namespace muskat {
 
 		auto next_index = 0_z;
 		if (maybe_preference) {
-			result[next_index] = *maybe_preference;
-			cards.remove(*maybe_preference);
-			++next_index;
+			std::cout << to_string(*maybe_preference) << '\n';
+			// result[next_index] = *maybe_preference;
+			// cards.remove(*maybe_preference);
+			// ++next_index;
 		}
 
 		auto maybe_forced_tt = [&]() -> std::optional<TrickAndGameType> {
@@ -226,6 +227,8 @@ namespace muskat {
 					//All childs win.
 					bounds.update_lower(bound_calculated_over_all_children);
 				}
+
+				// maybe_deciding_card = pref;
 			}
 
 			return {bounds, maybe_deciding_card};

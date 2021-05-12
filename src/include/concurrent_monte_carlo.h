@@ -70,8 +70,11 @@ inline void execute_worker_2(
 		watch_solve.start();
 		
 		//MEASURE BEGIN
+		
 		// auto solver = muskat::SituationSolver{game};
 		// auto points = solver.score_for_possible_plays(situation);
+		// auto nodes = std::vector{static_cast<double>(solver.number_of_nodes()) / 1000.};
+		
 		auto [points, nodes] = score_for_possible_plays_separate(situation, game);
 		
 		//MEASURE END
