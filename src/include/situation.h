@@ -114,7 +114,7 @@ template<typename RNG>
 }
 
 template<typename RNG>
-[[nodiscard]] constexpr auto get_shuffled_deck(RNG &rng) {
+[[nodiscard]] constexpr auto get_shuffled_deck(RNG &rng) -> Deck {
 	auto result = get_unshuffled_deck();
 	std::shuffle(RANGE(result), rng);
 	return result;

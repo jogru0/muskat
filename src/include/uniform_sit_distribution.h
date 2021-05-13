@@ -6,7 +6,7 @@
 
 namespace muskat {
 
-[[inline]] auto get_signatures_dec_fdef_sdef_skat_and_entropy_and_number_of_possibilities(
+[[nodiscard]] inline auto get_signatures_dec_fdef_sdef_skat_and_entropy_and_number_of_possibilities(
 	std::array<Cards, 5> unknown_cards_per_trick_type,
 	std::array<KnownUnknownInSet, 4> known_about_unknown_dec_fdef_sdef_skat
 
@@ -88,6 +88,46 @@ namespace muskat {
 }
 
 
+struct UniformInitialSitDistribution {
+	GameType game;
+	Role active_role;
+
+	UniformInitialSitDistribution(GameType a_game, Role a_active_role) :
+		game{a_game},
+		active_role{a_active_role}
+	{}
+
+	template<typename Generator>
+	[[nodiscard]] auto operator()(Generator &rng) const -> std::tuple<Situation, Card, Card, GameType> {
+		using namespace stdc::literals;
+		
+		auto shuffled_deck = get_shuffled_deck(rng);
+
+		//Not according to skat rules, since the declarer is always in a different initial position.
+		//But shuffled is shuffled.
+		auto [h_dec, h_fd, h_sd, skat] = deal_deck(shuffled_deck);
+
+		//We force the skat to be gedrueckt to get an uniform distribution of skat games.
+		//In reality of course, games are not distributed like that.
+		//Similar with what game is declared by whom.
+		auto gedrueckt = skat;
+		
+		assert(skat.size() == 2);
+		auto skat_0 = skat.remove_next();
+		auto skat_1 = skat.remove_next();
+		
+		return {Situation{
+			h_dec,
+			h_fd,
+			h_sd,
+			gedrueckt,
+			active_role,
+			MaybeCard{},
+			MaybeCard{}
+		}, skat_0, skat_1, game};
+	}
+};
+
 class UniformSitDistribution{
 private:
 	std::vector<std::pair<
@@ -100,29 +140,9 @@ private:
 	Role active_role;
 	MaybeCard maybe_first_trick_card;
 	MaybeCard maybe_second_trick_card;
+	GameType m_game;
 
-public:
-	explicit UniformSitDistribution(
-		Role a_active_role, GameType game
-	) {
-		unknown_cards_per_trick_type = split_by_trick_type(~Cards{}, game);
-		known_cards_dec_fdef_sdef_skat = {Cards{}, Cards{}, Cards{}, Cards{}};
-		active_role = a_active_role;
-		maybe_first_trick_card = {};
-		maybe_second_trick_card = {};
-
-		
-		std::tie(signatures_dec_fdef_sdef_skat_and_entropy, number_of_possibilities) = get_signatures_dec_fdef_sdef_skat_and_entropy_and_number_of_possibilities(
-			unknown_cards_per_trick_type,
-			std::array{
-				KnownUnknownInSet{10, {true, true, true, true, true}},
-				KnownUnknownInSet{10, {true, true, true, true, true}},
-				KnownUnknownInSet{10, {true, true, true, true, true}},
-				KnownUnknownInSet{2, {true, true, true, true, true}}
-			}
-		);
-	}
-	
+public:	
 	explicit UniformSitDistribution(
 		PossibleWorlds worlds
 	) {
@@ -131,6 +151,8 @@ public:
 		active_role = worlds.active_role;
 		maybe_first_trick_card = worlds.maybe_first_trick_card;
 		maybe_second_trick_card = worlds.maybe_second_trick_card;
+		m_game = worlds.game;
+
 
 		std::tie(signatures_dec_fdef_sdef_skat_and_entropy, number_of_possibilities) = get_signatures_dec_fdef_sdef_skat_and_entropy_and_number_of_possibilities(
 			unknown_cards_per_trick_type,
@@ -138,16 +160,16 @@ public:
 		);
 	}
 
-	[[nodiscard]] constexpr auto get_number_of_possibilities() const {
+	[[nodiscard]] constexpr auto get_number_of_possibilities() const -> uint64_t {
 		return number_of_possibilities;
 	}
 
-	[[nodiscard]] constexpr auto get_number_of_color_distributions() const {
+	[[nodiscard]] constexpr auto get_number_of_color_distributions() const -> size_t {
 		return signatures_dec_fdef_sdef_skat_and_entropy.size();
 	}
 
 	template<typename Generator>
-	[[nodiscard]] auto operator()(Generator &rng) -> std::tuple<Situation, Card, Card> {
+	[[nodiscard]] auto operator()(Generator &rng) const -> std::tuple<Situation, Card, Card, GameType> {
 		using namespace stdc::literals;
 
 		auto sig_id = 0_z;
@@ -208,7 +230,7 @@ public:
 			active_role,
 			maybe_first_trick_card,
 			maybe_second_trick_card
-		}, skat_0, skat_1};
+		}, skat_0, skat_1, m_game};
 	}
 };
 

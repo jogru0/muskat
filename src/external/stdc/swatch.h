@@ -2,6 +2,8 @@
 
 #include <chrono>
 
+#include <fmt/core.h>
+
 #include<cassert>
 
 namespace stdc {
@@ -44,6 +46,7 @@ public:
 		return elap;
 	}
 
+
 	
 
 	// void reset() noexcept {
@@ -51,4 +54,32 @@ public:
 	// 	elap = std::chrono::nanoseconds{};
 	// }
 };
+
+namespace detail {
+
+template<int factor_to_ns>
+[[nodiscard]] auto to_string(std::chrono::nanoseconds ns, int prec, std::string abbreviation) {
+	return fmt::format(
+		"{:.{}f}{}",
+		ns.count() / static_cast<double>(factor_to_ns),
+		prec,
+		abbreviation
+	);
+}
+
+} //namespace detail
+
+[[nodiscard]] auto to_string_ms(std::chrono::nanoseconds ns, int prec = 0) {
+	return detail::to_string<1'000'000>(ns, prec, "ms");
+}
+
+[[nodiscard]] auto to_string_us(std::chrono::nanoseconds ns, int prec = 0) {
+	return detail::to_string<1'000>(ns, prec, "us");
+}
+
+[[nodiscard]] auto to_string_s(std::chrono::nanoseconds ns, int prec = 0) {
+	return detail::to_string<1'000'000'000>(ns, prec, "s");
+}
+
+
 } //namespace stdc

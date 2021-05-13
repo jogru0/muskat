@@ -205,134 +205,113 @@ inline void performance() {
 
 
 namespace detail {
-	[[noreturn]] inline void non_valid_input_exit() {
-		std::cout << "\n\n"
-			<< "USAGE: -a [valid_json] [number of iterations]\n"
-			<< "Exiting, please try again." << std::endl;
-		exit(1);
-	}
 
-	namespace detail {
-		inline void warn_about_ignored_flag(const char option, const std::string_view& flag) {
-			std::cout << "ATTENTION: Option '" << option << "' does not apply flag '" << flag << "'!" << "\n";
-		}
+[[noreturn]] inline void non_valid_input_exit() {
+	std::cout << "\n\n"
+		<< "USAGE: -a [valid_json] [number of iterations]\n"
+		<< "Exiting, please try again." << std::endl;
+	exit(1);
+}
 
-		[[noreturn]] inline void apply_flag(const char /*option*/, const std::string_view& flag)
-		{
-			// //plotting ignores this flag, but no reason to issue a warning
-			// if (flag == "-plot") {
-			// 	turn::config::do_plot = true;
-			// 	return;
-			// }
+inline void warn_about_ignored_flag(const char option, const std::string_view& flag) {
+	std::cout << "ATTENTION: Option '" << option << "' does not apply flag '" << flag << "'!" << "\n";
+}
 
-			// if (flag == "-write_expected" or flag == "-write_new") {
-			// 	if (option != 't') {
-			// 		detail::warn_about_ignored_flag(option, flag);
-			// 		return;
-			// 	}
-
-			// 	turn::config::write_diff_for_validation_files = true;
-
-			// 	if (flag == "-write_expected") {
-			// 		turn::config::write_expected_file_for_CI = true;
-			// 	}
-			// 	else {
-			// 		turn::config::write_new_expected_file_for_comparison = true;
-			// 	}		
-			// 	return;
-			// }
-
-			std::cout << "Unknown flag '" << flag << "'" << std::endl;
-			non_valid_input_exit();
-		}
-	} //namespace detail
-
-	inline void check_number_of_inputs_and_apply_flags(
-		const stdc::arguments& args, const char /*option*/, size_t arguments_needed_by_option
-	)
+[[noreturn]] inline void apply_flag(const char /*option*/, const std::string_view& flag)
 	{
-		size_t argument_without_flags_size = 2 + arguments_needed_by_option;
-		if (args.size() < argument_without_flags_size) {
-			std::cout << "Wrong number of arguments" << "\n";
-			non_valid_input_exit();
-		}
-
-		// for (size_t i = argument_without_flags_size; i < args.size(); ++i) {
-		// 	detail::apply_flag(option, args[i]);
+		// //plotting ignores this flag, but no reason to issue a warning
+		// if (flag == "-plot") {
+		// 	turn::config::do_plot = true;
+		// 	return;
 		// }
+
+		// if (flag == "-write_expected" or flag == "-write_new") {
+		// 	if (option != 't') {
+		// 		detail::warn_about_ignored_flag(option, flag);
+		// 		return;
+		// 	}
+
+		// 	turn::config::write_diff_for_validation_files = true;
+
+		// 	if (flag == "-write_expected") {
+		// 		turn::config::write_expected_file_for_CI = true;
+		// 	}
+		// 	else {
+		// 		turn::config::write_new_expected_file_for_comparison = true;
+		// 	}		
+		// 	return;
+		// }
+
+		std::cout << "Unknown flag '" << flag << "'" << std::endl;
+		non_valid_input_exit();
 	}
 
-	inline auto is_equal(const char* a, const char* b)
-	{
-		return strncmp(a, b, std::strlen(a)) == 0;
+inline void check_number_of_inputs_and_apply_flags(
+	const stdc::arguments& args, const char /*option*/, size_t arguments_needed_by_option
+) {
+	size_t argument_without_flags_size = 2 + arguments_needed_by_option;
+	if (args.size() < argument_without_flags_size) {
+		std::cout << "Wrong number of arguments" << "\n";
+		non_valid_input_exit();
 	}
 
-	inline auto parse_iterations_or_exit(std::string_view sv) {
-		auto maybe_number_simulation = stdc::maybe_parse_chars<size_t>(sv);
-		if (!maybe_number_simulation) {
-			std::cout << "Unable to read number of iterations from input." << std::endl;
-			non_valid_input_exit();
-		}
-		return *maybe_number_simulation;
+	// for (size_t i = argument_without_flags_size; i < args.size(); ++i) {
+	// 	detail::apply_flag(option, args[i]);
+	// }
+}
+
+inline auto is_equal(const char* a, const char* b)
+{
+	return strncmp(a, b, std::strlen(a)) == 0;
+}
+
+inline auto parse_iterations_or_exit(std::string_view sv) {
+	auto maybe_number_simulation = stdc::maybe_parse_chars<size_t>(sv);
+	if (!maybe_number_simulation) {
+		std::cout << "Unable to read number of iterations from input." << std::endl;
+		non_valid_input_exit();
 	}
+	return *maybe_number_simulation;
+}
 
-} //namespace detail
-
-
-//At the moment, noreturn
-auto main(int argc, char **argv) -> int try {
-	assert(std::cout << "Asserts active.\n");
-
-	std::cout << "Card:      " << sizeof(muskat::Card) << "\n";
-	std::cout << "op<Card>:  " << sizeof(std::optional<muskat::Card>) << "\n";
-	std::cout << "OpCard:    " << sizeof(muskat::MaybeCard) << "\n";
-	std::cout << "Role:      " << sizeof(muskat::Role) << "\n";
-	std::cout << "Sit:       " << sizeof(muskat::Situation) << "\n";
-	std::cout << "B:         " << sizeof(muskat::Bounds) << "\n";
-	std::cout << "(B, OpC):  " << sizeof(std::pair<muskat::Bounds, muskat::MaybeCard>) << "\n";
-	std::cout << "(OpC, B):  " << sizeof(std::pair<muskat::MaybeCard, muskat::Bounds>) << "\n";
-	
-
+inline void test_calculating_initial_games(size_t iterations) {
 	for (auto game : std::array{
+		// muskat::GameType::Null,
 		muskat::GameType::Eichel,
 		muskat::GameType::Green, 
 		muskat::GameType::Herz,
 		muskat::GameType::Schell,
-		muskat::GameType::Grand,
-		muskat::GameType::Null
+		muskat::GameType::Grand
 	}) {
 		for (auto role: std::array{
 			muskat::Role::Declarer,
 			muskat::Role::FirstDefender,
 			muskat::Role::SecondDefender
 		}) {
-			auto watch_dist_generation = stdc::SWatch{};
-			watch_dist_generation.start();
-			auto dist = muskat::UniformSitDistribution{role, game};
-			watch_dist_generation.stop();
-			stdc::log("==================");
-			stdc::log(
-				"Creation of the uniform sit distribution for {} games with {} in Vorhand took {:.0f}ms.",
-				muskat::to_string(game),
-				muskat::to_string(role),
-				watch_dist_generation.elapsed().count() / 1'000'000.0
-			);
-			stdc::log("Number of {} games with {} in Vorhand: {}",
-				muskat::to_string(game),
-				muskat::to_string(role),
-				dist.get_number_of_possibilities()
-			);
-			stdc::log("Number of color distributions for {} with {} in Vorhand: {}",
-				muskat::to_string(game),
-				muskat::to_string(role),
-				dist.get_number_of_color_distributions()
-			);
+			muskat::calculate_initial_games(iterations, game, role);
 		}
 	}
+}
 
-	return 0;
+} //namespace detail
+
+//At the moment, noreturn
+auto main(int argc, char **argv) -> int try {
+	assert(std::cout << "Asserts active.\n");
+
+	// std::cout << "Card:      " << sizeof(muskat::Card) << "\n";
+	// std::cout << "op<Card>:  " << sizeof(std::optional<muskat::Card>) << "\n";
+	// std::cout << "OpCard:    " << sizeof(muskat::MaybeCard) << "\n";
+	// std::cout << "Role:      " << sizeof(muskat::Role) << "\n";
+	// std::cout << "Sit:       " << sizeof(muskat::Situation) << "\n";
+	// std::cout << "B:         " << sizeof(muskat::Bounds) << "\n";
+	// std::cout << "(B, OpC):  " << sizeof(std::pair<muskat::Bounds, muskat::MaybeCard>) << "\n";
+	// std::cout << "(OpC, B):  " << sizeof(std::pair<muskat::MaybeCard, muskat::Bounds>) << "\n";
 	
 	stdc::log("=====================================");
+
+	auto in_release_mode = true;
+	assert((in_release_mode = false) || true);
 
 	auto args = stdc::arguments{argc, argv};
 	
@@ -346,6 +325,16 @@ auto main(int argc, char **argv) -> int try {
 			muskat::analyze_game(
 				std::filesystem::path{args[2]},
 				detail::parse_iterations_or_exit(args[3])
+			);
+			break;
+		case 't':
+			if (!in_release_mode) {
+				stdc::log("THIS WAS NOT MEASURED IN RELEASE MODE!");
+			}
+			
+			detail::check_number_of_inputs_and_apply_flags(args, option, 1);
+			detail::test_calculating_initial_games(
+				detail::parse_iterations_or_exit(args[2])
 			);
 			break;
 		//plot initial state if simulator constructor does not throw

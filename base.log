@@ -1,56 +1,152 @@
 
 =====================================
-Start pick_best_card.
-Start simulation of 1000 worlds.
+
+Start calculate_initial_games(1000, Eichel, Declarer).
 Number of 1000 nodes:
-	mean:     788
-	median:   388
+	mean:     395
+	median:   216
 Run time in ms:
-	mean:     1480
-	median:   498
-Simulations took 137.6s -> perceived time per sample: 1651ms.
-Start pick_best_card.
-Start simulation of 1000 worlds.
+	mean:     541
+	median:   207
+Simulations took 48.7s -> perceived time per sample: 585ms.
+Hash: 5172525969396470229
+
+Start calculate_initial_games(1000, Eichel, First Defender).
 Number of 1000 nodes:
-	mean:     183
-	median:   93
+	mean:     328
+	median:   166
 Run time in ms:
-	mean:     251
-	median:   98
-Simulations took 21.8s -> perceived time per sample: 261ms.
-Start pick_best_card.
-Start simulation of 1000 worlds.
+	mean:     480
+	median:   168
+Simulations took 41.3s -> perceived time per sample: 496ms.
+Hash: 15000066867884389596
+
+Start calculate_initial_games(1000, Eichel, Second Defender).
 Number of 1000 nodes:
-	mean:     3
-	median:   1
+	mean:     342
+	median:   169
 Run time in ms:
-	mean:     2
-	median:   1
-Simulations took 0.2s -> perceived time per sample: 3ms.
-Start pick_best_card.
-Start simulation of 1000 worlds.
+	mean:     489
+	median:   173
+Simulations took 51.8s -> perceived time per sample: 621ms.
+Hash: 14694672009696912465
+
+Start calculate_initial_games(1000, Green, Declarer).
 Number of 1000 nodes:
-	mean:     5
-	median:   4
+	mean:     413
+	median:   228
 Run time in ms:
-	mean:     4
-	median:   3
-Simulations took 0.4s -> perceived time per sample: 4ms.
-Start pick_best_card.
-Start simulation of 1000 worlds.
+	mean:     573
+	median:   225
+Simulations took 49.4s -> perceived time per sample: 593ms.
+Hash: 15272549174292048255
+
+Start calculate_initial_games(1000, Green, First Defender).
 Number of 1000 nodes:
-	mean:     1
-	median:   1
+	mean:     342
+	median:   175
 Run time in ms:
-	mean:     1
-	median:   0
-Simulations took 0.0s -> perceived time per sample: 1ms.
-Start pick_best_card.
-Start simulation of 1000 worlds.
+	mean:     496
+	median:   180
+Simulations took 43.9s -> perceived time per sample: 527ms.
+Hash: 573368857236830875
+
+Start calculate_initial_games(1000, Green, Second Defender).
 Number of 1000 nodes:
-	mean:     0
-	median:   0
+	mean:     359
+	median:   184
 Run time in ms:
-	mean:     0
-	median:   0
-Simulations took 0.0s -> perceived time per sample: 0ms.
+	mean:     524
+	median:   192
+Simulations took 45.4s -> perceived time per sample: 545ms.
+Hash: 3595067717543666355
+
+Start calculate_initial_games(1000, Herz, Declarer).
+Number of 1000 nodes:
+	mean:     414
+	median:   218
+Run time in ms:
+	mean:     577
+	median:   219
+Simulations took 49.8s -> perceived time per sample: 598ms.
+Hash: 7744276682620319612
+
+Start calculate_initial_games(1000, Herz, First Defender).
+Number of 1000 nodes:
+	mean:     348
+	median:   171
+Run time in ms:
+	mean:     508
+	median:   176
+Simulations took 44.1s -> perceived time per sample: 530ms.
+Hash: 17722297316807530159
+
+Start calculate_initial_games(1000, Herz, Second Defender).
+Number of 1000 nodes:
+	mean:     360
+	median:   174
+Run time in ms:
+	mean:     526
+	median:   178
+Simulations took 48.8s -> perceived time per sample: 586ms.
+Hash: 5726000145590928552
+
+Start calculate_initial_games(1000, Schell, Declarer).
+Number of 1000 nodes:
+	mean:     392
+	median:   232
+Run time in ms:
+	mean:     529
+	median:   220
+Simulations took 44.7s -> perceived time per sample: 537ms.
+Hash: 12851022176777145813
+
+Start calculate_initial_games(1000, Schell, First Defender).
+Number of 1000 nodes:
+	mean:     331
+	median:   180
+Run time in ms:
+	mean:     471
+	median:   186
+Simulations took 41.8s -> perceived time per sample: 502ms.
+Hash: 6855162881504708642
+
+Start calculate_initial_games(1000, Schell, Second Defender).
+Number of 1000 nodes:
+	mean:     341
+	median:   187
+Run time in ms:
+	mean:     483
+	median:   191
+Simulations took 43.6s -> perceived time per sample: 523ms.
+Hash: 2645755826357685270
+
+Start calculate_initial_games(1000, Grand, Declarer).
+Number of 1000 nodes:
+	mean:     312
+	median:   172
+Run time in ms:
+	mean:     351
+	median:   145
+Simulations took 29.4s -> perceived time per sample: 353ms.
+Hash: 2346853115766035708
+
+Start calculate_initial_games(1000, Grand, First Defender).
+Number of 1000 nodes:
+	mean:     252
+	median:   143
+Run time in ms:
+	mean:     287
+	median:   131
+Simulations took 24.2s -> perceived time per sample: 290ms.
+Hash: 2596189175127280105
+
+Start calculate_initial_games(1000, Grand, Second Defender).
+Number of 1000 nodes:
+	mean:     260
+	median:   141
+Run time in ms:
+	mean:     298
+	median:   128
+Simulations took 27.5s -> perceived time per sample: 330ms.
+Hash: 5976389533755676257

@@ -62,7 +62,16 @@ namespace muskat {
 				auto card = cards_mod.remove_next();
 				auto options = get_options(card);
 				auto power = to_power(card, maybe_forced_tt.value_or(TrickAndGameType{card, game}));
-				if (std::tuple{options, -power} < std::tuple{best_options, -best_power}) {
+				
+				if (
+					#pragma clang diagnostic push
+					#pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
+					std::tuple{options, -power} < std::tuple{best_options, -best_power}
+					#pragma clang diagnostic pop
+					
+					
+					
+					) {
 					best_card = card;
 					best_options = options;
 					best_power = power;

@@ -12,3 +12,4 @@
 -Wno-non-virtual-dtor
 -Wno-exit-time-destructors
 -Wno-float-equal
+-Wno-date-time

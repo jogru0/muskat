@@ -40,10 +40,9 @@ static auto done_threads = std::atomic<uint8_t>{0};
 
 namespace muskat {
 
-inline void execute_worker_2(
+inline void execute_worker_sampling(
 	std::stop_token stoken,
-	GameType game,
-	const std::vector<std::tuple<Situation, Card, Card>> &inputs,
+	const std::vector<std::tuple<Situation, Card, Card, GameType>> &inputs,
 	stdc::ConcurrentResultVector<std::array<uint8_t, 32>> &results,
 	size_t worker_id,
 	std::vector<double> &times_in_ms,
@@ -64,7 +63,7 @@ inline void execute_worker_2(
 		}
 		auto result_id = *maybe_result_id;
 
-		auto [situation, skat_0, skat_1] = inputs[result_id];
+		auto [situation, skat_0, skat_1, game] = inputs[result_id];
 
 		wa::watches_th[worker_id][wa::loop_pre].stop();
 		++wa::iterations_pre[worker_id];
@@ -114,8 +113,9 @@ inline void execute_worker_2(
 	throw;
 }
 
-[[nodiscard]] inline auto multithreaded_world_simulation_2(
-	const PossibleWorlds &possible_worlds,
+template<typename SituationDistribution>
+[[nodiscard]] inline auto multithreaded_sampling(
+	const SituationDistribution &situation_dist,
 	size_t number_samples
 )
 	-> std::vector<PerfectInformationResult>
@@ -136,7 +136,6 @@ inline void execute_worker_2(
 		};
 	}
 
-
 	//Uses shared_ptr because threads might be finished before or after this function returns.
 	auto results = stdc::ConcurrentResultVector<std::array<uint8_t, 32>>{number_samples};
 
@@ -149,44 +148,20 @@ inline void execute_worker_2(
 	// Make a random number engine
 	auto rng = pcg32(/*seed_source*/);
 
-	auto inputs = std::vector<std::tuple<Situation, Card, Card>>{};
+	auto inputs = std::vector<std::tuple<Situation, Card, Card, GameType>>{};
 	inputs.reserve(number_samples);
-
-
-	auto watch_dist_generation = stdc::SWatch{};
-	watch_dist_generation.start();
-	auto dist = UniformSitDistribution{possible_worlds};
-	watch_dist_generation.stop();
-	stdc::log(
-		"Creation of the uniform sit distribution took {:.0f}us.",
-		watch_dist_generation.elapsed().count() / 1'000.0
-	);
-
-
-	stdc::log(
-		"Number of possible situations: {}",
-		dist.get_number_of_possibilities()
-	);
-
 
 	auto watch_sampling = stdc::SWatch{};
 	watch_sampling.start();
 	std::generate_n(std::back_inserter(inputs), number_samples, [&](){
-		return dist(rng);
+		return situation_dist(rng);
 	});
 	watch_sampling.stop();
-	stdc::log(
-		"Sampling of {} situations took {:.0f}us.",
+	stdc::log_debug(
+		"Sampling of {} situations took {}.",
 		number_samples,
-		watch_sampling.elapsed().count() / 1'000.0
+		stdc::to_string_us(watch_sampling.elapsed())
 	);
-
-	return {PerfectInformationResult{
-		0, 0, 0, 0, 0, 0, 0, 0,
-		0, 0, 0, 0, 0, 0, 0, 0,
-		0, 0, 0, 0, 0, 0, 0, 0,
-		0, 0, 0, 0, 0, 0, 0, 0
-	}};
 	
 	auto threads = std::vector<std::jthread>{};
 	threads.reserve(number_of_threads);
@@ -197,8 +172,7 @@ inline void execute_worker_2(
 
 	for (auto thread_id = 0_z; thread_id < number_of_threads; ++thread_id) {
 		threads.push_back(std::jthread{
-			execute_worker_2,
-			possible_worlds.get_game_type(),
+			execute_worker_sampling,
 			std::cref(inputs),
 			std::ref(results),
 			thread_id,
@@ -252,25 +226,34 @@ inline void execute_worker_2(
 	auto watch_whole = stdc::SWatch{};
 	watch_whole.start();
 
+	auto watch_dist_generation = stdc::SWatch{};
+	watch_dist_generation.start();
+	auto dist = UniformSitDistribution{worlds};
+	watch_dist_generation.stop();
+	stdc::log(
+		"Creation of the uniform sit distribution took {}.",
+		stdc::to_string_us(watch_dist_generation.elapsed())
+	);
+
+
 	// stdc::log(fmt::format("Start simulation of {} worlds.", number_samples_to_do));
 	auto watch_simulation = stdc::SWatch{};
 	watch_simulation.start();
 	
 	// auto results = muskat::multithreaded_world_simulation(worlds, std::chrono::seconds(100));
-	auto results = muskat::multithreaded_world_simulation_2(worlds, number_samples_to_do);
+	auto results = muskat::multithreaded_sampling(dist, number_samples_to_do);
 	
 	//TODO: Empty -> Assert triggert.
 	auto sample = muskat::to_sample(std::move(results));
 	
 	watch_simulation.stop();
-	// assert(sample.points_for_situations().size() == number_samples_to_do);
+	assert(sample.points_for_situations().size() == number_samples_to_do);
 
-	auto elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(watch_simulation.elapsed());
-	// stdc::log(
-	// 	"Simulations took {:.1f}s -> perceived time per sample: {:.0f}ms.",
-	// 	elapsed_ms.count() / 1000.0,
-	// 	(elapsed_ms.count() * 12.0) / number_samples_to_do
-	// );
+	stdc::log(
+		"Simulations took {} -> perceived time per sample: {}.",
+		stdc::to_string_s(watch_simulation.elapsed(), 1),
+		stdc::to_string_ms((watch_simulation.elapsed() * 12) / number_samples_to_do)
+	);
 
 
 	std::cout << "\nUsing these samples to make an informed choice now.\n";
@@ -340,6 +323,42 @@ inline void execute_worker_2(
 	// for (const auto &watches : wa::watches_th) {
 	// 	std::cout << '\t' << watches[wa::rng].elapsed<std::chrono::microseconds>() << "us.\n";
 	// }
+}
+
+
+
+inline void calculate_initial_games(size_t number_samples_to_do, GameType game, Role initial_role) {
+	using namespace stdc::literals;
+	
+	stdc::log(
+		"\nStart calculate_initial_games({}, {}, {}).",
+		number_samples_to_do,
+		to_string(game),
+		to_string(initial_role)
+	);
+
+	// stdc::log(fmt::format("Start simulation of {} worlds.", number_samples_to_do));
+	auto watch_simulation = stdc::SWatch{};
+	watch_simulation.start();
+	
+	auto results = muskat::multithreaded_sampling(
+		UniformInitialSitDistribution{game, initial_role},
+		number_samples_to_do
+	);
+	
+	watch_simulation.stop();
+	
+	// assert(sample.points_for_situations().size() == number_samples_to_do);
+
+	stdc::log(
+		"Simulations took {} -> perceived time per sample: {}.",
+		stdc::to_string_s(watch_simulation.elapsed(), 1),
+		stdc::to_string_ms((watch_simulation.elapsed() * 12) / number_samples_to_do)
+	);
+
+
+	stdc::log("Hash: {}", stdc::GeneralHasher{}(results));
+	stdc::detail::log.flush();
 }
 
 
