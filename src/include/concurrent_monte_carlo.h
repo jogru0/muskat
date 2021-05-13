@@ -142,22 +142,13 @@ inline void execute_worker_2(
 
 	auto times_in_ms = std::vector<double>(number_samples);
 	auto numbers_of_nodes = std::vector<std::vector<double>>(number_samples);
-	
-	auto watch_rng = stdc::SWatch{};
-	watch_rng.start();
-	
+		
 	// Seed with a real random value, if available
 	// auto seed_source = pcg_extras::seed_seq_from<std::random_device>{};
 
 	// Make a random number engine
 	auto rng = pcg32(/*seed_source*/);
-	
-	watch_rng.stop();
-	stdc::log(
-		"Creation of the rng took {:.0f}us.",
-		watch_rng.elapsed().count() / 1'000.0
-	);
-	
+
 	auto inputs = std::vector<std::tuple<Situation, Card, Card>>{};
 	inputs.reserve(number_samples);
 
@@ -169,6 +160,12 @@ inline void execute_worker_2(
 	stdc::log(
 		"Creation of the uniform sit distribution took {:.0f}us.",
 		watch_dist_generation.elapsed().count() / 1'000.0
+	);
+
+
+	stdc::log(
+		"Number of possible situations: {}",
+		dist.get_number_of_possibilities()
 	);
 
 

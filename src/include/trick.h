@@ -156,7 +156,7 @@ using Power = int8_t;
 }
 
 [[nodiscard]] inline constexpr auto split_by_trick_type(Cards cards, GameType game)
-	-> std::array<Cards,  5>
+	-> std::array<Cards, 5>
 {
 	auto id_to_skip = static_cast<size_t>(game);
 

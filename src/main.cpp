@@ -292,6 +292,45 @@ auto main(int argc, char **argv) -> int try {
 	std::cout << "(B, OpC):  " << sizeof(std::pair<muskat::Bounds, muskat::MaybeCard>) << "\n";
 	std::cout << "(OpC, B):  " << sizeof(std::pair<muskat::MaybeCard, muskat::Bounds>) << "\n";
 	
+
+	for (auto game : std::array{
+		muskat::GameType::Eichel,
+		muskat::GameType::Green, 
+		muskat::GameType::Herz,
+		muskat::GameType::Schell,
+		muskat::GameType::Grand,
+		muskat::GameType::Null
+	}) {
+		for (auto role: std::array{
+			muskat::Role::Declarer,
+			muskat::Role::FirstDefender,
+			muskat::Role::SecondDefender
+		}) {
+			auto watch_dist_generation = stdc::SWatch{};
+			watch_dist_generation.start();
+			auto dist = muskat::UniformSitDistribution{role, game};
+			watch_dist_generation.stop();
+			stdc::log("==================");
+			stdc::log(
+				"Creation of the uniform sit distribution for {} games with {} in Vorhand took {:.0f}ms.",
+				muskat::to_string(game),
+				muskat::to_string(role),
+				watch_dist_generation.elapsed().count() / 1'000'000.0
+			);
+			stdc::log("Number of {} games with {} in Vorhand: {}",
+				muskat::to_string(game),
+				muskat::to_string(role),
+				dist.get_number_of_possibilities()
+			);
+			stdc::log("Number of color distributions for {} with {} in Vorhand: {}",
+				muskat::to_string(game),
+				muskat::to_string(role),
+				dist.get_number_of_color_distributions()
+			);
+		}
+	}
+
+	return 0;
 	
 	stdc::log("=====================================");
 
