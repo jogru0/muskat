@@ -147,7 +147,7 @@ using Power = int8_t;
 }
 
 [[nodiscard]] inline auto get_legal_cards(
-	Cards &hand,
+	const Cards &hand,
 	std::optional<TrickAndGameType> maybe_trick_game_type
 ) {
 	return maybe_trick_game_type

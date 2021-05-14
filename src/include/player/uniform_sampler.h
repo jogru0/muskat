@@ -21,7 +21,7 @@ namespace muskat {
 
 		std::optional<PossibleWorlds> m_current_information;
 		std::mt19937 m_rng;
-		Points m_points_declarer;
+		Points m_points_declarer_without_skat;
 
 
 		//Hopefully there when we get informed about the game …
@@ -50,7 +50,7 @@ namespace muskat {
 		virtual void inform_about_game(GameType game) final {
 			using namespace stdc::literals;
 			say("We play "s + to_string(game) + ".");
-			m_points_declarer = 0;
+			m_points_declarer_without_skat = 0;
 			say("For debugging: I think my role is " + to_string(m_role) + ".");
 			say("For debugging: I think my position is " + to_string(m_my_first_position) + ".");
 			say("For debugging: I think my hand is " + to_string(m_hand) + ".");
@@ -106,8 +106,7 @@ namespace muskat {
 				known_cards |= stdc::surely(m_skat);
 			}
 			say("For debugging: I think my known cards are " + to_string(known_cards) + ".");
-			auto unknown_cards = ~known_cards;
-
+			
 			m_current_information = muskat::PossibleWorlds{
 				m_hand,
 				m_role,
@@ -118,7 +117,7 @@ namespace muskat {
 
 			assert(known_about_unknown_dec_fdef_sdef_skat == m_current_information->known_about_unknown_dec_fdef_sdef_skat);
 			assert(known_cards_dec_fdef_sdef_skat == m_current_information->known_cards_dec_fdef_sdef_skat);
-			assert(unknown_cards == m_current_information->unknown_cards);
+			assert(~known_cards == m_current_information->unknown_cards);
 		}
 
 		virtual void inform_about_deal(Cards cards) final {
@@ -136,14 +135,14 @@ namespace muskat {
 		virtual void inform_about_move(Card card) final {
 			using namespace stdc::literals;
 			say("Card "s + to_string(card) + " was played.");
-			m_points_declarer += stdc::surely(m_current_information).play_card(card);
+			m_points_declarer_without_skat += stdc::surely(m_current_information).play_card(card);
 		}
 
 		virtual auto request_move() -> Card final {
 			assert(m_current_information->active_role == m_role);
 			assert(!m_current_information->is_at_game_end());
 			say("Deciding my next move …\n");
-			auto card = pick_best_card(stdc::surely(m_current_information), m_points_declarer, 200);
+			auto card = pick_best_card(stdc::surely(m_current_information), m_points_declarer_without_skat, 200);
 			return card;
 		}
 

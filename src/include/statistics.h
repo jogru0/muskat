@@ -11,6 +11,8 @@ namespace stdc{
 inline void display_statistics(std::vector<double> data) {
 	auto size = data.size();
 	assert(2 <= size);
+
+	auto sample_max = *std::max_element(RANGE(data));
 	
 	auto sum = std::accumulate(RANGE(data), 0.);
 	auto sample_mean = sum / static_cast<double>(size);
@@ -33,9 +35,10 @@ inline void display_statistics(std::vector<double> data) {
 
 	auto sample_median = std::midpoint(median_l, median_r);
 
-	stdc::log("\tmean:     {:.0f}", sample_mean);
+	stdc::log("\tmean:     {:5.0f}", sample_mean);
 	stdc::log_debug("\tstddev:   {}", corrected_sample_standard_deviation);
-	stdc::log("\tmedian:   {:.0f}", sample_median);
+	stdc::log("\tmedian:   {:5.0f}", sample_median);
+	stdc::log("\tmax:      {:5.0f}", sample_max);
 	
 }
 

@@ -232,11 +232,10 @@ namespace muskat {
 
 			auto bound_calculated_over_all_children = is_declarer ? Points{} : Points{120};
 
-			auto remaining_possible_plays = next_possible_plays(sit, m_game);
-			//We catch these via strict bounds.
-			assert(!remaining_possible_plays.empty());
-
 			auto cards_to_consider = get_cards_to_consider(sit, m_game, pref);
+
+			//We catch these via strict bounds.
+			assert(cards_to_consider[0]);
 
 			auto maybe_deciding_card = MaybeCard{};
 
@@ -398,6 +397,8 @@ namespace muskat {
 			return {stdc::surely(maybe_card_for_threshold(sit, final_additional_score_to_reach + 1)), final_additional_score_to_reach};
 		}
 
+		//How many points will still follow for the declarer due to finishing tricks?
+		//Not counting tricks already won, or points gedrückt.
 		auto score_for_possible_plays(Situation sit) {
 			using namespace stdc::literals;
 			

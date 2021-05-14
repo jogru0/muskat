@@ -3,150 +3,195 @@
 
 Start calculate_initial_games(1000, Eichel, Declarer).
 Number of 1000 nodes:
-	mean:     395
-	median:   216
+	mean:       395
+	median:     216
+	max:       7002
 Run time in ms:
-	mean:     541
-	median:   207
-Simulations took 48.7s -> perceived time per sample: 585ms.
-Hash: 5172525969396470229
+	mean:       546
+	median:     210
+	max:      12718
+Time to finished 1000 tasks with 12 threads: 49.3s
+	-> effective time per task: 592ms
+Hash: 11393448816606751144
 
 Start calculate_initial_games(1000, Eichel, First Defender).
 Number of 1000 nodes:
-	mean:     328
-	median:   166
+	mean:       328
+	median:     166
+	max:       3820
 Run time in ms:
-	mean:     480
-	median:   168
-Simulations took 41.3s -> perceived time per sample: 496ms.
-Hash: 15000066867884389596
+	mean:       489
+	median:     173
+	max:       9595
+Time to finished 1000 tasks with 12 threads: 42.3s
+	-> effective time per task: 508ms
+Hash: 11296914152991369721
 
 Start calculate_initial_games(1000, Eichel, Second Defender).
 Number of 1000 nodes:
-	mean:     342
-	median:   169
+	mean:       342
+	median:     169
+	max:       9674
 Run time in ms:
-	mean:     489
-	median:   173
-Simulations took 51.8s -> perceived time per sample: 621ms.
-Hash: 14694672009696912465
+	mean:       525
+	median:     183
+	max:      20778
+Time to finished 1000 tasks with 12 threads: 55.3s
+	-> effective time per task: 664ms
+Hash: 17880689724063414497
 
 Start calculate_initial_games(1000, Green, Declarer).
 Number of 1000 nodes:
-	mean:     413
-	median:   228
+	mean:       413
+	median:     228
+	max:       8807
 Run time in ms:
-	mean:     573
-	median:   225
-Simulations took 49.4s -> perceived time per sample: 593ms.
-Hash: 15272549174292048255
+	mean:       593
+	median:     235
+	max:      23245
+Time to finished 1000 tasks with 12 threads: 51.3s
+	-> effective time per task: 616ms
+Hash: 10108758540838733084
 
 Start calculate_initial_games(1000, Green, First Defender).
 Number of 1000 nodes:
-	mean:     342
-	median:   175
+	mean:       342
+	median:     175
+	max:       8985
 Run time in ms:
-	mean:     496
-	median:   180
-Simulations took 43.9s -> perceived time per sample: 527ms.
-Hash: 573368857236830875
+	mean:       519
+	median:     188
+	max:      25036
+Time to finished 1000 tasks with 12 threads: 45.9s
+	-> effective time per task: 551ms
+Hash: 9796678020323708415
 
 Start calculate_initial_games(1000, Green, Second Defender).
 Number of 1000 nodes:
-	mean:     359
-	median:   184
+	mean:       359
+	median:     184
+	max:      10399
 Run time in ms:
-	mean:     524
-	median:   192
-Simulations took 45.4s -> perceived time per sample: 545ms.
-Hash: 3595067717543666355
+	mean:       549
+	median:     209
+	max:      29955
+Time to finished 1000 tasks with 12 threads: 47.6s
+	-> effective time per task: 572ms
+Hash: 14824025670357758736
 
 Start calculate_initial_games(1000, Herz, Declarer).
 Number of 1000 nodes:
-	mean:     414
-	median:   218
+	mean:       414
+	median:     218
+	max:       7126
 Run time in ms:
-	mean:     577
-	median:   219
-Simulations took 49.8s -> perceived time per sample: 598ms.
-Hash: 7744276682620319612
+	mean:       609
+	median:     229
+	max:      14950
+Time to finished 1000 tasks with 12 threads: 52.7s
+	-> effective time per task: 633ms
+Hash: 323907493819616161
 
 Start calculate_initial_games(1000, Herz, First Defender).
 Number of 1000 nodes:
-	mean:     348
-	median:   171
+	mean:       348
+	median:     171
+	max:       6878
 Run time in ms:
-	mean:     508
-	median:   176
-Simulations took 44.1s -> perceived time per sample: 530ms.
-Hash: 17722297316807530159
+	mean:       520
+	median:     179
+	max:      15676
+Time to finished 1000 tasks with 12 threads: 45.1s
+	-> effective time per task: 541ms
+Hash: 17591054048567608044
 
 Start calculate_initial_games(1000, Herz, Second Defender).
 Number of 1000 nodes:
-	mean:     360
-	median:   174
+	mean:       360
+	median:     174
+	max:       6824
 Run time in ms:
-	mean:     526
-	median:   178
-Simulations took 48.8s -> perceived time per sample: 586ms.
-Hash: 5726000145590928552
+	mean:       534
+	median:     180
+	max:      15201
+Time to finished 1000 tasks with 12 threads: 49.7s
+	-> effective time per task: 597ms
+Hash: 15623664099917767041
 
 Start calculate_initial_games(1000, Schell, Declarer).
 Number of 1000 nodes:
-	mean:     392
-	median:   232
+	mean:       392
+	median:     232
+	max:       3826
 Run time in ms:
-	mean:     529
-	median:   220
-Simulations took 44.7s -> perceived time per sample: 537ms.
-Hash: 12851022176777145813
+	mean:       579
+	median:     240
+	max:       8320
+Time to finished 1000 tasks with 12 threads: 49.0s
+	-> effective time per task: 588ms
+Hash: 13148568315212559871
 
 Start calculate_initial_games(1000, Schell, First Defender).
 Number of 1000 nodes:
-	mean:     331
-	median:   180
+	mean:       331
+	median:     180
+	max:       3787
 Run time in ms:
-	mean:     471
-	median:   186
-Simulations took 41.8s -> perceived time per sample: 502ms.
-Hash: 6855162881504708642
+	mean:       481
+	median:     189
+	max:       9907
+Time to finished 1000 tasks with 12 threads: 43.0s
+	-> effective time per task: 516ms
+Hash: 14782255430367615621
 
 Start calculate_initial_games(1000, Schell, Second Defender).
 Number of 1000 nodes:
-	mean:     341
-	median:   187
+	mean:       341
+	median:     187
+	max:       4183
 Run time in ms:
-	mean:     483
-	median:   191
-Simulations took 43.6s -> perceived time per sample: 523ms.
-Hash: 2645755826357685270
+	mean:       493
+	median:     196
+	max:      10814
+Time to finished 1000 tasks with 12 threads: 44.4s
+	-> effective time per task: 533ms
+Hash: 5879333275298128614
 
 Start calculate_initial_games(1000, Grand, Declarer).
 Number of 1000 nodes:
-	mean:     312
-	median:   172
+	mean:       312
+	median:     172
+	max:       3013
 Run time in ms:
-	mean:     351
-	median:   145
-Simulations took 29.4s -> perceived time per sample: 353ms.
-Hash: 2346853115766035708
+	mean:       359
+	median:     146
+	max:       5564
+Time to finished 1000 tasks with 12 threads: 30.1s
+	-> effective time per task: 362ms
+Hash: 9589234069563463592
 
 Start calculate_initial_games(1000, Grand, First Defender).
 Number of 1000 nodes:
-	mean:     252
-	median:   143
+	mean:       252
+	median:     143
+	max:       2650
 Run time in ms:
-	mean:     287
-	median:   131
-Simulations took 24.2s -> perceived time per sample: 290ms.
-Hash: 2596189175127280105
+	mean:       294
+	median:     134
+	max:       4407
+Time to finished 1000 tasks with 12 threads: 24.8s
+	-> effective time per task: 298ms
+Hash: 799317990272595189
 
 Start calculate_initial_games(1000, Grand, Second Defender).
 Number of 1000 nodes:
-	mean:     260
-	median:   141
+	mean:       260
+	median:     141
+	max:       4641
 Run time in ms:
-	mean:     298
-	median:   128
-Simulations took 27.5s -> perceived time per sample: 330ms.
-Hash: 5976389533755676257
+	mean:       305
+	median:     129
+	max:       7175
+Time to finished 1000 tasks with 12 threads: 28.2s
+	-> effective time per task: 338ms
+Hash: 9524775807108960679

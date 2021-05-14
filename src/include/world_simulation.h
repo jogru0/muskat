@@ -98,7 +98,7 @@ using TrickTypeSignature = std::array<uint8_t, 5>;
 [[nodiscard]] inline constexpr auto remaining_unknown_after_distributing(
 	std::array<KnownUnknownInSet, 4> known_about_unknown_dec_fdef_sdef_skat,
 	const std::array<uint8_t, 4> &distributed_numbers,
-	TrickType distributed_trick_type
+	[[maybe_unused]] TrickType distributed_trick_type
 ) {
 	using namespace stdc::literals;
 
@@ -306,7 +306,7 @@ public:
 	}
 
 	template<typename RNG>
-	[[nodiscard]] auto get_one_uniformly(RNG &rng) const -> std::tuple<Situation, Card, Card> {
+	[[nodiscard]] auto get_one_uniformly_old_and_not_clever(RNG &rng) const -> std::tuple<Situation, Card, Card> {
 		using namespace stdc::literals;
 		
 		//Not directly known_cards_dec_fdef_sdef_skat because we mutate it.
@@ -353,204 +353,75 @@ public:
 		}, skat_0, skat_1};
 	}
 
-	[[nodiscard]] auto get_all_signatures_dec_fdef_sdef_skat_and_entropy() const -> std::vector<
-		std::pair<
-			std::array<TrickTypeSignature, 4>,
-			uint64_t //Enough to hold the number of possible distributions when nothing is known.
-		>
-	> {
-
-		auto result = std::vector<std::pair<
-			std::array<TrickTypeSignature, 4>,
-			uint64_t
-		>>{};
-
-		//TODO: Also done in get_one_uniformly_clever.
-		auto unknown_cards_per_trick_type = split_by_trick_type(unknown_cards, game);
-		auto unknown_number_per_trick_type = std::array{
-			unknown_cards_per_trick_type[0].size(),
-			unknown_cards_per_trick_type[1].size(),
-			unknown_cards_per_trick_type[2].size(),
-			unknown_cards_per_trick_type[3].size(),
-			unknown_cards_per_trick_type[4].size()
-		};
-		
-		const auto &remaining_0 = known_about_unknown_dec_fdef_sdef_skat;
-		auto vec_distribution_and_possibilities_0 = distribute(remaining_0, unknown_number_per_trick_type[0], static_cast<TrickType>(0));
-		for (const auto &[dist_0, poss_0] : vec_distribution_and_possibilities_0) {
-			
-			auto remaining_1 = remaining_unknown_after_distributing(remaining_0, dist_0, static_cast<TrickType>(0));
-			auto vec_distribution_and_possibilities_1 = distribute(remaining_1, unknown_number_per_trick_type[1], static_cast<TrickType>(1));
-			for (const auto &[dist_1, poss_1] : vec_distribution_and_possibilities_1) {
-			
-				auto remaining_2 = remaining_unknown_after_distributing(remaining_1, dist_1, static_cast<TrickType>(1));
-				auto vec_distribution_and_possibilities_2 = distribute(remaining_2, unknown_number_per_trick_type[2], static_cast<TrickType>(2));
-				for (const auto &[dist_2, poss_2] : vec_distribution_and_possibilities_2) {
-				
-					auto remaining_3 = remaining_unknown_after_distributing(remaining_2, dist_2, static_cast<TrickType>(2));
-					auto vec_distribution_and_possibilities_3 = distribute(remaining_3, unknown_number_per_trick_type[3], static_cast<TrickType>(3));
-					for (const auto &[dist_3, poss_3] : vec_distribution_and_possibilities_3) {
-					
-						auto remaining_4 = remaining_unknown_after_distributing(remaining_3, dist_3, static_cast<TrickType>(3));
-						auto vec_distribution_and_possibilities_4 = distribute(remaining_4, unknown_number_per_trick_type[4], static_cast<TrickType>(4));
-						//Either all remaining cards can be trump, or not.
-						assert(vec_distribution_and_possibilities_4.size() <= 1);
-						for (const auto &[dist_4, poss_4] : vec_distribution_and_possibilities_4) {
-							auto remaining_after_all_is_distributed = remaining_unknown_after_distributing(remaining_4, dist_4, static_cast<TrickType>(4));
-							assert(is_nothing_unknown_left(remaining_after_all_is_distributed));
-
-							auto sig_0 = TrickTypeSignature{dist_0[0], dist_1[0], dist_2[0], dist_3[0], dist_4[0]};
-							auto sig_1 = TrickTypeSignature{dist_0[1], dist_1[1], dist_2[1], dist_3[1], dist_4[1]};
-							auto sig_2 = TrickTypeSignature{dist_0[2], dist_1[2], dist_2[2], dist_3[2], dist_4[2]};
-							auto sig_3 = TrickTypeSignature{dist_0[3], dist_1[3], dist_2[3], dist_3[3], dist_4[3]};
-
-							auto entropy = poss_0 * poss_1 * poss_2 * poss_3 * poss_4;
-
-							result.emplace_back(
-								std::array{sig_0, sig_1, sig_2, sig_3},
-								entropy
-							);
-						}
-					}
-				}
-			}
+	[[nodiscard]] auto get_maybe_forced_trick_game_type() const -> std::optional<TrickAndGameType> {
+		if (maybe_first_trick_card) {
+			return TrickAndGameType{*maybe_first_trick_card, game};
 		}
-
-		//At least one solution has to be there, because we only call this with inputs from actual skat games,
-		//which of course always have an actual concrete distribution of cards.
-		assert(!result.empty());
-		return result;
+		return std::nullopt;
 	}
 
-
-	//TODO: Many things can be calculated independently of the RNG.
-	//TODO: Precalc and separate from PossibleWorlds per se.
-	template<typename RNG>
-	[[nodiscard]] auto get_one_uniformly_clever(RNG &rng) const -> std::tuple<Situation, Card, Card> {
-		using namespace stdc::literals;
+	[[nodiscard]] auto surely_get_playable_cards() const -> Cards {
+		auto id = static_cast<size_t>(active_role);
 		
-		auto signatures_dec_fdef_sdef_skat_and_entropy = get_all_signatures_dec_fdef_sdef_skat_and_entropy();
-
-		auto number_of_possibilities = stdc::transform_accumulate(
-			RANGE(signatures_dec_fdef_sdef_skat_and_entropy),
-			[](const auto &signatures_entropy) {
-				return signatures_entropy.second;
-			}
+		assert(!known_cards_dec_fdef_sdef_skat[id].empty());
+		assert(known_about_unknown_dec_fdef_sdef_skat[id].number == 0);
+		return get_legal_cards(
+			known_cards_dec_fdef_sdef_skat[id],
+			get_maybe_forced_trick_game_type()
 		);
+	}
 
-		assert(number_of_possibilities != 0);
-		static_assert(std::is_same_v<uint64_t, decltype(number_of_possibilities)>);
-		auto dist = std::uniform_int_distribution{uint64_t{1}, number_of_possibilities};
-	
-		auto sig_id = 0_z;
-		{
-			auto number = dist(rng);
-			auto partial_sum = uint64_t{0_z};
-			for (;;) {
-				assert(sig_id < signatures_dec_fdef_sdef_skat_and_entropy.size());
-				partial_sum += signatures_dec_fdef_sdef_skat_and_entropy[sig_id].second;
-				if (partial_sum >= number) {
-					break;
-				}
-				++sig_id;
-			}
-		}
-		const auto &selected_signature = signatures_dec_fdef_sdef_skat_and_entropy[sig_id].first;
-
-		auto unknown_cards_per_trick_type = split_by_trick_type(unknown_cards, game);
-		std::array<std::vector<Card>, 5> cards_to_distribute_by_trick_type;
-		for (auto tt = 0_z; tt < 5; ++tt) {
-			cards_to_distribute_by_trick_type[tt] = get_shuffled(unknown_cards_per_trick_type[tt], rng);
-		}
-
-		//Not just a reference to known_cards_dec_fdef_sdef_skat because we mutate it.
-		auto cards_for_simulator = known_cards_dec_fdef_sdef_skat;
-
-		for (auto i = 0_z; i < 4; ++i) {
-			const auto &selected_signature_this_set = selected_signature[i];
-			auto &cards_to_add_to = cards_for_simulator[i];
-			for (auto tt = 0_z; tt < 5; ++tt) {
-				
-
-				auto number_of_cards_to_add = selected_signature_this_set[tt];
-				auto &cards_to_distribute_with_trick_type = cards_to_distribute_by_trick_type[tt];
-				while (number_of_cards_to_add --> 0) {
-					assert(!cards_to_distribute_with_trick_type.empty());
-					auto card_to_add = cards_to_distribute_with_trick_type.back();
-					cards_to_distribute_with_trick_type.pop_back();
-					cards_to_add_to.add(card_to_add);
-				}
-			}
-		}
-
-
-		for (auto tt = 0_z; tt < 5; ++tt) {
-			assert(cards_to_distribute_by_trick_type[tt].empty());
-		}
-
-		auto skat = cards_for_simulator[3];
-		assert(skat.size() == 2);
-		auto skat_0 = skat.remove_next();
-		auto skat_1 = skat.remove_next();
+	//Probably, because we don't check everything.
+	[[nodiscard]] auto probably_could_be_played_next(Card card) const -> bool {
+		auto id = static_cast<size_t>(active_role);
 		
-		return {Situation{
-			cards_for_simulator[0],
-			cards_for_simulator[1],
-			cards_for_simulator[2],
-			cards_for_simulator[3],
-			active_role,
-			maybe_first_trick_card,
-			maybe_second_trick_card
-		}, skat_0, skat_1};
+		if (!known_cards_dec_fdef_sdef_skat[id].empty()) {
+			//Check that playing this card was allowed with this known hand.
+			return surely_get_playable_cards().contains(card);
+		}
+		//Check that playing this previously hidden card was consistent with what we knew so far.
+		
+		if (!unknown_cards.contains(card)) {
+			return false;
+		}
+
+		if (known_about_unknown_dec_fdef_sdef_skat[id].number == 0) {
+			return false;
+		}
+
+		if (!known_about_unknown_dec_fdef_sdef_skat[id].can_be_trick_type[static_cast<size_t>(get_trick_type(card, game))]) {
+			return false;
+		}
+
+		//Everything checks out.
+		//IMPORTANT: We might have missed that not playing according to Farbzwang is impossible,
+		//because in no possible distribution of cards does the player not have any cards of this color.
+		return true;
 	}
 
 	//Returns what points the declarer makes with this move.
 	[[nodiscard]] auto play_card(Card card) -> Points {
-		
+		assert(probably_could_be_played_next(card));
+
 		auto id = static_cast<size_t>(active_role);
+		auto maybe_forced_trick_game_type = get_maybe_forced_trick_game_type();
 
-		auto maybe_forced_trick_game_type = [&]() -> std::optional<TrickAndGameType> {
-			if (maybe_first_trick_card) {
-				return TrickAndGameType{*maybe_first_trick_card, game};
-			}
-
-			return std::nullopt;
-		}();
-
-
+		//Update our card knowledge.
 		if (!known_cards_dec_fdef_sdef_skat[id].empty()) {
-			
-			//Check that playing this card was allowed with this known hand.
-			assert(known_about_unknown_dec_fdef_sdef_skat[id].number == 0);
-			assert(get_legal_cards(
-				known_cards_dec_fdef_sdef_skat[id],
-				maybe_forced_trick_game_type
-			).contains(card));
-
-			//Update our knowledge.
 			known_cards_dec_fdef_sdef_skat[id].remove(card);
-
 		} else {
-			auto trick_type_played_card = get_trick_type(card, game);
-			
-			//Check that playing this card was consistent with what we knew so far.
-			assert(unknown_cards.contains(card));
-			assert(known_about_unknown_dec_fdef_sdef_skat[id].number);
-			assert(known_about_unknown_dec_fdef_sdef_skat[id].can_be_trick_type[static_cast<size_t>(trick_type_played_card)]);
-		
-			//Update our knowledge.
 			--known_about_unknown_dec_fdef_sdef_skat[id].number;
 			unknown_cards.remove(card);
 			//Did we learn something because a forced suite wasn't followed?
 			if (
 				maybe_forced_trick_game_type &&
-				maybe_forced_trick_game_type->trick() != trick_type_played_card
+				maybe_forced_trick_game_type->trick() != get_trick_type(card, game)
 			) {
 				known_about_unknown_dec_fdef_sdef_skat[id].can_be_trick_type[static_cast<size_t>(maybe_forced_trick_game_type->trick())] = false;
 			}
 		}
 
-		
+		//Update the rest and calculated the score.
 		active_role = next(active_role);
 
 		auto result = Points{};

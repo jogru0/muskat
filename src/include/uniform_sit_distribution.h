@@ -52,7 +52,7 @@ namespace muskat {
 					//Either all remaining cards can be trump, or not.
 					assert(vec_distribution_and_possibilities_4.size() <= 1);
 					for (const auto &[dist_4, poss_4] : vec_distribution_and_possibilities_4) {
-						auto remaining_after_all_is_distributed = remaining_unknown_after_distributing(remaining_4, dist_4, static_cast<TrickType>(4));
+						[[maybe_unused]] auto remaining_after_all_is_distributed = remaining_unknown_after_distributing(remaining_4, dist_4, static_cast<TrickType>(4));
 						assert(is_nothing_unknown_left(remaining_after_all_is_distributed));
 
 						auto sig_0 = TrickTypeSignature{dist_0[0], dist_1[0], dist_2[0], dist_3[0], dist_4[0]};
@@ -128,6 +128,7 @@ struct UniformInitialSitDistribution {
 	}
 };
 
+//TODO: Currently, worlds don't guarantee as invariant to have at least one possible situation.
 class UniformSitDistribution{
 private:
 	std::vector<std::pair<

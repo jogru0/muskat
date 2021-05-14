@@ -19,6 +19,7 @@ namespace muskat {
 	private:
 		Cards m_playable_cards;
 		std::vector<PerfectInformationResult> m_points_for_situations;
+
 	public:
 		[[nodiscard]] auto playable_cards() const {
 			return m_playable_cards;
@@ -37,33 +38,16 @@ namespace muskat {
 			using namespace stdc::literals;
 			assert(!m_playable_cards.empty());
 			
-			for (const auto &points : m_points_for_situations) {
+			assert(std::all_of(RANGE(m_points_for_situations), [&](const auto &points) {
 				for (auto i = 0_z; i < 32; ++i) {
-					assert(points[i] <= 121);
-					assert((points[i] < 121) == (m_playable_cards.contains(static_cast<Card>(i))));
+					if (!((points[i] < 121) == (m_playable_cards.contains(static_cast<Card>(i))))) {
+						return false;
+					}
 				}
-			}
+				return true;
+			}));
 		}
 	};
-
-	[[nodiscard]] inline auto to_sample(
-		std::vector<PerfectInformationResult> &&points_for_situations
-	) {
-		using namespace stdc::literals;
-		
-		assert(!points_for_situations.empty());
-		
-		auto cards = Cards{};
-		for (auto i = 0_z; i < 32; ++i) {
-			if (points_for_situations.front()[i] != 121) {
-				cards.add(static_cast<Card>(i));
-			}
-		}
-
-		return PerfectInformationSample{
-			cards, std::move(points_for_situations)
-		};
-	}
 
 	template<typename PointsToSummand>
 	[[nodiscard]] auto get_additive_scores(
@@ -298,12 +282,12 @@ namespace muskat {
 	}
 
 
-	template<typename Data, typename Format>
+	template<typename Fun, typename Data, typename Format>
 	void print_statistics(
 		std::string_view category_string,
 		const std::vector<Data> &datas,
 		Format format,
-		Data highlighted_data
+		Fun is_highlighted
 	) {
 		using namespace stdc::literals;
 		
@@ -315,7 +299,7 @@ namespace muskat {
 			const auto &data = datas[id];
 			auto out = stretch_to<Side::Right>(format(data), 6) + " ";
 			
-			if (data == highlighted_data){
+			if (is_highlighted(data)){
 				fmt::print(fmt::emphasis::bold, out);
 			} else {
 				fmt::print(out);
@@ -331,15 +315,15 @@ namespace muskat {
 
 	[[nodiscard]] inline auto show_statistics(
 		const PerfectInformationSample &sample,
-		uint8_t current_score,
+		uint8_t current_score_without_skat,
 		Role active_role,
-		Card highlighted_card
+		Cards highlighted_cards
 	) {
 		using namespace stdc::literals;
 		
-		auto threshold_win = missing_for(unmodified_threshold_win, current_score);
-		auto threshold_win_schneider = missing_for(unmodified_threshold_win_schneider, current_score);
-		auto threshold_not_lost_schneider = missing_for(unmodified_threshold_not_lost_schneider, current_score);
+		auto threshold_win = missing_for(unmodified_threshold_win, current_score_without_skat);
+		auto threshold_win_schneider = missing_for(unmodified_threshold_win_schneider, current_score_without_skat);
+		auto threshold_not_lost_schneider = missing_for(unmodified_threshold_not_lost_schneider, current_score_without_skat);
 
 		auto cmp_to = [&](auto threshold) {
 			return cmp_to_helper{threshold, active_role};
@@ -360,49 +344,61 @@ namespace muskat {
 		);
 		
 		auto average_scores = get_averages(sample);
+		std::transform(RANGE(average_scores), average_scores.begin(), [&](auto score) {
+			return score + current_score_without_skat;
+		});
+		if (active_role != Role::Declarer) {
+			std::transform(RANGE(average_scores), average_scores.begin(), [](auto score) {
+				return 120. - score;
+			});
+		}
 
 		auto to_percent = [](auto p) {
 			return fmt::format("{:.1f}%", 100 * p);
 		};
 		
 		auto to_average_score = [&](auto sc) {
-			return fmt::format("{:.2f}", sc + current_score);
+			return fmt::format("{:.2f}", sc);
 		};
 
 		auto to_card = [](auto card) {
 			return to_string(card);
 		};
 
-		std::cout << "Current Score: " << std::to_string(current_score) << "\n\n";
+		//TODO: Relevant score …
+		// std::cout << "Current Score: " << std::to_string(current_score_without_skat) << "\n\n";
 
+		auto max_probabilities_not_lost_schneider = *std::max_element(RANGE(probabilities_not_lost_schneider));
 		print_statistics(
 			cmp_str + std::to_string(unmodified_threshold_not_lost_schneider),
 			probabilities_not_lost_schneider,
 			to_percent,
-			*std::max_element(RANGE(probabilities_not_lost_schneider))
+			[&](auto p) { return p == max_probabilities_not_lost_schneider; }
 		);
+
+		auto max_probabilities_win = *std::max_element(RANGE(probabilities_win));
 		print_statistics(
 			cmp_str + std::to_string(unmodified_threshold_win),
 			probabilities_win,
 			to_percent,
-			*std::max_element(RANGE(probabilities_win))
+			[&](auto p) { return p == max_probabilities_win; }
 		);
+
+		auto max_probabilities_win_schneider = *std::max_element(RANGE(probabilities_win_schneider));
 		print_statistics(
 			cmp_str + std::to_string(unmodified_threshold_win_schneider),
 			probabilities_win_schneider,
 			to_percent,
-			*std::max_element(RANGE(probabilities_win_schneider))
+			[&](auto p) { return p == max_probabilities_win_schneider; }
 		);
 
-		auto hightlight_value_average = active_role == Role::Declarer
-			? *std::max_element(RANGE(average_scores))
-			: *std::min_element(RANGE(average_scores));
-
+		auto max_average_score = *std::max_element(RANGE(average_scores));
 		print_statistics(
 			"avg.",
 			average_scores,
 			to_average_score,
-			hightlight_value_average
+			[&](auto p) { return p == max_average_score; }
+			
 		);
 
 		auto cards = to_vector(sample.playable_cards());
@@ -412,13 +408,8 @@ namespace muskat {
 			std::string{},
 			cards,
 			to_card,
-			highlighted_card
+			[&](auto card) { return highlighted_cards.contains(card); }
 		);
-		
-
-
-
 	}
-
 
 } // namespace muskat

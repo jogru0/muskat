@@ -174,6 +174,7 @@ public:
 		return m_hand_declarer | m_hand_first_defender | m_hand_second_defender;
 	}
 
+	//Everything already face down, either gedrückt or played.
 	[[nodiscard]] auto cellar() const {
 		auto result = ~remaining_cards_in_hands();
 		if(m_maybe_first_trick_card) {

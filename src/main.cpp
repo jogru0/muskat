@@ -53,8 +53,7 @@ namespace perf {
 		auto initial_situation = muskat::Situation{hand_geber, hand_hoerer, hand_sager, skat, role_vorhand};
 
 
-		auto skat_sit = initial_situation.cellar();
-		assert(skat_sit == skat);
+		assert(initial_situation.cellar() == skat);
 		assert(skat.size() == 2);
 		auto skat_0 = skat.remove_next();
 		auto skat_1 = skat.remove_next();
@@ -95,8 +94,7 @@ namespace perf {
 		auto [hand_geber, hand_hoerer, hand_sager, skat] = deal_deck(deck);
 		auto initial_situation = muskat::Situation{hand_geber, hand_hoerer, hand_sager, skat, role_vorhand};
 
-		auto skat_sit = initial_situation.cellar();
-		assert(skat_sit == skat);
+		assert(initial_situation.cellar() == skat);
 		assert(skat.size() == 2);
 		auto skat_0 = skat.remove_next();
 		auto skat_1 = skat.remove_next();
@@ -139,8 +137,7 @@ namespace perf {
 		auto [hand_geber, hand_hoerer, hand_sager, skat] = deal_deck(deck);
 		auto initial_situation = muskat::Situation{hand_geber, hand_hoerer, hand_sager, skat, role_vorhand};
 
-		auto skat_sit = initial_situation.cellar();
-		assert(skat_sit == skat);
+		assert(initial_situation.cellar() == skat);
 		assert(skat.size() == 2);
 		auto skat_0 = skat.remove_next();
 		auto skat_1 = skat.remove_next();
@@ -321,15 +318,23 @@ auto main(int argc, char **argv) -> int try {
 	
 	switch (option) {
 		case 'a':
-			detail::check_number_of_inputs_and_apply_flags(args, option, 2);
-			muskat::analyze_game(
-				std::filesystem::path{args[2]},
-				detail::parse_iterations_or_exit(args[3])
-			);
+			{
+				detail::check_number_of_inputs_and_apply_flags(args, option, 2);
+				auto path_to_json = std::filesystem::path{args[2]};
+				auto fs = stdc::IO::open_file_with_checks_for_reading(path_to_json);
+				auto json = nlohmann::json::parse(fs);
+				auto [worlds, moves, my_role] = muskat::parse_game_record(json);
+				auto iterations = detail::parse_iterations_or_exit(args[3]);
+				
+				muskat::analyze_game(
+					worlds, moves, my_role, iterations
+				);
+			}
 			break;
 		case 't':
 			if (!in_release_mode) {
 				stdc::log("THIS WAS NOT MEASURED IN RELEASE MODE!");
+				stdc::detail::log.flush();
 			}
 			
 			detail::check_number_of_inputs_and_apply_flags(args, option, 1);

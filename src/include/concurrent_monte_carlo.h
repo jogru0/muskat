@@ -34,6 +34,10 @@ static std::array<size_t, 12> iterations_pre{};
 static std::array<size_t, 12> iterations_main{};
 static std::array<size_t, 12> iterations_post{};
 
+static std::array<double, 12> last_iter_ms{};
+
+
+
 } //namespace wa
 
 static auto done_threads = std::atomic<uint8_t>{0};
@@ -75,7 +79,16 @@ inline void execute_worker_sampling(
 		//MEASURE BEGIN
 		
 		auto solver = muskat::SituationSolver{situation, game, skat_0, skat_1};
-		auto points = solver.score_for_possible_plays(situation);
+		auto points_arr = solver.score_for_possible_plays(situation);
+		
+		//We want to return how many points the declarer makes not already observed with the tricks so far.
+		//So the points gedrückt have to be added as well.
+		//TODO: In the future, it might be nicer to also add the points already made here.
+		auto points_from_gedrueckt = to_points(skat_0, game) + to_points(skat_1, game);
+		for (auto &points : points_arr) {
+			points += points_from_gedrueckt;
+		}
+
 		auto nodes = std::vector{static_cast<double>(solver.number_of_nodes()) / 1000.};
 		
 		// auto [points, nodes] = score_for_possible_plays_separate(situation, game);
@@ -86,13 +99,16 @@ inline void execute_worker_sampling(
 		
 		wa::watches_th[worker_id][wa::loop_main].stop();
 		++wa::iterations_main[worker_id];
+
+		auto time_ms = (static_cast<double>(watch_solve.elapsed<std::chrono::nanoseconds>()) + .5) / 1'000'000.;
+
+		times_in_ms[result_id] = time_ms;
+		numbers_of_nodes[result_id] = nodes;
+		wa::last_iter_ms[worker_id] = time_ms;
+
 		wa::watches_th[worker_id][wa::loop_post].start();
 
-
-		times_in_ms[result_id] = (static_cast<double>(watch_solve.elapsed<std::chrono::nanoseconds>()) + .5) / 1'000'000.;
-		numbers_of_nodes[result_id] = nodes;
-
-		results.report_a_result(result_id, points);
+		results.report_a_result(result_id, points_arr);
 		
 		wa::watches_th[worker_id][wa::loop_post].stop();
 		++wa::iterations_post[worker_id];
@@ -181,8 +197,20 @@ template<typename SituationDistribution>
 		});
 	}
 
+	auto join_watch = stdc::SWatch{};
+	join_watch.start();
+
 	for (auto thread_id = 0_z; thread_id < number_of_threads; ++thread_id) {
 		threads[thread_id].join();
+		join_watch.stop();
+		stdc::log_debug(
+			"join {}: {}\t(last iteration: {:.0f}ms)",
+			thread_id,
+			stdc::to_string_ms(join_watch.elapsed()),
+			wa::last_iter_ms[thread_id]
+		);
+		join_watch.reset();
+		join_watch.start();
 	}
 
 
@@ -214,15 +242,32 @@ template<typename SituationDistribution>
 	return result;
 }
 
+inline void log_multithreaded_performance(
+	std::chrono::nanoseconds total_time,
+	size_t number_of_threads,
+	size_t number_of_tasks
+) {
+	stdc::log(
+		"Time to finished {} tasks with {} threads: {}\n\t-> effective time per task: {}",
+		number_of_tasks,
+		number_of_threads,
+		stdc::to_string_s(total_time, 1),
+		stdc::to_string_ms((total_time * 12) / number_of_tasks)
+	);
+}
+
 [[nodiscard]] inline auto pick_best_card(
 	const PossibleWorlds &worlds,
 	//TODO: Track in worlds!!!!!!
-	uint8_t current_score,
+	uint8_t current_score_without_skat,
 	size_t number_samples_to_do
 ) -> Card {
 	using namespace stdc::literals;
 	
-	stdc::log("Start pick_best_card.");
+	stdc::log(
+		"\nStart pick_best_card with {} iterations.",
+		number_samples_to_do
+	);
 	auto watch_whole = stdc::SWatch{};
 	watch_whole.start();
 
@@ -240,41 +285,33 @@ template<typename SituationDistribution>
 	auto watch_simulation = stdc::SWatch{};
 	watch_simulation.start();
 	
-	// auto results = muskat::multithreaded_world_simulation(worlds, std::chrono::seconds(100));
-	auto results = muskat::multithreaded_sampling(dist, number_samples_to_do);
-	
-	//TODO: Empty -> Assert triggert.
-	auto sample = muskat::to_sample(std::move(results));
+	auto results = multithreaded_sampling(dist, number_samples_to_do);
+	auto playable_cards = worlds.surely_get_playable_cards();
+	auto sample = muskat::PerfectInformationSample{std::move(playable_cards), std::move(results)};
 	
 	watch_simulation.stop();
 	assert(sample.points_for_situations().size() == number_samples_to_do);
 
-	stdc::log(
-		"Simulations took {} -> perceived time per sample: {}.",
-		stdc::to_string_s(watch_simulation.elapsed(), 1),
-		stdc::to_string_ms((watch_simulation.elapsed() * 12) / number_samples_to_do)
-	);
+	log_multithreaded_performance(watch_simulation.elapsed(), 12, number_samples_to_do);
 
-
-	std::cout << "\nUsing these samples to make an informed choice now.\n";
+	// std::cout << "\nUsing these samples to make an informed choice now.\n";
 
 	WATCH("ana").reset();
 	WATCH("ana").start();
-	auto picks = analyze(sample, current_score, worlds.active_role);
+	auto picks = analyze(sample, current_score_without_skat, worlds.active_role);
 	WATCH("ana").stop();
 	assert(!picks.empty());
-	auto result = picks.remove_next();
-	std::cout << "Time spent to do these choices: " << WATCH("ana").elapsed<std::chrono::milliseconds>() << "ms.\n";
+	// std::cout << "Time spent to do these choices: " << WATCH("ana").elapsed<std::chrono::milliseconds>() << "ms.\n";
 
 	watch_whole.stop();
 
-	std::cout << "\nTotal time used: " << watch_whole.elapsed<std::chrono::milliseconds>() << "ms.\n\n";
+	// std::cout << "\nTotal time used: " << watch_whole.elapsed<std::chrono::milliseconds>() << "ms.\n\n";
 	stdc::detail::log.flush();
 
-	show_statistics(sample, current_score, worlds.active_role, result);
+	show_statistics(sample, current_score_without_skat, worlds.active_role, picks);
 
-
-	return result;
+	//For now, just do an arbitrary choice here.
+	return picks.remove_next();
 
 	//Below is code to look at the performance in the main loop of the threads.
 
@@ -348,13 +385,9 @@ inline void calculate_initial_games(size_t number_samples_to_do, GameType game, 
 	
 	watch_simulation.stop();
 	
-	// assert(sample.points_for_situations().size() == number_samples_to_do);
+	assert(results.size() == number_samples_to_do);
 
-	stdc::log(
-		"Simulations took {} -> perceived time per sample: {}.",
-		stdc::to_string_s(watch_simulation.elapsed(), 1),
-		stdc::to_string_ms((watch_simulation.elapsed() * 12) / number_samples_to_do)
-	);
+	log_multithreaded_performance(watch_simulation.elapsed(), 12, number_samples_to_do);
 
 
 	stdc::log("Hash: {}", stdc::GeneralHasher{}(results));
