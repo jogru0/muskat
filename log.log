@@ -1,93 +1,80 @@
 
 =====================================
 
-Start pick_best_card with 10000 iterations.
-Creation of the uniform sit distribution took 73us.
+Start calculate_initial_games(1000, Eichel, Declarer).
 Number of 1000 nodes:
-	mean:       429
-	median:     342
-	max:       3101
+	mean:       395
+	median:     217
+	max:       7002
 Run time in ms:
-	mean:       945
-	median:     634
-	max:       9949
-Time to finished 10000 tasks with 12 threads: 790.2s
-	-> effective time per task: 948ms
+	mean:       655
+	median:     254
+	max:      14987
+Time to finished 1000 tasks with 12 threads: 59.1s
+	-> effective time per task: 709ms
+Hash: 14431726066735443661
 
-Start pick_best_card with 10000 iterations.
-Creation of the uniform sit distribution took 49us.
+Start calculate_initial_games(1000, Herz, First Defender).
 Number of 1000 nodes:
-	mean:       149
-	median:     128
-	max:        849
+	mean:       348
+	median:     171
+	max:       6878
 Run time in ms:
-	mean:       267
-	median:     206
-	max:       2287
-Time to finished 10000 tasks with 12 threads: 222.5s
-	-> effective time per task: 267ms
+	mean:       666
+	median:     225
+	max:      18569
+Time to finished 1000 tasks with 12 threads: 57.7s
+	-> effective time per task: 693ms
+Hash: 16674612762904544740
 
-Start pick_best_card with 10000 iterations.
-Creation of the uniform sit distribution took 14us.
+Start calculate_initial_games(1000, Schell, Second Defender).
 Number of 1000 nodes:
-	mean:         4
-	median:       3
-	max:         19
+	mean:       341
+	median:     187
+	max:       4183
 Run time in ms:
-	mean:         6
-	median:       4
-	max:         61
-Time to finished 10000 tasks with 12 threads: 4.7s
-	-> effective time per task: 6ms
+	mean:       590
+	median:     238
+	max:      12624
+Time to finished 1000 tasks with 12 threads: 53.1s
+	-> effective time per task: 638ms
+Hash: 7863452090417462547
 
-Start pick_best_card with 10000 iterations.
-Creation of the uniform sit distribution took 7us.
+Start calculate_initial_games(1000, Grand, Declarer).
 Number of 1000 nodes:
-	mean:         1
-	median:       1
-	max:          7
+	mean:       313
+	median:     173
+	max:       3013
 Run time in ms:
-	mean:         1
-	median:       1
-	max:         29
-Time to finished 10000 tasks with 12 threads: 1.2s
-	-> effective time per task: 1ms
+	mean:       421
+	median:     171
+	max:       6590
+Time to finished 1000 tasks with 12 threads: 35.3s
+	-> effective time per task: 424ms
+Hash: 11293675127748875471
 
-Start pick_best_card with 10000 iterations.
-Creation of the uniform sit distribution took 6us.
+Start calculate_initial_games(1000, Grand, First Defender).
 Number of 1000 nodes:
-	mean:         0
-	median:       0
-	max:          1
+	mean:       252
+	median:     142
+	max:       2650
 Run time in ms:
-	mean:         0
-	median:       0
-	max:         10
-Time to finished 10000 tasks with 12 threads: 0.4s
-	-> effective time per task: 0ms
+	mean:       344
+	median:     155
+	max:       5099
+Time to finished 1000 tasks with 12 threads: 28.9s
+	-> effective time per task: 347ms
+Hash: 15173480429377851780
 
-Start pick_best_card with 10000 iterations.
-Creation of the uniform sit distribution took 4us.
+Start calculate_initial_games(1000, Grand, Second Defender).
 Number of 1000 nodes:
-	mean:         0
-	median:       0
-	max:          1
+	mean:       261
+	median:     141
+	max:       4641
 Run time in ms:
-	mean:         0
-	median:       0
-	max:         11
-Time to finished 10000 tasks with 12 threads: 0.3s
-	-> effective time per task: 0ms
-
-Start pick_best_card with 10000 iterations.
-Creation of the uniform sit distribution took 2us.
-Number of 1000 nodes:
-	mean:         0
-	median:       0
-	max:          0
-Run time in ms:
-	mean:         0
-	median:       0
-	max:         12
-Time to finished 10000 tasks with 12 threads: 0.1s
-	-> effective time per task: 0ms
+	mean:       366
+	median:     153
+	max:       8348
+Time to finished 1000 tasks with 12 threads: 33.6s
+	-> effective time per task: 403ms
+Hash: 196260294924697824

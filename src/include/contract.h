@@ -6,7 +6,10 @@
 namespace muskat {
 
 [[nodiscard]] auto inline get_spitzen(Cards hand_and_skat, GameType game) -> int {
-	assert(game != GameType::Null);
+	if (game == GameType::Null) {
+		return 1000;
+	}
+
 	assert(hand_and_skat.size() == 12);
 
 	//TODO: We know it's 11 (or 4), vector is overkill.

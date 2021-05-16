@@ -1,0 +1,17 @@
+{
+	"position": "sager",
+	"hand": ["HU", "E8", "E9", "EO", "EA", "G7", "GO", "GA", "SK", "SA"],
+	"revealed": ["H7", "H9", "H8", "E7", "S7", "S8", "SZ", "SO", "G8", "GZ"],
+	"skat": null,
+	"game_mode": {
+		"declarer": "geber",
+		"type": "Null",
+		"hand": false,
+		"ouvert": true
+	},
+	"played_cards": [
+		["HZ", "HU", "H9"],
+		["GA", "GZ", "GU"],
+		["G7", "G8", "G9"]
+	]
+}

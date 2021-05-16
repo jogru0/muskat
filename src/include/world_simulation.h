@@ -237,7 +237,8 @@ public:
 		Role my_role,
 		std::optional<Cards> maybe_skat,
 		GameType a_game,
-		Role a_active_role
+		Role a_active_role,
+		std::optional<Cards> maybe_revealed
 	) :
 		known_about_unknown_dec_fdef_sdef_skat{},
 		known_cards_dec_fdef_sdef_skat{Cards{}, Cards{}, Cards{}, Cards{}},
@@ -254,17 +255,21 @@ public:
 		//TODO: assert_invariants should do this as soon as we introduce hidden/open explicitly for groups of cards.
 		//TODO: Need contract to know that …
 		// assert(maybe_skat.has_value() == (my_role == Role::Declarer));
-		assert(IMPLIES(maybe_skat.has_value(), my_role == Role::Declarer));
+		assert(IMPLIES(maybe_skat, my_role == Role::Declarer));
+		assert(IMPLIES(maybe_revealed, my_role != Role::Declarer));
 		
 		//TODO: Double check that overlapping skat or wrong initial hand/skat size etc would
 		//all be catched by check_invariants already.
 
 		known_cards_dec_fdef_sdef_skat[static_cast<size_t>(my_role)] = my_hand;
+		if (maybe_revealed) {
+			assert(known_cards_dec_fdef_sdef_skat[0].empty());
+			known_cards_dec_fdef_sdef_skat[0] = *maybe_revealed;
+		}
 		for (auto i = 0_z; i < 3; ++i) {
-			if (i == static_cast<size_t>(my_role)) {
-				continue;
+			if (known_cards_dec_fdef_sdef_skat[i].empty()) {
+				known_about_unknown_dec_fdef_sdef_skat[i].number = 10;
 			}
-			known_about_unknown_dec_fdef_sdef_skat[i].number = 10;
 		}
 		
 		auto known_cards = my_hand;
@@ -273,6 +278,9 @@ public:
 			known_cards_dec_fdef_sdef_skat[3] = *maybe_skat;
 		} else {
 			known_about_unknown_dec_fdef_sdef_skat[3].number = 2;
+		}
+		if (maybe_revealed) {
+			known_cards |= *maybe_revealed;
 		}
 
 		unknown_cards = ~known_cards;

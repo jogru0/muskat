@@ -290,6 +290,7 @@ inline void log_multithreaded_performance(
 	watch_dist_generation.start();
 	auto dist = UniformSitDistribution{worlds};
 	watch_dist_generation.stop();
+	//TODO!!!!!!!!!!!!!!!! DATA LOSS
 	stdc::log(
 		"Creation of the uniform sit distribution took {}.",
 		stdc::to_string_us(watch_dist_generation.elapsed())

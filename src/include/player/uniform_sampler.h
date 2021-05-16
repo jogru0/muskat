@@ -112,7 +112,8 @@ namespace muskat {
 				m_role,
 				m_skat,
 				game,
-				active_role
+				active_role,
+				std::nullopt
 			};
 
 			assert(known_about_unknown_dec_fdef_sdef_skat == m_current_information->known_about_unknown_dec_fdef_sdef_skat);

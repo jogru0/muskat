@@ -153,6 +153,11 @@ namespace muskat {
 
 		auto maybe_skat = parse::maybe(json.at("skat"), parse::cards);
 		
+		auto maybe_revealed = std::optional<Cards>{};
+		if (json.contains("revealed")) {
+			maybe_revealed = parse::maybe(json.at("revealed"), parse::cards);
+		}
+		
 		auto my_role = [&]() {
 			if (my_pos == declarer_pos) {
 				return Role::Declarer;
@@ -170,6 +175,11 @@ namespace muskat {
 			play_hand = json.at("game_mode").at("hand");
 		}
 
+		auto play_ouvert = false;
+		if (json.at("game_mode").contains("ouvert")) {
+			play_ouvert = json.at("game_mode").at("ouvert");
+		}
+
 		if (my_role == Role::Declarer) {
 			if (maybe_skat.has_value() == play_hand) {
 				throw parse::ParseException{"Skat visinility and hand play is not concruent."};
@@ -179,15 +189,31 @@ namespace muskat {
 				throw parse::ParseException{"Skat is visible, but you are not the declarer."};
 			}
 		}
+
+		if (my_role == Role::Declarer) {
+			if (maybe_revealed) {
+				throw parse::ParseException{"A hand is revealed, but you are the declarer."};
+			}
+		} else {
+			if (maybe_revealed.has_value() != play_ouvert) {
+				throw parse::ParseException{"Hand revealedness and ouvert play is not concruent."};
+			}
+		}
 		
 		auto game = parse::game(json.at("game_mode").at("type"));
+		
+		//TODO!
+		assert(IMPLIES(play_ouvert, game == GameType::Null));
+
+
 
 		auto worlds = PossibleWorlds{
 			my_hand,
 			my_role,
 			maybe_skat,
 			game,
-			active_role
+			active_role,
+			maybe_revealed
 		};
 
 		auto moves = parse::moves(json.at("played_cards"));
@@ -207,7 +233,7 @@ namespace muskat {
 
 		//TODO: More than that.
 		auto contract = Contract{
-			game, play_hand, false, false, false
+			game, play_hand, false, false, play_ouvert
 		};
 
 		auto bidding_value = 18;

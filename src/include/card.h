@@ -120,8 +120,9 @@ enum class GameType {
 
 using PointsOnly = uint8_t;
 	
+//TODO: Is it okay everywhere to use these values for Null too?
 [[nodiscard]] inline auto to_points(Card card, [[maybe_unused]] GameType game) -> PointsOnly {
-	assert(game != GameType::Null);
+	// assert(game != GameType::Null);
 	switch (to_rank(card)) {
 	case Rank::L7: [[fallthrough]];
 		case Rank::L8: [[fallthrough]];
