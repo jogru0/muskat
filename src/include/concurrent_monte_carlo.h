@@ -324,7 +324,10 @@ inline void log_multithreaded_performance(
 
 	WATCH("ana").stop();
 	assert(!picks.empty());
-	std::cout << "Time spent to analyze samples: " << WATCH("ana").elapsed<std::chrono::milliseconds>() << "ms.\n";
+	auto time_for_analysis_ms = WATCH("ana").elapsed<std::chrono::milliseconds>();
+	if (1 <= time_for_analysis_ms) {
+		std::cout << "WARNING! Time spent to analyze samples: " << time_for_analysis_ms << "ms.\n";
+	}
 
 	watch_whole.stop();
 

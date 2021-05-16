@@ -210,7 +210,12 @@ namespace muskat {
 			game, play_hand, false, false, false
 		};
 
-		auto bidding_value = static_cast<int>(json.at("bidding_value"));
+		auto bidding_value = 18;
+		if (json.contains("bidding_value")) {
+			bidding_value = static_cast<int>(json.at("bidding_value"));
+		} else {
+			std::cout << "Assuming bidding value 18.\n";
+		}
 		//TODO: Check if legal value.
 
 		return std::tuple{worlds, moves, my_role, contract, bidding_value};

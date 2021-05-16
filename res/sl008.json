@@ -1,0 +1,20 @@
+{
+	"position": "hoerer",
+	"hand": ["GA", "GZ", "GK", "GO", "G9", "H9", "EU", "SU", "E8", "E9"],
+	"skat": ["SO", "SK"],
+	"game_mode": {
+		"declarer": "hoerer",
+		"type": "Green",
+		"hand": false
+	},
+	"bidding_value": 18,
+	"played_cards": [
+		["G9", "HU", "G8"],
+		["HA", "H7", "H9"],
+		["HZ", "H8", "GA"],
+		["EU", "E7", "G7"],
+		["SU", "SA", "GU"],
+		["EA", "E9", "EK"],
+		["EZ", "E8", "SZ"]
+	]
+}

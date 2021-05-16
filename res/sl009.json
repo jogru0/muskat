@@ -1,0 +1,19 @@
+{
+	"position": "hoerer",
+	"hand": ["G7", "E9", "S8", "S9", "H9", "HZ", "HA", "HU", "GU", "EU"],
+	"skat": ["EZ", "GZ"],
+	"game_mode": {
+		"declarer": "hoerer",
+		"type": "Grand",
+		"hand": false
+	},
+	"played_cards": [
+		["EU", "SU", "E7"],
+		["G7", "GA", "GK"],
+		["EA", "SA", "E9"],
+		["SO", "SZ", "S8"],
+		["SK", "S9", "S7"],
+		["GO", "HU", "G9"],
+		["GU"]
+	]
+}

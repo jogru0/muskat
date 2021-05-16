@@ -1,15 +1,93 @@
 
 =====================================
 
-Start pick_best_card with 1000 iterations.
-Creation of the uniform sit distribution took 85us.
+Start pick_best_card with 10000 iterations.
+Creation of the uniform sit distribution took 73us.
 Number of 1000 nodes:
-	mean:       307
-	median:     224
-	max:       2704
+	mean:       429
+	median:     342
+	max:       3101
 Run time in ms:
-	mean:       554
-	median:     378
-	max:       6434
-Time to finished 1000 tasks with 12 threads: 47.6s
-	-> effective time per task: 572ms
+	mean:       945
+	median:     634
+	max:       9949
+Time to finished 10000 tasks with 12 threads: 790.2s
+	-> effective time per task: 948ms
+
+Start pick_best_card with 10000 iterations.
+Creation of the uniform sit distribution took 49us.
+Number of 1000 nodes:
+	mean:       149
+	median:     128
+	max:        849
+Run time in ms:
+	mean:       267
+	median:     206
+	max:       2287
+Time to finished 10000 tasks with 12 threads: 222.5s
+	-> effective time per task: 267ms
+
+Start pick_best_card with 10000 iterations.
+Creation of the uniform sit distribution took 14us.
+Number of 1000 nodes:
+	mean:         4
+	median:       3
+	max:         19
+Run time in ms:
+	mean:         6
+	median:       4
+	max:         61
+Time to finished 10000 tasks with 12 threads: 4.7s
+	-> effective time per task: 6ms
+
+Start pick_best_card with 10000 iterations.
+Creation of the uniform sit distribution took 7us.
+Number of 1000 nodes:
+	mean:         1
+	median:       1
+	max:          7
+Run time in ms:
+	mean:         1
+	median:       1
+	max:         29
+Time to finished 10000 tasks with 12 threads: 1.2s
+	-> effective time per task: 1ms
+
+Start pick_best_card with 10000 iterations.
+Creation of the uniform sit distribution took 6us.
+Number of 1000 nodes:
+	mean:         0
+	median:       0
+	max:          1
+Run time in ms:
+	mean:         0
+	median:       0
+	max:         10
+Time to finished 10000 tasks with 12 threads: 0.4s
+	-> effective time per task: 0ms
+
+Start pick_best_card with 10000 iterations.
+Creation of the uniform sit distribution took 4us.
+Number of 1000 nodes:
+	mean:         0
+	median:       0
+	max:          1
+Run time in ms:
+	mean:         0
+	median:       0
+	max:         11
+Time to finished 10000 tasks with 12 threads: 0.3s
+	-> effective time per task: 0ms
+
+Start pick_best_card with 10000 iterations.
+Creation of the uniform sit distribution took 2us.
+Number of 1000 nodes:
+	mean:         0
+	median:       0
+	max:          0
+Run time in ms:
+	mean:         0
+	median:       0
+	max:         12
+Time to finished 10000 tasks with 12 threads: 0.1s
+	-> effective time per task: 0ms
