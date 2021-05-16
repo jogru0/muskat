@@ -164,11 +164,22 @@ namespace muskat {
 			assert(next(next(my_pos)) == declarer_pos);
 			return Role::FirstDefender;
 		}();
-
-		if (my_role != Role::Declarer && maybe_skat) {
-			throw parse::ParseException{"Skat is visible, but you are not the declarer."};
+		
+		auto play_hand = false;
+		if (json.at("game_mode").contains("hand")) {
+			play_hand = json.at("game_mode").at("hand");
 		}
 
+		if (my_role == Role::Declarer) {
+			if (maybe_skat.has_value() == play_hand) {
+				throw parse::ParseException{"Skat visinility and hand play is not concruent."};
+			}
+		} else {
+			if (maybe_skat) {
+				throw parse::ParseException{"Skat is visible, but you are not the declarer."};
+			}
+		}
+		
 		auto game = parse::game(json.at("game_mode").at("type"));
 
 		auto worlds = PossibleWorlds{
@@ -191,9 +202,12 @@ namespace muskat {
 
 		//TODO: Check if the resulting worlds_copy has any possible situation left.
 
+
+
+
 		//TODO: More than that.
 		auto contract = Contract{
-			game, false, false, false, false
+			game, play_hand, false, false, false
 		};
 
 		auto bidding_value = static_cast<int>(json.at("bidding_value"));

@@ -252,7 +252,10 @@ public:
 		using namespace stdc::literals;
 
 		//TODO: assert_invariants should do this as soon as we introduce hidden/open explicitly for groups of cards.
-		assert(maybe_skat.has_value() == (my_role == Role::Declarer));
+		//TODO: Need contract to know that …
+		// assert(maybe_skat.has_value() == (my_role == Role::Declarer));
+		assert(IMPLIES(maybe_skat.has_value(), my_role == Role::Declarer));
+		
 		//TODO: Double check that overlapping skat or wrong initial hand/skat size etc would
 		//all be catched by check_invariants already.
 
