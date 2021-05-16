@@ -40,19 +40,58 @@ namespace muskat {
 }
 
 
-struct Score {
-	uint8_t points;
-	uint8_t tricks;
-	friend auto operator<=>(Score, Score) -> bool = default;
+class ScoreNew {
+private:
+	uint8_t m_points;
+	uint8_t m_tricks;
+public:
+	ScoreNew(uint8_t points, uint8_t tricks) :
+		m_points{points},
+		m_tricks{tricks}
+	{}
+
+	friend auto operator<=>(ScoreNew, ScoreNew) -> bool = default;
+	void add_score_from_trick(uint8_t trick_value) {
+		m_points += trick_value;
+		++m_tricks;
+	}
+	[[nodiscard]] auto points() const {
+		return m_points;
+	}
+	[[nodiscard]] auto tricks() const {
+		return m_tricks;
+	}
 };
 
+class Score {
+private:
+	uint8_t m_points;
+public:
+	Score(uint8_t points, uint8_t) :
+		m_points{points}
+	{}
+
+	friend auto operator<=>(Score, Score) -> bool = default;
+	void add_score_from_trick(uint8_t trick_value) {
+		m_points += trick_value;
+	}
+	[[nodiscard]] auto points() const {
+		return m_points;
+	}
+	[[nodiscard]] auto tricks() const -> uint8_t {
+		return 5;
+	}
+};
+
+
+
 [[nodiscard]] inline auto someone_is_schwarz(Score score) {
-	if (score.tricks == 0) {
-		assert(score.points == 0);
+	if (score.tricks() == 0) {
+		assert(score.points() == 0);
 		return true;
 	}
-	if (score.tricks == 10) {
-		assert(score.points == 120);
+	if (score.tricks() == 10) {
+		assert(score.points() == 120);
 		return true;
 	}
 
@@ -60,7 +99,7 @@ struct Score {
 }
 
 [[nodiscard]] inline auto someone_is_schneider(Score score) {
-	return score.points <= 30 || 90 <= score.points;
+	return score.points() <= 30 || 90 <= score.points();
 }
 
 
@@ -79,8 +118,10 @@ struct Contract{
 		case GameType::Green: return 11;
 		case GameType::Herz: return 10;
 		case GameType::Schell: return 9;
-		case GameType::Null: assert(false);
+		case GameType::Null: ;
 	}
+	
+	assert(false); return 0;
 }
 
 //Not influenced by overbidding, or by the question whether the contract was fulfilled or not.
@@ -172,10 +213,10 @@ struct Contract{
 	}
 
 	if (contract.schneider) {
-		return 90 <= final_score.points;
+		return 90 <= final_score.points();
 	}
 
-	return 61 <= final_score.points;
+	return 61 <= final_score.points();
 }
 
 

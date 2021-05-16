@@ -272,22 +272,13 @@ inline auto parse_iterations_or_exit(std::string_view sv) {
 }
 
 inline void test_calculating_initial_games(size_t iterations) {
-	for (auto game : std::array{
-		// muskat::GameType::Null,
-		muskat::GameType::Eichel,
-		muskat::GameType::Green, 
-		muskat::GameType::Herz,
-		muskat::GameType::Schell,
-		muskat::GameType::Grand
-	}) {
-		for (auto role: std::array{
-			muskat::Role::Declarer,
-			muskat::Role::FirstDefender,
-			muskat::Role::SecondDefender
-		}) {
-			muskat::calculate_initial_games(iterations, game, role);
-		}
-	}
+	muskat::calculate_initial_games(iterations, muskat::GameType::Eichel, muskat::Role::Declarer);
+	muskat::calculate_initial_games(iterations, muskat::GameType::Herz, muskat::Role::FirstDefender);
+	muskat::calculate_initial_games(iterations, muskat::GameType::Schell, muskat::Role::SecondDefender);
+
+	muskat::calculate_initial_games(iterations, muskat::GameType::Grand, muskat::Role::Declarer);
+	muskat::calculate_initial_games(iterations, muskat::GameType::Grand, muskat::Role::FirstDefender);
+	muskat::calculate_initial_games(iterations, muskat::GameType::Grand, muskat::Role::SecondDefender);
 }
 
 } //namespace detail

@@ -163,7 +163,7 @@ public: //!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	
 		auto already_played_dec_but_not_gone = already_played_cards_dec & ~gone_cards;
 		while (!already_played_dec_but_not_gone.empty()) {
-			auto c = already_played_dec_but_not_gone.remove_next();
+			[[maybe_unused]] auto c = already_played_dec_but_not_gone.remove_next();
 			assert(c == maybe_first_trick_card || c == maybe_second_trick_card);
 		}
 
