@@ -10,6 +10,7 @@
 #include <fmt/core.h>
 #include <fmt/color.h>
 
+#include "contract.h"
 #include "cards.h"
 
 namespace muskat {
@@ -49,6 +50,36 @@ namespace muskat {
 		}
 	};
 
+	template<typename ToSummand>
+	[[nodiscard]] auto get_additive_scores(
+		const PerfectInformationSample &sample,
+		const std::vector<int> &spitzen,
+		ToSummand to_summand
+	) {
+		using namespace stdc::literals;
+		
+		using Score = std::invoke_result_t<ToSummand, uint8_t, int>;
+		static_assert(std::is_same_v<Score, int>);
+
+		const auto &points_for_situations = sample.points_for_situations();
+		
+		auto cards = sample.playable_cards();
+
+		auto scores = std::vector<Score>{};
+		scores.reserve(cards.size());
+		while (!cards.empty()) {
+			auto card = cards.remove_next();
+			
+			auto score = std::transform_reduce(RANGE(points_for_situations), spitzen.begin(), Score{}, std::plus{}, [&] (auto &points, auto sp){
+				return to_summand(points[static_cast<uint8_t>(card)], sp);
+			});
+
+			scores.push_back(score);
+		}
+		return scores;
+	}
+
+
 	template<typename PointsToSummand>
 	[[nodiscard]] auto get_additive_scores(
 		const PerfectInformationSample &sample,
@@ -76,27 +107,13 @@ namespace muskat {
 		return scores;
 	}
 
-	template<typename Predicate>
-	[[nodiscard]] auto get_propability(
-		const PerfectInformationSample &sample,
-		Predicate predicate
+	template<typename Sc>
+	[[nodiscard]] inline auto get_propability(
+		const std::vector<Sc> &sums_via_bool_predicate,
+		size_t sample_size
 	) {
-		using namespace stdc::literals;
-		
-		using Bool = std::invoke_result_t<Predicate, uint8_t>;
-		static_assert(std::is_same_v<Bool, bool>);
-
-		auto sums = get_additive_scores(
-			sample,
-			[&](auto points) {
-				return static_cast<size_t>(predicate(points));
-			}
-		);
-
-		auto size = sample.points_for_situations().size();
-
-		return stdc::transformed_vector(RANGE(sums), [&](auto sum) {
-			return static_cast<double>(sum) / static_cast<double>(size);
+		return stdc::transformed_vector(RANGE(sums_via_bool_predicate), [&](auto sum) {
+			return static_cast<double>(sum) / static_cast<double>(sample_size);
 		});
 	}
 
@@ -113,6 +130,26 @@ namespace muskat {
 		return stdc::transformed_vector(RANGE(sums), [&](auto sum) {
 			return static_cast<double>(sum) / static_cast<double>(size);
 		});
+	}
+
+	template<typename Score>
+	[[nodiscard]] inline auto get_all_cards_with_score(
+		Score target_score,
+		const std::vector<Score> &scores,
+		Cards parallel_cards
+	) {
+		using namespace stdc::literals;
+		
+		auto result = Cards{};
+		for (auto i = 0_z; i < scores.size(); ++i) {
+			assert(!parallel_cards.empty());
+			auto c = parallel_cards.remove_next();
+			if (scores[i] == target_score) {
+				result.add(c);
+			}
+		}
+		assert(parallel_cards.empty());
+		return result;
 	}
 
 
@@ -191,6 +228,60 @@ namespace muskat {
 		);
 	}
 
+
+
+	[[nodiscard]] inline auto get_accumulated_game_results(
+		const PerfectInformationSample &sample,
+		const std::vector<int> &spitzen,
+		Contract contract,
+		int bidding_value,
+		uint8_t current_score
+	) {
+		return get_additive_scores(
+			sample,
+			spitzen,
+			[&](auto future_points_and_skat, auto sp) {
+				//TODO: Correct number of tricks.
+				auto game_result = get_game_result(
+					contract,
+					sp,
+					bidding_value,
+					Score{static_cast<uint8_t>(future_points_and_skat + current_score), 5}
+				);
+				return score_classical(game_result);
+			}
+		);
+	}
+
+
+	[[nodiscard]] inline auto analyze_new(
+		const PerfectInformationSample &sample,
+		const std::vector<int> &spitzen,
+		Contract contract,
+		int bidding_value,
+		uint8_t current_score,
+		Role active_role
+	) {
+		auto scores = get_accumulated_game_results(
+			sample,
+			spitzen,
+			contract,
+			bidding_value,
+			current_score
+		);
+
+		auto best_score = active_role == Role::Declarer
+			? *std::max_element(RANGE(scores))
+			: *std::min_element(RANGE(scores));
+
+
+		return get_all_cards_with_score(
+			best_score,
+			scores,
+			sample.playable_cards()
+		);
+	}
+
 	[[nodiscard]] inline auto analyze_for_defender(
 		const PerfectInformationSample &sample,
 		uint8_t threshold
@@ -231,7 +322,7 @@ namespace muskat {
 		uint8_t threshold;
 		Role active_role;
 
-		[[nodiscard]] auto operator()(uint8_t score) -> bool {
+		[[nodiscard]] auto operator()(uint8_t score) -> size_t {
 			return active_role == Role::Declarer
 				? threshold <= score
 				: score < threshold;
@@ -297,7 +388,7 @@ namespace muskat {
 		std::cout << stretch_to<Side::Left>(category_string, 4) << " | ";
 		for (auto id = 0_z; id < datas.size(); ++id) {
 			const auto &data = datas[id];
-			auto out = stretch_to<Side::Right>(format(data), 6) + " ";
+			auto out = stretch_to<Side::Right>(format(data), 7) + " ";
 			
 			if (is_highlighted(data)){
 				fmt::print(fmt::emphasis::bold, out);
@@ -317,7 +408,10 @@ namespace muskat {
 		const PerfectInformationSample &sample,
 		uint8_t current_score_without_skat,
 		Role active_role,
-		Cards highlighted_cards
+		Cards highlighted_cards,
+		const std::vector<int> &spitzen,
+		Contract contract,
+		int bidding_value
 	) {
 		using namespace stdc::literals;
 		
@@ -325,22 +419,24 @@ namespace muskat {
 		auto threshold_win_schneider = missing_for(unmodified_threshold_win_schneider, current_score_without_skat);
 		auto threshold_not_lost_schneider = missing_for(unmodified_threshold_not_lost_schneider, current_score_without_skat);
 
-		auto cmp_to = [&](auto threshold) {
+		auto size_t_cmp_to = [&](auto threshold) {
 			return cmp_to_helper{threshold, active_role};
 		};
 		auto cmp_str = active_role == Role::Declarer ? ""s : "<"s;
 
+		auto sample_size = sample.points_for_situations().size();
+
 		auto probabilities_win = get_propability(
-			sample,
-			cmp_to(threshold_win)
+			get_additive_scores(sample, size_t_cmp_to(threshold_win)),
+			sample_size
 		);
 		auto probabilities_win_schneider = get_propability(
-			sample,
-			cmp_to(threshold_win_schneider)
+			get_additive_scores(sample, size_t_cmp_to(threshold_win_schneider)),
+			sample_size
 		);
 		auto probabilities_not_lost_schneider = get_propability(
-			sample,
-			cmp_to(threshold_not_lost_schneider)
+			get_additive_scores(sample, size_t_cmp_to(threshold_not_lost_schneider)),
+			sample_size
 		);
 		
 		auto average_scores = get_averages(sample);
@@ -352,6 +448,17 @@ namespace muskat {
 				return 120. - score;
 			});
 		}
+
+		auto average_game_results = get_propability(
+			get_accumulated_game_results(
+				sample,
+				spitzen,
+				contract,
+				bidding_value,
+				current_score_without_skat
+			),
+			sample_size
+		);
 
 		auto to_percent = [](auto p) {
 			return fmt::format("{:.1f}%", 100 * p);
@@ -398,6 +505,18 @@ namespace muskat {
 			average_scores,
 			to_average_score,
 			[&](auto p) { return p == max_average_score; }
+			
+		);
+
+		auto best_game_result = active_role == Role::Declarer
+			? *std::max_element(RANGE(average_game_results))
+			: *std::min_element(RANGE(average_game_results));
+
+		print_statistics(
+			"game",
+			average_game_results,
+			to_average_score,
+			[&](auto p) { return p == best_game_result; }
 			
 		);
 

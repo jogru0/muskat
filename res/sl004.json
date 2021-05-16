@@ -6,6 +6,7 @@
 		"declarer": "geber",
 		"type": "Green"
 	},
+	"bidding_value": 18,
 	"played_cards": [
 		["S7", "SO", "SA"],
 		["GU", "GZ", "EU"],

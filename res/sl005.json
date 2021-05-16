@@ -6,6 +6,7 @@
 		"declarer": "geber",
 		"type": "Green"
 	},
+	"bidding_value": 18,
 	"played_cards": [
 		["HK", "H8", "H9"],
 		["EO", "E9", "E8"],

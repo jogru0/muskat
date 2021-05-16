@@ -6,6 +6,7 @@
 		"declarer": "sager",
 		"type": "Herz"
 	},
+	"bidding_value": 18,
 	"played_cards": [
 		["S7", "SA", "S8"],
 		["H7", "SU", "HK"],

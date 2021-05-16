@@ -6,6 +6,7 @@
 		"declarer": "sager",
 		"type": "Eichel"
 	},
+	"bidding_value": 23,
 	"played_cards": [
 		["G9", "G8", "GA"],
 		["G7", "GO", "EZ"],

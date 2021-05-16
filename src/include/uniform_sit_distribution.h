@@ -1,5 +1,7 @@
 #pragma once
 
+
+#include "contract.h"
 #include "world_simulation.h"
 
 #include <random>
@@ -98,7 +100,7 @@ struct UniformInitialSitDistribution {
 	{}
 
 	template<typename Generator>
-	[[nodiscard]] auto operator()(Generator &rng) const -> std::tuple<Situation, Card, Card, GameType> {
+	[[nodiscard]] auto operator()(Generator &rng) const -> std::pair<std::tuple<Situation, Card, Card, GameType>, int> {
 		using namespace stdc::literals;
 		
 		auto shuffled_deck = get_shuffled_deck(rng);
@@ -115,8 +117,11 @@ struct UniformInitialSitDistribution {
 		assert(skat.size() == 2);
 		auto skat_0 = skat.remove_next();
 		auto skat_1 = skat.remove_next();
+
+		auto cards_declarer = h_dec | gedrueckt;
+		auto spitzen = get_spitzen(cards_declarer, game);
 		
-		return {Situation{
+		return {{Situation{
 			h_dec,
 			h_fd,
 			h_sd,
@@ -124,7 +129,7 @@ struct UniformInitialSitDistribution {
 			active_role,
 			MaybeCard{},
 			MaybeCard{}
-		}, skat_0, skat_1, game};
+		}, skat_0, skat_1, game}, spitzen};
 	}
 };
 
@@ -142,8 +147,9 @@ private:
 	MaybeCard maybe_first_trick_card;
 	MaybeCard maybe_second_trick_card;
 	GameType m_game;
+	Cards m_already_played_cards_dec;
 
-public:	
+public:
 	explicit UniformSitDistribution(
 		PossibleWorlds worlds
 	) {
@@ -153,6 +159,7 @@ public:
 		maybe_first_trick_card = worlds.maybe_first_trick_card;
 		maybe_second_trick_card = worlds.maybe_second_trick_card;
 		m_game = worlds.game;
+		m_already_played_cards_dec = worlds.already_played_cards_dec;
 
 
 		std::tie(signatures_dec_fdef_sdef_skat_and_entropy, number_of_possibilities) = get_signatures_dec_fdef_sdef_skat_and_entropy_and_number_of_possibilities(
@@ -170,7 +177,7 @@ public:
 	}
 
 	template<typename Generator>
-	[[nodiscard]] auto operator()(Generator &rng) const -> std::tuple<Situation, Card, Card, GameType> {
+	[[nodiscard]] auto operator()(Generator &rng) const -> std::pair<std::tuple<Situation, Card, Card, GameType>, int> {
 		using namespace stdc::literals;
 
 		auto sig_id = 0_z;
@@ -222,8 +229,12 @@ public:
 		assert(skat.size() == 2);
 		auto skat_0 = skat.remove_next();
 		auto skat_1 = skat.remove_next();
+
+		auto h_dec_at_start_of_game = cards_for_simulator[0] | m_already_played_cards_dec;
+		auto cards_declarer = h_dec_at_start_of_game | cards_for_simulator[3];
+		auto spitzen = get_spitzen(cards_declarer, m_game);
 		
-		return {Situation{
+		return {{Situation{
 			cards_for_simulator[0],
 			cards_for_simulator[1],
 			cards_for_simulator[2],
@@ -231,7 +242,7 @@ public:
 			active_role,
 			maybe_first_trick_card,
 			maybe_second_trick_card
-		}, skat_0, skat_1, m_game};
+		}, skat_0, skat_1, m_game}, spitzen};
 	}
 };
 

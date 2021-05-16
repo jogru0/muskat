@@ -7,12 +7,12 @@ Number of 1000 nodes:
 	median:     216
 	max:       7002
 Run time in ms:
-	mean:       546
-	median:     210
-	max:      12718
-Time to finished 1000 tasks with 12 threads: 49.3s
-	-> effective time per task: 592ms
-Hash: 11393448816606751144
+	mean:       549
+	median:     213
+	max:      12649
+Time to finished 1000 tasks with 12 threads: 49.5s
+	-> effective time per task: 594ms
+Hash: 6684485687524044615
 
 Start calculate_initial_games(1000, Eichel, First Defender).
 Number of 1000 nodes:
@@ -20,12 +20,12 @@ Number of 1000 nodes:
 	median:     166
 	max:       3820
 Run time in ms:
-	mean:       489
-	median:     173
-	max:       9595
-Time to finished 1000 tasks with 12 threads: 42.3s
-	-> effective time per task: 508ms
-Hash: 11296914152991369721
+	mean:       476
+	median:     167
+	max:       9492
+Time to finished 1000 tasks with 12 threads: 41.0s
+	-> effective time per task: 492ms
+Hash: 1806403757135368610
 
 Start calculate_initial_games(1000, Eichel, Second Defender).
 Number of 1000 nodes:
@@ -33,12 +33,12 @@ Number of 1000 nodes:
 	median:     169
 	max:       9674
 Run time in ms:
-	mean:       525
-	median:     183
-	max:      20778
-Time to finished 1000 tasks with 12 threads: 55.3s
-	-> effective time per task: 664ms
-Hash: 17880689724063414497
+	mean:       491
+	median:     173
+	max:      19620
+Time to finished 1000 tasks with 12 threads: 52.1s
+	-> effective time per task: 626ms
+Hash: 1621495815637693082
 
 Start calculate_initial_games(1000, Green, Declarer).
 Number of 1000 nodes:
@@ -46,12 +46,12 @@ Number of 1000 nodes:
 	median:     228
 	max:       8807
 Run time in ms:
-	mean:       593
-	median:     235
-	max:      23245
-Time to finished 1000 tasks with 12 threads: 51.3s
-	-> effective time per task: 616ms
-Hash: 10108758540838733084
+	mean:       575
+	median:     228
+	max:      22261
+Time to finished 1000 tasks with 12 threads: 49.6s
+	-> effective time per task: 595ms
+Hash: 1240142030039046585
 
 Start calculate_initial_games(1000, Green, First Defender).
 Number of 1000 nodes:
@@ -59,12 +59,12 @@ Number of 1000 nodes:
 	median:     175
 	max:       8985
 Run time in ms:
-	mean:       519
-	median:     188
-	max:      25036
-Time to finished 1000 tasks with 12 threads: 45.9s
-	-> effective time per task: 551ms
-Hash: 9796678020323708415
+	mean:       500
+	median:     180
+	max:      24301
+Time to finished 1000 tasks with 12 threads: 44.2s
+	-> effective time per task: 531ms
+Hash: 8215925178451947054
 
 Start calculate_initial_games(1000, Green, Second Defender).
 Number of 1000 nodes:
@@ -72,12 +72,12 @@ Number of 1000 nodes:
 	median:     184
 	max:      10399
 Run time in ms:
-	mean:       549
-	median:     209
-	max:      29955
-Time to finished 1000 tasks with 12 threads: 47.6s
-	-> effective time per task: 572ms
-Hash: 14824025670357758736
+	mean:       535
+	median:     195
+	max:      29495
+Time to finished 1000 tasks with 12 threads: 46.4s
+	-> effective time per task: 557ms
+Hash: 12245962150011353781
 
 Start calculate_initial_games(1000, Herz, Declarer).
 Number of 1000 nodes:
@@ -85,113 +85,9 @@ Number of 1000 nodes:
 	median:     218
 	max:       7126
 Run time in ms:
-	mean:       609
-	median:     229
-	max:      14950
-Time to finished 1000 tasks with 12 threads: 52.7s
-	-> effective time per task: 633ms
-Hash: 323907493819616161
-
-Start calculate_initial_games(1000, Herz, First Defender).
-Number of 1000 nodes:
-	mean:       348
-	median:     171
-	max:       6878
-Run time in ms:
-	mean:       520
-	median:     179
-	max:      15676
-Time to finished 1000 tasks with 12 threads: 45.1s
-	-> effective time per task: 541ms
-Hash: 17591054048567608044
-
-Start calculate_initial_games(1000, Herz, Second Defender).
-Number of 1000 nodes:
-	mean:       360
-	median:     174
-	max:       6824
-Run time in ms:
-	mean:       534
-	median:     180
-	max:      15201
-Time to finished 1000 tasks with 12 threads: 49.7s
-	-> effective time per task: 597ms
-Hash: 15623664099917767041
-
-Start calculate_initial_games(1000, Schell, Declarer).
-Number of 1000 nodes:
-	mean:       392
-	median:     232
-	max:       3826
-Run time in ms:
-	mean:       579
-	median:     240
-	max:       8320
-Time to finished 1000 tasks with 12 threads: 49.0s
-	-> effective time per task: 588ms
-Hash: 13148568315212559871
-
-Start calculate_initial_games(1000, Schell, First Defender).
-Number of 1000 nodes:
-	mean:       331
-	median:     180
-	max:       3787
-Run time in ms:
-	mean:       481
-	median:     189
-	max:       9907
-Time to finished 1000 tasks with 12 threads: 43.0s
-	-> effective time per task: 516ms
-Hash: 14782255430367615621
-
-Start calculate_initial_games(1000, Schell, Second Defender).
-Number of 1000 nodes:
-	mean:       341
-	median:     187
-	max:       4183
-Run time in ms:
-	mean:       493
-	median:     196
-	max:      10814
-Time to finished 1000 tasks with 12 threads: 44.4s
-	-> effective time per task: 533ms
-Hash: 5879333275298128614
-
-Start calculate_initial_games(1000, Grand, Declarer).
-Number of 1000 nodes:
-	mean:       312
-	median:     172
-	max:       3013
-Run time in ms:
-	mean:       359
-	median:     146
-	max:       5564
-Time to finished 1000 tasks with 12 threads: 30.1s
-	-> effective time per task: 362ms
-Hash: 9589234069563463592
-
-Start calculate_initial_games(1000, Grand, First Defender).
-Number of 1000 nodes:
-	mean:       252
-	median:     143
-	max:       2650
-Run time in ms:
-	mean:       294
-	median:     134
-	max:       4407
-Time to finished 1000 tasks with 12 threads: 24.8s
-	-> effective time per task: 298ms
-Hash: 799317990272595189
-
-Start calculate_initial_games(1000, Grand, Second Defender).
-Number of 1000 nodes:
-	mean:       260
-	median:     141
-	max:       4641
-Run time in ms:
-	mean:       305
-	median:     129
-	max:       7175
-Time to finished 1000 tasks with 12 threads: 28.2s
-	-> effective time per task: 338ms
-Hash: 9524775807108960679
+	mean:       580
+	median:     221
+	max:      14252
+Time to finished 1000 tasks with 12 threads: 50.2s
+	-> effective time per task: 603ms
+Hash: 13460661332007907796

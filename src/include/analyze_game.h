@@ -12,7 +12,9 @@ namespace muskat {
 		PossibleWorlds &worlds,
 		std::vector<Card> &moves,
 		Role my_role,
-		size_t iterations
+		size_t iterations,
+		Contract contract,
+		int bidding_value
 	) {
 
 		auto score_without_skat = uint8_t{};
@@ -30,7 +32,9 @@ namespace muskat {
 				auto card = pick_best_card(
 					worlds,
 					score_without_skat,
-					iterations
+					iterations,
+					contract,
+					bidding_value
 				);
 				std::cout << "\nRecommendation: " << to_string(card) << ".\n";
 			}

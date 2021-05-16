@@ -152,6 +152,7 @@ public: //!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	MaybeCard maybe_second_trick_card;
 
 	Cards gone_cards;
+	Cards already_played_cards_dec;
 
 	void assert_invariants() const {
 		//We don't check if so many trick types of unknown cards are restricted that
@@ -160,6 +161,12 @@ public: //!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		//about a game and play_card is called to model what ACTUALLY happens during that game.
 		//(Then, at each time, the situation describing the state of the actual game is possible.)
 	
+		auto already_played_dec_but_not_gone = already_played_cards_dec & ~gone_cards;
+		while (!already_played_dec_but_not_gone.empty()) {
+			auto c = already_played_dec_but_not_gone.remove_next();
+			assert(c == maybe_first_trick_card || c == maybe_second_trick_card);
+		}
+
 		using namespace stdc::literals;
 		
 		auto number_unknown = 0_z;
@@ -219,7 +226,9 @@ public:
 			game == other.game &&
 			active_role == other.active_role &&
 			maybe_first_trick_card == other.maybe_first_trick_card &&
-			maybe_second_trick_card == other.maybe_second_trick_card;
+			maybe_second_trick_card == other.maybe_second_trick_card &&
+			gone_cards == other.gone_cards &&
+			already_played_cards_dec == other.already_played_cards_dec;
 	}
 
 
@@ -237,7 +246,8 @@ public:
 		active_role{std::move(a_active_role)},
 		maybe_first_trick_card{},
 		maybe_second_trick_card{},
-		gone_cards{}
+		gone_cards{},
+		already_played_cards_dec{}
 	{
 		using namespace stdc::literals;
 
@@ -279,7 +289,8 @@ public:
 		Role a_active_role,
 		MaybeCard a_maybe_first_trick_card,
 		MaybeCard a_maybe_second_trick_card,
-		Cards a_gone_cards
+		Cards a_gone_cards,
+		Cards a_already_played_cards_dec
 	) :
 		known_about_unknown_dec_fdef_sdef_skat{std::move(a_known_about_unknown_dec_fdef_sdef_skat)},
 		known_cards_dec_fdef_sdef_skat{std::move(a_known_cards_dec_fdef_sdef_skat)},
@@ -288,7 +299,8 @@ public:
 		active_role{std::move(a_active_role)},
 		maybe_first_trick_card{std::move(a_maybe_first_trick_card)},
 		maybe_second_trick_card{std::move(a_maybe_second_trick_card)},
-		gone_cards{a_gone_cards}
+		gone_cards{a_gone_cards},
+		already_played_cards_dec{a_already_played_cards_dec}
 	{
 		assert_invariants();
 		//TODO: Check for initial position, because other positions
@@ -402,6 +414,10 @@ public:
 	//Returns what points the declarer makes with this move.
 	[[nodiscard]] auto play_card(Card card) -> Points {
 		assert(probably_could_be_played_next(card));
+
+		if (active_role == Role::Declarer) {
+			already_played_cards_dec.add(card);
+		}
 
 		auto id = static_cast<size_t>(active_role);
 		auto maybe_forced_trick_game_type = get_maybe_forced_trick_game_type();

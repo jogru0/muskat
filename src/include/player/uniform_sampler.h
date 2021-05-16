@@ -142,7 +142,12 @@ namespace muskat {
 			assert(m_current_information->active_role == m_role);
 			assert(!m_current_information->is_at_game_end());
 			say("Deciding my next move …\n");
-			auto card = pick_best_card(stdc::surely(m_current_information), m_points_declarer_without_skat, 200);
+
+			//TODO: Not done yet.
+			auto contract = Contract{stdc::surely(m_current_information).game, false, false, false, false};
+			auto bidding_value = 18;
+
+			auto card = pick_best_card(stdc::surely(m_current_information), m_points_declarer_without_skat, 200, contract, bidding_value);
 			return card;
 		}
 

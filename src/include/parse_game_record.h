@@ -186,11 +186,19 @@ namespace muskat {
 			if (!worlds_copy.probably_could_be_played_next(move)) {
 				throw parse::ParseException{fmt::format("Move {} is impossible in that situation.", to_string(move))};
 			}
-			worlds_copy.play_card(move);
+			[[maybe_unused]] auto pts = worlds_copy.play_card(move);
 		}
 
 		//TODO: Check if the resulting worlds_copy has any possible situation left.
 
-		return std::tuple{worlds, moves, my_role};
+		//TODO: More than that.
+		auto contract = Contract{
+			game, false, false, false, false
+		};
+
+		auto bidding_value = static_cast<int>(json.at("bidding_value"));
+		//TODO: Check if legal value.
+
+		return std::tuple{worlds, moves, my_role, contract, bidding_value};
 	}
 } // namespace muskat

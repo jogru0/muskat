@@ -323,11 +323,11 @@ auto main(int argc, char **argv) -> int try {
 				auto path_to_json = std::filesystem::path{args[2]};
 				auto fs = stdc::IO::open_file_with_checks_for_reading(path_to_json);
 				auto json = nlohmann::json::parse(fs);
-				auto [worlds, moves, my_role] = muskat::parse_game_record(json);
+				auto [worlds, moves, my_role, contract, bidding_value] = muskat::parse_game_record(json);
 				auto iterations = detail::parse_iterations_or_exit(args[3]);
 				
 				muskat::analyze_game(
-					worlds, moves, my_role, iterations
+					worlds, moves, my_role, iterations, contract, bidding_value
 				);
 			}
 			break;

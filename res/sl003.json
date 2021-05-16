@@ -6,6 +6,7 @@
 		"declarer": "hoerer",
 		"type": "Eichel"
 	},
+	"bidding_value": 18,
 	"played_cards": [
 		["EU", "EO", "EK"],
 		["HU", "GU", "EA"],

@@ -133,9 +133,10 @@ template<typename SituationDistribution>
 [[nodiscard]] inline auto multithreaded_sampling(
 	const SituationDistribution &situation_dist,
 	size_t number_samples
-)
-	-> std::vector<PerfectInformationResult>
-{
+) -> std::pair<
+	std::vector<PerfectInformationResult>,
+	std::vector<int>
+> {
 	using namespace stdc::literals;
 	
 	auto number_of_threads = std::thread::hardware_concurrency();
@@ -167,10 +168,15 @@ template<typename SituationDistribution>
 	auto inputs = std::vector<std::tuple<Situation, Card, Card, GameType>>{};
 	inputs.reserve(number_samples);
 
+	auto spitzen = std::vector<int>{};
+	spitzen.reserve(number_samples);
+
 	auto watch_sampling = stdc::SWatch{};
 	watch_sampling.start();
 	std::generate_n(std::back_inserter(inputs), number_samples, [&](){
-		return situation_dist(rng);
+		auto [in, sp] = situation_dist(rng);
+		spitzen.push_back(sp);
+		return in;
 	});
 	watch_sampling.stop();
 	stdc::log_debug(
@@ -239,7 +245,7 @@ template<typename SituationDistribution>
 	stdc::log("Run time in ms:");
 	stdc::display_statistics(times_in_ms);
 
-	return result;
+	return {result, spitzen};
 }
 
 inline void log_multithreaded_performance(
@@ -260,7 +266,9 @@ inline void log_multithreaded_performance(
 	const PossibleWorlds &worlds,
 	//TODO: Track in worlds!!!!!!
 	uint8_t current_score_without_skat,
-	size_t number_samples_to_do
+	size_t number_samples_to_do,
+	Contract contract,
+	int bidding_value
 ) -> Card {
 	using namespace stdc::literals;
 	
@@ -285,7 +293,7 @@ inline void log_multithreaded_performance(
 	auto watch_simulation = stdc::SWatch{};
 	watch_simulation.start();
 	
-	auto results = multithreaded_sampling(dist, number_samples_to_do);
+	auto [results, spitzen] = multithreaded_sampling(dist, number_samples_to_do);
 	auto playable_cards = worlds.surely_get_playable_cards();
 	auto sample = muskat::PerfectInformationSample{std::move(playable_cards), std::move(results)};
 	
@@ -298,17 +306,33 @@ inline void log_multithreaded_performance(
 
 	WATCH("ana").reset();
 	WATCH("ana").start();
-	auto picks = analyze(sample, current_score_without_skat, worlds.active_role);
+	auto picks = analyze_new(
+		sample,
+		spitzen,
+		contract,
+		bidding_value,
+		current_score_without_skat,
+		worlds.active_role
+	);
+
 	WATCH("ana").stop();
 	assert(!picks.empty());
-	// std::cout << "Time spent to do these choices: " << WATCH("ana").elapsed<std::chrono::milliseconds>() << "ms.\n";
+	std::cout << "Time spent to analyze samples: " << WATCH("ana").elapsed<std::chrono::milliseconds>() << "ms.\n";
 
 	watch_whole.stop();
 
 	// std::cout << "\nTotal time used: " << watch_whole.elapsed<std::chrono::milliseconds>() << "ms.\n\n";
 	stdc::detail::log.flush();
 
-	show_statistics(sample, current_score_without_skat, worlds.active_role, picks);
+	show_statistics(
+		sample,
+		current_score_without_skat,
+		worlds.active_role,
+		picks,
+		spitzen,
+		contract,
+		bidding_value
+	);
 
 	//For now, just do an arbitrary choice here.
 	return picks.remove_next();
@@ -378,7 +402,7 @@ inline void calculate_initial_games(size_t number_samples_to_do, GameType game, 
 	auto watch_simulation = stdc::SWatch{};
 	watch_simulation.start();
 	
-	auto results = muskat::multithreaded_sampling(
+	auto [results, spitzen] = muskat::multithreaded_sampling(
 		UniformInitialSitDistribution{game, initial_role},
 		number_samples_to_do
 	);
@@ -390,7 +414,7 @@ inline void calculate_initial_games(size_t number_samples_to_do, GameType game, 
 	log_multithreaded_performance(watch_simulation.elapsed(), 12, number_samples_to_do);
 
 
-	stdc::log("Hash: {}", stdc::GeneralHasher{}(results));
+	stdc::log("Hash: {}", stdc::GeneralHasher{}(results, spitzen));
 	stdc::detail::log.flush();
 }
 
