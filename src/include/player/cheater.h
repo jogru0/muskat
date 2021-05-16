@@ -44,7 +44,7 @@ namespace muskat {
 			say("Secretly peeking at hidden cards to cheat later.");
 			WATCH("decide").reset();
 			WATCH("decide").start();
-			auto [card, worst_case_score_from_here] = m_solver.pick_best_card_in_situation(m_current_situation);
+			auto [card, worst_case_score_from_here] = m_solver.pick_best_card_in_situation(m_current_situation, m_points_declarer);
 			WATCH("decide").stop();
 			say(
 				"This already tells me that for perfect play with no hidden information, the final score would be " +
@@ -96,7 +96,7 @@ namespace muskat {
 			say("Cheating to find the perfect move …");
 			WATCH("decide").reset();
 			WATCH("decide").start();
-			auto [card, worst_case_score_from_here] = m_solver.pick_best_card_in_situation(m_current_situation);
+			auto [card, worst_case_score_from_here] = m_solver.pick_best_card_in_situation(m_current_situation, m_points_declarer);
 			WATCH("decide").stop();
 			auto end_of_sentence = m_role == Role::Declarer ? std::string{" or more."} : std::string{" or less."};
 			say(

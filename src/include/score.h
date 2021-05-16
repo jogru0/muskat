@@ -8,20 +8,45 @@
 #include "trick.h"
 
 namespace muskat {
-class ScoreNew {
+class Score {
 private:
 	uint8_t m_points;
 	uint8_t m_tricks;
 public:
-	explicit constexpr ScoreNew(uint8_t points, uint8_t tricks) :
+	[[nodiscard]] constexpr auto makes_probably_sense() const -> bool {
+		if (121 <= m_points) {
+			return m_tricks == 0;
+		}
+		if (m_points == 119) {
+			return false;
+		}
+		if (m_points == 1) {
+			return false;
+		}
+		if (m_tricks == 10) {
+			return 98 <= m_points;
+		}
+		if (m_tricks == 0) {
+			return m_points <= 22;
+		}
+		return true;
+
+	}
+
+	explicit constexpr Score() = default;
+
+	explicit constexpr Score(uint8_t points, uint8_t tricks) :
 		m_points{points},
 		m_tricks{tricks}
-	{}
+	{
+		// assert(makes_probably_sense());
+	}
 
-	friend auto operator<=>(ScoreNew, ScoreNew) -> bool = default;
+	friend constexpr auto operator<=>(Score, Score) = default;
 	void add_trick(const Trick &trick, GameType game) {
 		m_points += to_points(trick, game);
 		++m_tricks;
+		assert(makes_probably_sense());
 	}
 	[[nodiscard]] auto points() const {
 		return m_points;
@@ -29,37 +54,11 @@ public:
 	[[nodiscard]] auto tricks() const {
 		return m_tricks;
 	}
-	void add(ScoreNew other) {
-		m_points += other.m_points;
-		m_tricks += other.m_tricks;
-	}
-};
-
-class Score {
-private:
-	uint8_t m_points;
-	uint8_t m_ignore;
-public:
-	explicit constexpr Score(uint8_t points, uint8_t) :
-		m_points{points}, m_ignore{5}
-	{}
-
-	//TODO
-	explicit constexpr Score() = default;
-	
-	friend constexpr auto operator<=>(Score, Score) = default;
-	
-	void add_trick(const Trick &trick, GameType game) {
-		m_points += to_points(trick, game);
-	}
-	[[nodiscard]] auto points() const {
-		return m_points;
-	}
-	[[nodiscard]] auto tricks() const -> uint8_t {
-		return m_ignore;
-	}
 	void add(Score other) {
 		m_points += other.m_points;
+		m_tricks += other.m_tricks;
+
+		assert(makes_probably_sense());
 	}
 };
 
@@ -74,9 +73,10 @@ public:
 	return Score{required_points, required_tricks};
 }
 
+//When this is called, we should already have added all points together, including the skat.
 [[nodiscard]] inline auto someone_is_schwarz(Score score) {
 	if (score.tricks() == 0) {
-		assert(score.points() == 0);
+		assert(score.points() <= 22);
 		return true;
 	}
 	if (score.tricks() == 10) {
@@ -101,7 +101,7 @@ namespace std {
 			-> size_t
 		{
 			// return stdc::GeneralHasher{}(score.points(), score.tricks());
-			return std::hash<uint8_t>{}(score.points());
+			return stdc::GeneralHasher{}(score.points(), score.tricks());
 		}
 	};
 } //namespace std

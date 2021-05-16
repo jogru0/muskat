@@ -313,7 +313,7 @@ public:
 			return Score{0, 0};
 		}
 
-		auto result = Score {0, 0};
+		auto result = Score{0, 0};
 
 		auto trick = Trick{
 			*m_maybe_first_trick_card,

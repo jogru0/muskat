@@ -81,19 +81,19 @@ namespace muskat {
 	}
 
 	class Bounds {
-	public:
+	public: //TODO
 		Score m_lower;
 		Score m_upper;
 	public:
+
+		explicit constexpr Bounds() : m_lower{Score{0, 0}}, m_upper{Score{0, 0}} {}
+
 		explicit constexpr Bounds(Score lower, Score upper) :
 			m_lower{lower}, m_upper{upper}
 		{
 			assert(m_lower <= m_upper);
 		}
 		
-		//TODO: Where used? Should this be so?
-		explicit constexpr Bounds() : Bounds{Score{0, 0}, Score{0, 0}} {}
-
 		[[nodiscard]] constexpr auto lower() const{ return m_lower; }
 		[[nodiscard]] constexpr auto upper() const{ return m_upper; }
 
@@ -118,10 +118,15 @@ namespace muskat {
 	}
 
 	[[nodiscard]] inline auto quick_bounds(Situation sit, GameType game) {
-		constexpr auto max_points = 120;
+		constexpr auto max_score = Score{120, 10};
 		auto lower = Score{0, 0};
 		//TODO: How many tricks left?
-		auto upper = Score{static_cast<uint8_t>(max_points - to_points(sit.cellar(), game)), 10};
+		auto cellar = sit.cellar();
+		assert(cellar.size() % 3 == 2);
+		auto gone_tricks = cellar.size() / 3;
+		auto cellar_score = Score{to_points(sit.cellar(), game), static_cast<uint8_t>(gone_tricks)};
+
+		auto upper = required_beyond_to_reach(cellar_score, max_score);
 		return std::pair{Bounds{lower, upper}, MaybeCard{}};
 	}
 
@@ -192,20 +197,19 @@ namespace muskat {
 			m_h_fd{sit.hand(Role::FirstDefender)},
 			m_h_sd{sit.hand(Role::SecondDefender)}
 		{
-			[[maybe_unused]] auto strict_bounds_childs = std::pair{
-				Bounds{},
+			auto strict_bounds_leaf = std::pair{
+				Bounds{Score{0, 0}, Score{0, 0}},
 				MaybeCard{}
 			};
-			m_look_up[Cards{}] = strict_bounds_childs;
+			m_look_up[Cards{}] = strict_bounds_leaf;
 			auto c = Cards{};
 			c.add(skat_0);
-			m_look_up[c] = strict_bounds_childs;
+			m_look_up[c] = strict_bounds_leaf;
 			c = Cards{};
 			c.add(skat_1);
-			m_look_up[c] = strict_bounds_childs;
+			m_look_up[c] = strict_bounds_leaf;
 			assert(m_look_up.size() == 3);
 		}
-
 
 		[[nodiscard]] auto number_of_nodes() const {
 			return m_look_up.size();
@@ -369,41 +373,82 @@ namespace muskat {
 		}
 
 		//If everyone plays perfect, this is the score still made from here.
-		auto calculate_potential_score_2(Situation sit) -> Score {
-			auto goal = Score{0, 0};
-			while (still_makes_at_least(sit, goal)) {
-				goal = Score{static_cast<uint8_t>(goal.points() + 1), 0};
-			}
-			assert(0 < goal.points());
-			goal = Score{static_cast<uint8_t>(goal.points() - 1), 0};
-			assert(goal.points() <= 120);
-			return goal;
-		}
-
-		auto calculate_potential_score_3(Situation sit) -> Score {
-			auto goal = Score{121, 0};
-			while (!still_makes_at_least(sit, goal)) {
-				assert(0 < goal.points());
-				goal = Score{static_cast<uint8_t>(goal.points() - 1), 0};
+		// auto calculate_potential_score_2(Situation sit) -> Score {
+		// 	auto goal = Score{0, 1};
+		// 	while (still_makes_at_least(sit, goal)) {
+		// 		goal = Score{static_cast<uint8_t>(goal.points() + 1), 0};
+		// 	}
+		// 	if (0 == goal.points()) {
+		// 		goal = Score{0, 0};
+		// 	} else {
+		// 		goal = Score{static_cast<uint8_t>(goal.points() - 1), 0};
+		// 	}
+		// 	assert(goal.points() <= 120);
 			
+		// 	//WRONG
+		// 	if (goal.points() == 120) {
+		// 		if (still_makes_at_least(sit, Goal{120, 10})) {
+		// 			goal = Goal{120, 10};
+		// 		}
+		// 	}
+
+		// 	return goal;
+		// }
+
+		auto calculate_potential_points_and_schwarz(Situation sit, Score score_so_far) -> Score {
+			auto max_doable = quick_bounds(sit, m_game).first.upper();
+			[[maybe_unused]] auto min_doable = quick_bounds(sit, m_game).first.lower();
+
+			auto needed_for_schwarz = required_beyond_to_reach(score_so_far, Score{120, 10});
+			assert(max_doable <= needed_for_schwarz);
+
+			if (needed_for_schwarz == max_doable) {
+				//Try to force Schwarz for the declarer.
+				if (still_makes_at_least(sit, needed_for_schwarz)) {
+					return needed_for_schwarz;
+				}
 			}
-			assert(goal.points() <= 120);
+			assert(!still_makes_at_least(sit, needed_for_schwarz));
+			
+			if (max_doable.tricks() == 0) {
+				// We already know that no tricks can be made.
+				assert(max_doable.points() == 0);
+				assert(!still_makes_at_least(sit, Score{0, 1}));
+				assert((min_doable == Score{0, 0}));
+				return Score{0, 0};
+			}
+
+			//See if we make points (and therefore one trick), and how many, or no points, but at least one trick.
+			auto goal = Score{max_doable.points(), 1};
+			while (!still_makes_at_least(sit, goal)) {
+				if (goal.points() == 0) {
+					//Looks like the declarer can't prevent subschwarz.
+					assert((min_doable == Score{0, 0}));
+					return Score{0, 0};
+				}
+				goal = Score{static_cast<uint8_t>(goal.points() - 1), 1};
+			}
+			
+			//TODO: Would be really cool if we could return the actual threshold we found, not
+			//the arbitrary one with 1 trick.
+			assert(min_doable <= goal);
 			return goal;
 		}
 
 		//Undefined if no card is left.
-		auto pick_best_card_in_situation(Situation sit) -> std::pair<Card, Score> {
-			auto final_additional_score_to_reach = calculate_potential_score_2(sit);
+		//TODO: Just use score_for_possible_plays!
+		auto pick_best_card_in_situation(Situation sit, Score score_so_far) -> std::pair<Card, Score> {
+			auto final_additional_score_to_reach = calculate_potential_points_and_schwarz(sit, score_so_far);
 
 			if (sit.active_role() == Role::Declarer) {
 				//Pick a card that forces at least this value.
 				return {stdc::surely(maybe_card_for_threshold(sit, final_additional_score_to_reach)), final_additional_score_to_reach};
 			}
 			
-			//TODO: How to handle Schwarz here?
+			//TODO: THIS CAN GO WRONG FOR SCHWARZ!!!!!!!!!!!!!!!
 			auto final_additional_score_to_prevent = Score{
 				static_cast<uint8_t>(final_additional_score_to_reach.points() + 1),
-				final_additional_score_to_reach.tricks()
+				0
 			};
 
 			//Pick a card that forces at most this value (so less than this value + 1).
@@ -412,19 +457,19 @@ namespace muskat {
 
 		//How many points will still follow for the declarer due to finishing tricks?
 		//Not counting tricks already won, or points gedrückt.
-		auto score_for_possible_plays(Situation sit) {
+		auto score_for_possible_plays(Situation sit, Score score_so_far) {
 			using namespace stdc::literals;
 			
 			auto inv = Score{121, 0};
 
 			auto result = std::array<Score, 32>{
-				inv, inv, inv, inv, 
-				inv, inv, inv, inv, 
-				inv, inv, inv, inv, 
-				inv, inv, inv, inv, 
-				inv, inv, inv, inv, 
-				inv, inv, inv, inv, 
-				inv, inv, inv, inv, 
+				inv, inv, inv, inv,
+				inv, inv, inv, inv,
+				inv, inv, inv, inv,
+				inv, inv, inv, inv,
+				inv, inv, inv, inv,
+				inv, inv, inv, inv,
+				inv, inv, inv, inv,
 				inv, inv, inv, inv
 			};
 			auto possible_plays = next_possible_plays(sit, m_game);
@@ -439,7 +484,7 @@ namespace muskat {
 
 				auto child = sit;
 				auto points_to_get_to_child = child.play_card(card, m_game);
-				auto points_as_child = calculate_potential_score_3(child);
+				auto points_as_child = calculate_potential_points_and_schwarz(child, score_so_far);
 				auto future_points_for_tricks_when_choosing_child = points_as_child;
 				future_points_for_tricks_when_choosing_child.add(points_to_get_to_child);
 				result[i] = future_points_for_tricks_when_choosing_child;
@@ -447,8 +492,6 @@ namespace muskat {
 
 			return result;
 		}
-
-
 
 	};
 

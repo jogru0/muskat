@@ -304,7 +304,7 @@ namespace muskat {
 		return required_beyond_to_reach(current_score, target);
 	}
 
-	[[nodiscard]] inline auto analyze(
+	[[nodiscard]] inline auto analyze_old(
 		const PerfectInformationSample &sample,
 		Score current_score,
 		Role active_role 
@@ -332,11 +332,13 @@ namespace muskat {
 
 	enum class Side {Left, Right};
 
-	template<Side side>
+	template<Side side, typename Str>
 	[[nodiscard]] inline auto stretch_to(
-		std::string_view str,
+		const Str &str,
 		size_t length
 	) {
+
+		using Char = typename Str::value_type;
 		
 		//We hope to not clip the string.
 		assert(str.size() <= length);
@@ -347,7 +349,7 @@ namespace muskat {
 		auto remaining = length - one_after_last_to_copy;
 		auto middle_it = stdc::to_it(str, one_after_last_to_copy);
 
-		auto result = std::string{};
+		auto result = std::basic_string<Char>{};
 		result.reserve(length);
 		
 		auto op_str = [&](){
@@ -401,9 +403,11 @@ namespace muskat {
 		std::cout << '\n';
 	}
 
-		inline constexpr auto unmodified_threshold_win = Score{61, 0};
-		inline constexpr auto unmodified_threshold_win_schneider = Score{90, 0};
-		inline constexpr auto unmodified_threshold_not_lost_schneider = Score{31, 0};
+	inline /*constexpr*/ const auto unmodified_threshold_win = Score{61, 0};
+	inline /*constexpr*/ const auto unmodified_threshold_win_schneider = Score{90, 0};
+	inline /*constexpr*/ const auto unmodified_threshold_not_lost_schneider = Score{31, 0};
+	inline /*constexpr*/ const auto unmodified_threshold_win_schwarz = Score{120, 10};
+	inline /*constexpr*/ const auto unmodified_threshold_not_lost_schwarz = Score{0, 1};
 
 	[[nodiscard]] inline auto show_statistics(
 		const PerfectInformationSample &sample,
@@ -419,6 +423,9 @@ namespace muskat {
 		auto threshold_win = missing_for(unmodified_threshold_win, current_score_without_skat);
 		auto threshold_win_schneider = missing_for(unmodified_threshold_win_schneider, current_score_without_skat);
 		auto threshold_not_lost_schneider = missing_for(unmodified_threshold_not_lost_schneider, current_score_without_skat);
+		auto threshold_win_schwarz = missing_for(unmodified_threshold_win_schwarz, current_score_without_skat);
+		auto threshold_not_lost_schwarz = missing_for(unmodified_threshold_not_lost_schwarz, current_score_without_skat);
+
 
 		auto size_t_cmp_to = [&](Score threshold) {
 			return cmp_to_helper{threshold, active_role};
@@ -439,6 +446,19 @@ namespace muskat {
 			get_additive_scores(sample, size_t_cmp_to(threshold_not_lost_schneider)),
 			sample_size
 		);
+		auto probabilities_win_schwarz = get_propability(
+			get_additive_scores(sample, size_t_cmp_to(threshold_win_schwarz)),
+			sample_size
+		);
+		auto probabilities_not_lost_schwarz = get_propability(
+			get_additive_scores(sample, size_t_cmp_to(threshold_not_lost_schwarz)),
+			sample_size
+		);
+
+		if (active_role != Role::Declarer) {
+			std::swap(probabilities_win_schneider, probabilities_not_lost_schneider);
+			std::swap(probabilities_win_schwarz, probabilities_not_lost_schwarz);
+		}
 		
 		auto average_scores = get_averages(sample);
 		std::transform(RANGE(average_scores), average_scores.begin(), [&](auto score) {
@@ -461,10 +481,6 @@ namespace muskat {
 			sample_size
 		);
 
-		auto to_percent = [](auto p) {
-			return fmt::format("{:.1f}%", 100 * p);
-		};
-		
 		auto to_average_score = [&](auto sc) {
 			return fmt::format("{:.2f}", sc);
 		};
@@ -473,32 +489,45 @@ namespace muskat {
 			return to_string(card);
 		};
 
+		auto print_props = [](
+			const auto &probs,
+			std::string_view category_string
+		) {
+			auto max_prob = *std::max_element(RANGE(probs));
+
+			if (category_string != "w") {
+				if (max_prob == 0.0) {
+					// fmt::print(fmt::fg(fmt::color::red), stretch_to<Side::Left>(category_string, 4));
+					// std::cout << " |\n";
+					return;
+				}
+
+				if (*std::min_element(RANGE(probs)) == 1) {
+					// fmt::print(fmt::fg(fmt::color::green), stretch_to<Side::Left>(category_string, 4));
+					// std::cout << " |\n";
+					return;
+				}
+			}
+
+			print_statistics(
+				category_string,
+				probs,
+				[](auto p) {
+					return fmt::format("{:.1f}%", 100 * p);
+				},
+				[&](auto p) { return p == max_prob; }
+			);
+		};
+
+		auto vert_line = "------"s;
+		for (auto i = 0_z; i < sample.playable_cards().size(); ++i) {
+			vert_line += "--------";
+		}
+		vert_line.push_back('\n');
+
 		//TODO: Relevant score …
 		// std::cout << "Current Score: " << std::to_string(current_score_without_skat) << "\n\n";
-
-		auto max_probabilities_not_lost_schneider = *std::max_element(RANGE(probabilities_not_lost_schneider));
-		print_statistics(
-			cmp_str + std::to_string(unmodified_threshold_not_lost_schneider.points()),
-			probabilities_not_lost_schneider,
-			to_percent,
-			[&](auto p) { return p == max_probabilities_not_lost_schneider; }
-		);
-
-		auto max_probabilities_win = *std::max_element(RANGE(probabilities_win));
-		print_statistics(
-			cmp_str + std::to_string(unmodified_threshold_win.points()),
-			probabilities_win,
-			to_percent,
-			[&](auto p) { return p == max_probabilities_win; }
-		);
-
-		auto max_probabilities_win_schneider = *std::max_element(RANGE(probabilities_win_schneider));
-		print_statistics(
-			cmp_str + std::to_string(unmodified_threshold_win_schneider.points()),
-			probabilities_win_schneider,
-			to_percent,
-			[&](auto p) { return p == max_probabilities_win_schneider; }
-		);
+		
 
 		auto max_average_score = *std::max_element(RANGE(average_scores));
 		print_statistics(
@@ -508,6 +537,16 @@ namespace muskat {
 			[&](auto p) { return p == max_average_score; }
 			
 		);
+		
+		std::cout << vert_line;
+
+		print_props(probabilities_not_lost_schwarz, "nlb");
+		print_props(probabilities_not_lost_schneider, "nls");
+		print_props(probabilities_win, "w");
+		print_props(probabilities_win_schneider, "ws");
+		print_props(probabilities_win_schwarz, "wb");
+		
+		std::cout << vert_line;
 
 		auto best_game_result = active_role == Role::Declarer
 			? *std::max_element(RANGE(average_game_results))
@@ -523,7 +562,7 @@ namespace muskat {
 
 		auto cards = to_vector(sample.playable_cards());
 
-		std::cout << "--------------------------------------------------------\n";
+		std::cout << vert_line;
 		print_statistics(
 			std::string{},
 			cards,

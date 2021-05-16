@@ -45,7 +45,7 @@ public:
 		return m_bits == 0;
 	}
 
-	[[nodiscard]] auto size() const {
+	[[nodiscard]] constexpr auto size() const {
 		static_assert(std::is_same_v<uint32_t, unsigned int>);
 		return static_cast<size_t>(__builtin_popcount(m_bits));
 	}

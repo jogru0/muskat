@@ -50,7 +50,8 @@ inline void execute_worker_sampling(
 	stdc::ConcurrentResultVector<std::array<Score, 32>> &results,
 	size_t worker_id,
 	std::vector<double> &times_in_ms,
-	std::vector<std::vector<double>> &numbers_of_nodes
+	std::vector<std::vector<double>> &numbers_of_nodes,
+	Score current_score_without_skat
 ) try {
 	wa::watches_th[worker_id][wa::start].stop();
 
@@ -78,16 +79,20 @@ inline void execute_worker_sampling(
 		
 		//MEASURE BEGIN
 		
+		auto points_from_gedrueckt = Score{static_cast<uint8_t>(to_points(skat_0, game) + to_points(skat_1, game)), 0};
+		auto score_so_far = points_from_gedrueckt;
+		score_so_far.add(current_score_without_skat);
+		
 		auto solver = muskat::SituationSolver{situation, game, skat_0, skat_1};
-		auto points_arr = solver.score_for_possible_plays(situation);
+		auto points_arr = solver.score_for_possible_plays(situation, score_so_far);
+		
+		for (auto &points : points_arr) {
+			points.add(points_from_gedrueckt);
+		}
 		
 		//We want to return how many points the declarer makes not already observed with the tricks so far.
 		//So the points gedrückt have to be added as well.
 		//TODO: In the future, it might be nicer to also add the points already made here.
-		auto points_from_gedrueckt = Score{static_cast<uint8_t>(to_points(skat_0, game) + to_points(skat_1, game)), 0};
-		for (auto &points : points_arr) {
-			points.add(points_from_gedrueckt);
-		}
 
 		auto nodes = std::vector{static_cast<double>(solver.number_of_nodes()) / 1000.};
 		
@@ -132,7 +137,8 @@ inline void execute_worker_sampling(
 template<typename SituationDistribution>
 [[nodiscard]] inline auto multithreaded_sampling(
 	const SituationDistribution &situation_dist,
-	size_t number_samples
+	size_t number_samples,
+	Score current_score_without_skat
 ) -> std::pair<
 	std::vector<PerfectInformationResult>,
 	std::vector<int>
@@ -199,7 +205,8 @@ template<typename SituationDistribution>
 			std::ref(results),
 			thread_id,
 			std::ref(times_in_ms),
-			std::ref(numbers_of_nodes)
+			std::ref(numbers_of_nodes),
+			current_score_without_skat
 		});
 	}
 
@@ -293,7 +300,7 @@ inline void log_multithreaded_performance(
 	auto watch_simulation = stdc::SWatch{};
 	watch_simulation.start();
 	
-	auto [results, spitzen] = multithreaded_sampling(dist, number_samples_to_do);
+	auto [results, spitzen] = multithreaded_sampling(dist, number_samples_to_do, current_score_without_skat);
 	auto playable_cards = worlds.surely_get_playable_cards();
 	auto sample = muskat::PerfectInformationSample{std::move(playable_cards), std::move(results)};
 	
@@ -404,7 +411,8 @@ inline void calculate_initial_games(size_t number_samples_to_do, GameType game, 
 	
 	auto [results, spitzen] = muskat::multithreaded_sampling(
 		UniformInitialSitDistribution{game, initial_role},
-		number_samples_to_do
+		number_samples_to_do,
+		Score{0, 0}
 	);
 	
 	watch_simulation.stop();
