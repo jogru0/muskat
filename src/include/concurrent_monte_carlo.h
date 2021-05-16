@@ -290,11 +290,18 @@ inline void log_multithreaded_performance(
 	watch_dist_generation.start();
 	auto dist = UniformSitDistribution{worlds};
 	watch_dist_generation.stop();
-	//TODO!!!!!!!!!!!!!!!! DATA LOSS
 	stdc::log(
 		"Creation of the uniform sit distribution took {}.",
 		stdc::to_string_us(watch_dist_generation.elapsed())
 	);
+
+	stdc::log(
+		"Have {} possible situations, spread over {} different color distributions.",
+		dist.get_number_of_possibilities(),
+		dist.get_number_of_color_distributions()
+	);
+
+	
 
 
 	// stdc::log(fmt::format("Start simulation of {} worlds.", number_samples_to_do));
