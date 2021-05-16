@@ -118,9 +118,9 @@ enum class GameType {
 	Schell, Herz, Green, Eichel, Null, Grand
 };
 
-using Points = uint8_t;
+using PointsOnly = uint8_t;
 	
-[[nodiscard]] inline auto to_points(Card card, [[maybe_unused]] GameType game) -> Points {
+[[nodiscard]] inline auto to_points(Card card, [[maybe_unused]] GameType game) -> PointsOnly {
 	assert(game != GameType::Null);
 	switch (to_rank(card)) {
 	case Rank::L7: [[fallthrough]];

@@ -62,7 +62,7 @@ namespace perf {
 
 		auto watch_solve = detail::Watch{};
 		watch_solve.start();
-		points += solver.calculate_potential_score_2(initial_situation);
+		points += solver.calculate_potential_score_2(initial_situation).points();
 		watch_solve.stop();
 		
 		times_in_ms.push_back(static_cast<double>(watch_solve.elapsed<std::chrono::nanoseconds>() / 1'000'000.l));
@@ -103,7 +103,7 @@ namespace perf {
 
 		auto watch_solve = detail::Watch{};
 		watch_solve.start();
-		points += solver.calculate_potential_score_3(initial_situation);
+		points += solver.calculate_potential_score_3(initial_situation).points();
 		watch_solve.stop();
 		
 		times_in_ms.push_back(static_cast<double>(watch_solve.elapsed<std::chrono::nanoseconds>() / 1'000'000.l));
@@ -146,7 +146,7 @@ namespace perf {
 
 		auto watch_solve = detail::Watch{};
 		watch_solve.start();
-		auto won = solver.still_makes_at_least(initial_situation, 61);
+		auto won = solver.still_makes_at_least(initial_situation, muskat::Score{61, 0});
 		watch_solve.stop();
 		
 		times_in_ms.push_back(static_cast<double>(watch_solve.elapsed<std::chrono::nanoseconds>() / 1'000'000.l));
@@ -286,6 +286,13 @@ inline void test_calculating_initial_games(size_t iterations) {
 //At the moment, noreturn
 auto main(int argc, char **argv) -> int try {
 	assert(std::cout << "Asserts active.\n");
+
+	std::cout << "uint8_t:      " << sizeof(uint8_t) << "\n";
+	std::cout << "Score:      " << sizeof(muskat::Score) << "\n";
+	std::cout << "ScoreNew:      " << sizeof(muskat::ScoreNew) << "\n";
+	// std::cout << "Card:      " << sizeof(muskat::Card) << "\n";
+	// std::cout << "Card:      " << sizeof(muskat::Card) << "\n";
+	
 
 	// std::cout << "Card:      " << sizeof(muskat::Card) << "\n";
 	// std::cout << "op<Card>:  " << sizeof(std::optional<muskat::Card>) << "\n";

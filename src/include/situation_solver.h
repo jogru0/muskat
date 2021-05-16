@@ -2,6 +2,8 @@
 
 #include "situation.h"
 
+#include "contract.h"
+
 #include <stdc/mathematics.h>
 
 #include <robin_hood/robin_hood.h>
@@ -63,15 +65,7 @@ namespace muskat {
 				auto options = get_options(card);
 				auto power = to_power(card, maybe_forced_tt.value_or(TrickAndGameType{card, game}));
 				
-				if (
-					#pragma clang diagnostic push
-					#pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
-					std::tuple{options, -power} < std::tuple{best_options, -best_power}
-					#pragma clang diagnostic pop
-					
-					
-					
-					) {
+				if (std::tuple{options, -power} < std::tuple{best_options, -best_power}) {
 					best_card = card;
 					best_options = options;
 					best_power = power;
@@ -88,26 +82,27 @@ namespace muskat {
 
 	class Bounds {
 	public:
-		Points m_lower;
-		Points m_upper;
+		Score m_lower;
+		Score m_upper;
 	public:
-		explicit constexpr Bounds(Points lower, Points upper) :
+		explicit constexpr Bounds(Score lower, Score upper) :
 			m_lower{lower}, m_upper{upper}
 		{
 			assert(m_lower <= m_upper);
 		}
 		
-		explicit constexpr Bounds() : Bounds{0, 0} {}
+		//TODO: Where used? Should this be so?
+		explicit constexpr Bounds() : Bounds{Score{0, 0}, Score{0, 0}} {}
 
 		[[nodiscard]] constexpr auto lower() const{ return m_lower; }
 		[[nodiscard]] constexpr auto upper() const{ return m_upper; }
 
-		constexpr void update_lower(Points new_value) {
+		constexpr void update_lower(Score new_value) {
 			assert (m_lower <= new_value);
 			m_lower = new_value;
 			assert(m_lower <= m_upper);
 		}
-		constexpr void update_upper(Points new_value) {
+		constexpr void update_upper(Score new_value) {
 			assert(new_value <= m_upper);
 			m_upper = new_value;
 			assert(m_lower <= m_upper);
@@ -118,14 +113,16 @@ namespace muskat {
 		return left.lower() == right.lower() && left.upper() == right.upper();
 	}
 
-	[[nodiscard]] inline constexpr auto decides_threshold(Bounds bounds, Points threshold) {
+	[[nodiscard]] inline constexpr auto decides_threshold(Bounds bounds, Score threshold) {
 		return threshold <= bounds.lower() || bounds.upper() < threshold;
 	}
 
 	[[nodiscard]] inline auto quick_bounds(Situation sit, GameType game) {
-		constexpr auto max_points = Points{120};
-		auto upper = static_cast<Points>(max_points - to_points(sit.cellar(), game));
-		return std::pair{Bounds{0, upper}, MaybeCard{}};
+		constexpr auto max_points = 120;
+		auto lower = Score{0, 0};
+		//TODO: How many tricks left?
+		auto upper = Score{static_cast<uint8_t>(max_points - to_points(sit.cellar(), game)), 10};
+		return std::pair{Bounds{lower, upper}, MaybeCard{}};
 	}
 
 	class SituationSolver {
@@ -220,7 +217,7 @@ namespace muskat {
 		[[nodiscard]] auto improve_bounds_to_decide_threshold(
 			std::pair<Bounds, MaybeCard> bounds_pref,
 			Situation sit,
-			Points threshold
+			Score threshold
 		) -> std::pair<Bounds, MaybeCard> {
 			using namespace stdc::literals;
 			
@@ -230,7 +227,7 @@ namespace muskat {
 
 			assert(!decides_threshold(bounds, threshold));
 
-			auto bound_calculated_over_all_children = is_declarer ? Points{} : Points{120};
+			auto bound_calculated_over_all_children = is_declarer ? Score{0, 0} : Score{120, 10};
 
 			auto cards_to_consider = get_cards_to_consider(sit, m_game, pref);
 
@@ -247,17 +244,28 @@ namespace muskat {
 				auto card = *mcard;
 
 				auto child = sit;
-				auto points = child.play_card(card, m_game);
-				auto threshold_child = threshold <= points ? Points{} : static_cast<Points>(threshold - points);
+				auto additional_score = child.play_card(card, m_game);
+				auto threshold_child = required_beyond_to_reach(additional_score, threshold);
 
 				auto bounds_child = bounds_deciding_threshold(child, threshold_child);
+				
+				auto lower_bound_via_child = bounds_child.lower();
+				lower_bound_via_child.add(additional_score);
+				
+				auto upper_bound_via_child = bounds_child.upper();
+				upper_bound_via_child.add(additional_score);
+
+				assert(decides_threshold(
+					Bounds{lower_bound_via_child, upper_bound_via_child},
+					threshold
+				));
 
 				if constexpr (is_declarer) {
-					stdc::maximize(bounds.m_lower, static_cast<Points>(bounds_child.lower() + points));
-					stdc::maximize(bound_calculated_over_all_children, static_cast<Points>(bounds_child.upper() + points));
+					stdc::maximize(bounds.m_lower, lower_bound_via_child);
+					stdc::maximize(bound_calculated_over_all_children, upper_bound_via_child);
 				} else {
-					stdc::minimize(bound_calculated_over_all_children, static_cast<Points>(bounds_child.lower() + points));
-					stdc::minimize(bounds.m_upper, static_cast<Points>(bounds_child.upper() + points));
+					stdc::minimize(bound_calculated_over_all_children, lower_bound_via_child);
+					stdc::minimize(bounds.m_upper, upper_bound_via_child);
 				}
 				
 				if (decides_threshold(bounds, threshold)) {
@@ -282,7 +290,7 @@ namespace muskat {
 		}
 
 	public:
-		[[nodiscard]] auto bounds_deciding_threshold(Situation sit, Points threshold) -> Bounds {
+		[[nodiscard]] auto bounds_deciding_threshold(Situation sit, Score threshold) -> Bounds {
 
 			if (!sit.get_maybe_first_trick_card()) {
 				//Old path.
@@ -314,20 +322,20 @@ namespace muskat {
 
 		}
 
-		[[nodiscard]] auto still_makes_at_least(Situation sit, Points expected_points) {
-			const auto bounds = bounds_deciding_threshold(sit, expected_points);
-			if (expected_points <= bounds.lower()) {
+		[[nodiscard]] auto still_makes_at_least(Situation sit, Score expected_score) {
+			const auto bounds = bounds_deciding_threshold(sit, expected_score);
+			if (expected_score <= bounds.lower()) {
 				return true;
 			}
 
-			assert(bounds.upper() < expected_points);
+			assert(bounds.upper() < expected_score);
 			return false;
 		}
 
 		//Undefined if no card is left.
 		//Declarer picks any card that will result in reaching the threshold, if possible.
 		//Defender picks any card that will result in missing the threshold, if possible.
-		auto maybe_card_for_threshold(Situation sit, Points expected_points)
+		auto maybe_card_for_threshold(Situation sit, Score expected_score)
 			-> std::optional<Card>
 		{
 			auto possible_plays = next_possible_plays(sit, m_game);
@@ -341,10 +349,9 @@ namespace muskat {
 				}
 
 				auto child = sit;
-				auto points = child.play_card(card, m_game);
-				auto expected_points_child = expected_points <= points ? Points{} : static_cast<Points>(expected_points - points);
-
-				auto makes_it_child = still_makes_at_least(child, expected_points_child);
+				auto trick_score = child.play_card(card, m_game);
+				auto expected_score_child = required_beyond_to_reach(trick_score, expected_score);
+				auto makes_it_child = still_makes_at_least(child, expected_score_child);
 
 				if (makes_it_child) {
 					if (sit.active_role() == Role::Declarer) {
@@ -352,7 +359,7 @@ namespace muskat {
 					}
 				} else {
 					if (sit.active_role() != Role::Declarer) {
-						assert(expected_points != 0);
+						assert((expected_score != Score{0, 0}));
 						return card;
 					}
 				}
@@ -362,39 +369,45 @@ namespace muskat {
 		}
 
 		//If everyone plays perfect, this is the score still made from here.
-		auto calculate_potential_score_2(Situation sit) -> Points {
-			auto goal = Points{};
+		auto calculate_potential_score_2(Situation sit) -> Score {
+			auto goal = Score{0, 0};
 			while (still_makes_at_least(sit, goal)) {
-				++goal;
+				goal = Score{static_cast<uint8_t>(goal.points() + 1), 0};
 			}
-			assert(0 < goal);
-			--goal;
-			assert(goal <= 120);
+			assert(0 < goal.points());
+			goal = Score{static_cast<uint8_t>(goal.points() - 1), 0};
+			assert(goal.points() <= 120);
 			return goal;
 		}
 
-		auto calculate_potential_score_3(Situation sit) -> Points {
-			auto goal = Points{121};
+		auto calculate_potential_score_3(Situation sit) -> Score {
+			auto goal = Score{121, 0};
 			while (!still_makes_at_least(sit, goal)) {
-				assert(0 < goal);
-				--goal;
+				assert(0 < goal.points());
+				goal = Score{static_cast<uint8_t>(goal.points() - 1), 0};
 			
 			}
-			assert(goal <= 120);
+			assert(goal.points() <= 120);
 			return goal;
 		}
 
 		//Undefined if no card is left.
-		auto pick_best_card(Situation sit) -> std::pair<Card, uint8_t> {
+		auto pick_best_card_in_situation(Situation sit) -> std::pair<Card, Score> {
 			auto final_additional_score_to_reach = calculate_potential_score_2(sit);
 
 			if (sit.active_role() == Role::Declarer) {
 				//Pick a card that forces at least this value.
 				return {stdc::surely(maybe_card_for_threshold(sit, final_additional_score_to_reach)), final_additional_score_to_reach};
 			}
+			
+			//TODO: How to handle Schwarz here?
+			auto final_additional_score_to_prevent = Score{
+				static_cast<uint8_t>(final_additional_score_to_reach.points() + 1),
+				final_additional_score_to_reach.tricks()
+			};
 
 			//Pick a card that forces at most this value (so less than this value + 1).
-			return {stdc::surely(maybe_card_for_threshold(sit, final_additional_score_to_reach + 1)), final_additional_score_to_reach};
+			return {stdc::surely(maybe_card_for_threshold(sit, final_additional_score_to_prevent)), final_additional_score_to_reach};
 		}
 
 		//How many points will still follow for the declarer due to finishing tricks?
@@ -402,15 +415,17 @@ namespace muskat {
 		auto score_for_possible_plays(Situation sit) {
 			using namespace stdc::literals;
 			
-			auto result = std::array<uint8_t, 32>{
-				121, 121, 121, 121, 
-				121, 121, 121, 121, 
-				121, 121, 121, 121, 
-				121, 121, 121, 121, 
-				121, 121, 121, 121, 
-				121, 121, 121, 121, 
-				121, 121, 121, 121, 
-				121, 121, 121, 121
+			auto inv = Score{121, 0};
+
+			auto result = std::array<Score, 32>{
+				inv, inv, inv, inv, 
+				inv, inv, inv, inv, 
+				inv, inv, inv, inv, 
+				inv, inv, inv, inv, 
+				inv, inv, inv, inv, 
+				inv, inv, inv, inv, 
+				inv, inv, inv, inv, 
+				inv, inv, inv, inv
 			};
 			auto possible_plays = next_possible_plays(sit, m_game);
 			assert(!possible_plays.empty());
@@ -425,7 +440,9 @@ namespace muskat {
 				auto child = sit;
 				auto points_to_get_to_child = child.play_card(card, m_game);
 				auto points_as_child = calculate_potential_score_3(child);
-				result[i] = points_as_child + points_to_get_to_child;
+				auto future_points_for_tricks_when_choosing_child = points_as_child;
+				future_points_for_tricks_when_choosing_child.add(points_to_get_to_child);
+				result[i] = future_points_for_tricks_when_choosing_child;
 			}
 
 			return result;
@@ -436,45 +453,45 @@ namespace muskat {
 	};
 
 
-	inline auto score_for_possible_plays_separate(Situation sit, GameType game, Card skat_0, Card skat_1) {
-		using namespace stdc::literals;
+	// inline auto score_for_possible_plays_separate(Situation sit, GameType game, Card skat_0, Card skat_1) {
+	// 	using namespace stdc::literals;
 		
-		auto result = std::array<uint8_t, 32>{
-			121, 121, 121, 121, 
-			121, 121, 121, 121, 
-			121, 121, 121, 121, 
-			121, 121, 121, 121, 
-			121, 121, 121, 121, 
-			121, 121, 121, 121, 
-			121, 121, 121, 121, 
-			121, 121, 121, 121
-		};
+	// 	auto result = std::array<uint8_t, 32>{
+	// 		121, 121, 121, 121, 
+	// 		121, 121, 121, 121, 
+	// 		121, 121, 121, 121, 
+	// 		121, 121, 121, 121, 
+	// 		121, 121, 121, 121, 
+	// 		121, 121, 121, 121, 
+	// 		121, 121, 121, 121, 
+	// 		121, 121, 121, 121
+	// 	};
 
 
-		auto possible_plays = next_possible_plays(sit, game);
-		assert(!possible_plays.empty());
+	// 	auto possible_plays = next_possible_plays(sit, game);
+	// 	assert(!possible_plays.empty());
 
-		auto nodes = std::vector<double>{};
-		nodes.reserve(possible_plays.size());
+	// 	auto nodes = std::vector<double>{};
+	// 	nodes.reserve(possible_plays.size());
 
-		for (auto i = 0_z; i < 32; ++i) {
-			auto card = static_cast<Card>(i);
+	// 	for (auto i = 0_z; i < 32; ++i) {
+	// 		auto card = static_cast<Card>(i);
 			
-			if (!possible_plays.contains(card)) {
-				continue;
-			}
+	// 		if (!possible_plays.contains(card)) {
+	// 			continue;
+	// 		}
 
-			auto solver = SituationSolver{sit, game, skat_0, skat_1};
+	// 		auto solver = SituationSolver{sit, game, skat_0, skat_1};
 
-			auto child = sit;
-			auto points_to_get_to_child = child.play_card(card, game);
-			auto points_as_child = solver.calculate_potential_score_3(child);
-			result[i] = points_as_child + points_to_get_to_child;
-			nodes.push_back(static_cast<double>(solver.number_of_nodes()) / 1000.);
-		}
+	// 		auto child = sit;
+	// 		auto points_to_get_to_child = child.play_card(card, game);
+	// 		auto points_as_child = solver.calculate_potential_score_3(child);
+	// 		result[i] = points_as_child + points_to_get_to_child;
+	// 		nodes.push_back(static_cast<double>(solver.number_of_nodes()) / 1000.);
+	// 	}
 
-		return std::pair{result, nodes};
-	}
+	// 	return std::pair{result, nodes};
+	// }
 
 
 } // namespace muskat

@@ -17,7 +17,7 @@ namespace muskat {
 		int bidding_value
 	) {
 
-		auto score_without_skat = uint8_t{};
+		auto score_without_skat = Score{0, 0};
 
 		auto next_to_play_it = moves.begin();
 
@@ -46,7 +46,8 @@ namespace muskat {
 			auto played_card = *next_to_play_it;
 			++next_to_play_it;
 
-			score_without_skat += worlds.play_card(played_card);
+			auto additional_score = worlds.play_card(played_card);
+			score_without_skat.add(additional_score);
 			std::cout << "Played: " << to_string(played_card) << ".\n\n";
 		}
 	}

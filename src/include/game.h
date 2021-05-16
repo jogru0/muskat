@@ -1,7 +1,5 @@
 #pragma once
 
-#include "situation.h"
-
 #include "player/abstract_player.h"
 
 namespace muskat {
@@ -78,7 +76,7 @@ namespace muskat {
 		sager.inform_about_game(game_type);
 
 		auto points_declarer = to_points(gedrueckt, game_type);
-		auto points_defender = Points{};
+		auto points_defender = uint8_t{};
 
 		auto situation = Situation{
 			hand_declarer,

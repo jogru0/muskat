@@ -21,7 +21,7 @@ namespace muskat {
 
 		std::optional<PossibleWorlds> m_current_information;
 		std::mt19937 m_rng;
-		Points m_points_declarer_without_skat;
+		Score m_score_declarer_without_skat;
 
 
 		//Hopefully there when we get informed about the game …
@@ -50,7 +50,7 @@ namespace muskat {
 		virtual void inform_about_game(GameType game) final {
 			using namespace stdc::literals;
 			say("We play "s + to_string(game) + ".");
-			m_points_declarer_without_skat = 0;
+			m_score_declarer_without_skat = Score{0, 0};
 			say("For debugging: I think my role is " + to_string(m_role) + ".");
 			say("For debugging: I think my position is " + to_string(m_my_first_position) + ".");
 			say("For debugging: I think my hand is " + to_string(m_hand) + ".");
@@ -135,7 +135,8 @@ namespace muskat {
 		virtual void inform_about_move(Card card) final {
 			using namespace stdc::literals;
 			say("Card "s + to_string(card) + " was played.");
-			m_points_declarer_without_skat += stdc::surely(m_current_information).play_card(card);
+			auto additional_score = stdc::surely(m_current_information).play_card(card);
+			m_score_declarer_without_skat.add(additional_score);
 		}
 
 		virtual auto request_move() -> Card final {
@@ -147,7 +148,13 @@ namespace muskat {
 			auto contract = Contract{stdc::surely(m_current_information).game, false, false, false, false};
 			auto bidding_value = 18;
 
-			auto card = pick_best_card(stdc::surely(m_current_information), m_points_declarer_without_skat, 200, contract, bidding_value);
+			auto card = pick_best_card(
+				stdc::surely(m_current_information),
+				m_score_declarer_without_skat,
+				200,
+				contract,
+				bidding_value
+			);
 			return card;
 		}
 
@@ -156,7 +163,8 @@ namespace muskat {
 			std::mt19937 &&rng
 		) :
 			m_name{std::move(name)},
-			m_rng{std::move(rng)}
+			m_rng{std::move(rng)},
+			m_score_declarer_without_skat{0, 0}
 		{}
 	};
 } // namespace muskat

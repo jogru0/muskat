@@ -56,7 +56,7 @@ private:
 	Data m_data;
 
 public:
-	Ransom() : m_is_delivered{false} /* uninitialized m_data */ {}
+	Ransom() : m_is_delivered{false} {}
 
 	template<typename DataToo>
 	[[nodiscard]] auto deliver(DataToo &&data) {

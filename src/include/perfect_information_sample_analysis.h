@@ -15,7 +15,7 @@
 
 namespace muskat {
 
-	using PerfectInformationResult = std::array<uint8_t, 32>;
+	using PerfectInformationResult = std::array<Score, 32>;
 	class PerfectInformationSample {
 	private:
 		Cards m_playable_cards;
@@ -41,7 +41,7 @@ namespace muskat {
 			
 			assert(std::all_of(RANGE(m_points_for_situations), [&](const auto &points) {
 				for (auto i = 0_z; i < 32; ++i) {
-					if (!((points[i] < 121) == (m_playable_cards.contains(static_cast<Card>(i))))) {
+					if (!((points[i].points() < 121) == (m_playable_cards.contains(static_cast<Card>(i))))) {
 						return false;
 					}
 				}
@@ -58,19 +58,19 @@ namespace muskat {
 	) {
 		using namespace stdc::literals;
 		
-		using Score = std::invoke_result_t<ToSummand, uint8_t, int>;
-		static_assert(std::is_same_v<Score, int>);
+		using Sc = std::invoke_result_t<ToSummand, Score, int>;
+		static_assert(std::is_same_v<Sc, int>);
 
 		const auto &points_for_situations = sample.points_for_situations();
 		
 		auto cards = sample.playable_cards();
 
-		auto scores = std::vector<Score>{};
+		auto scores = std::vector<Sc>{};
 		scores.reserve(cards.size());
 		while (!cards.empty()) {
 			auto card = cards.remove_next();
 			
-			auto score = std::transform_reduce(RANGE(points_for_situations), spitzen.begin(), Score{}, std::plus{}, [&] (auto &points, auto sp){
+			auto score = std::transform_reduce(RANGE(points_for_situations), spitzen.begin(), Sc{}, std::plus{}, [&] (auto &points, auto sp){
 				return to_summand(points[static_cast<uint8_t>(card)], sp);
 			});
 
@@ -87,14 +87,14 @@ namespace muskat {
 	) {
 		using namespace stdc::literals;
 		
-		using Score = std::invoke_result_t<PointsToSummand, uint8_t>;
-		static_assert(std::is_same_v<Score, size_t>);
+		using Sc = std::invoke_result_t<PointsToSummand, Score>;
+		static_assert(std::is_same_v<Sc, size_t>);
 
 		const auto &points_for_situations = sample.points_for_situations();
 		
 		auto cards = sample.playable_cards();
 
-		auto scores = std::vector<Score>{};
+		auto scores = std::vector<Sc>{};
 		scores.reserve(cards.size());
 		while (!cards.empty()) {
 			auto card = cards.remove_next();
@@ -122,7 +122,7 @@ namespace muskat {
 	) {
 		auto sums = get_additive_scores(
 			sample,
-			stdc::static_cast_to<size_t>{}
+			[](auto score) { return static_cast<size_t>(score.points()); }
 		);
 
 		auto size = sample.points_for_situations().size();
@@ -161,14 +161,14 @@ namespace muskat {
 	) {
 		using namespace stdc::literals;
 		
-		using Score = std::invoke_result_t<PointsToSummand, uint8_t>;
-		static_assert(std::is_same_v<Score, size_t>);
+		using Sc = std::invoke_result_t<PointsToSummand, Score>;
+		static_assert(std::is_same_v<Sc, size_t>);
 
 		const auto &points_for_situations = sample.points_for_situations();
 		
-		auto cards_to_score = std::vector<std::pair<Card, Score>>{};
+		auto cards_to_score = std::vector<std::pair<Card, Sc>>{};
 		cards_to_score.reserve(cards_to_consider.size());
-		auto high_score = Score{};
+		auto high_score = Sc{};
 		while (!cards_to_consider.empty()) {
 			auto card = cards_to_consider.remove_next();
 			assert(sample.playable_cards().contains(card));
@@ -215,15 +215,15 @@ namespace muskat {
 
 	[[nodiscard]] inline auto analyze_for_declarer(
 		const PerfectInformationSample &sample,
-		uint8_t threshold
+		Score threshold
 	) {
 		return highest_additive_score(
 			sample,
-			[&](auto points) {
-				return static_cast<size_t>(points >= threshold);
+			[&](Score score) {
+				return static_cast<size_t>(score.points() >= threshold.points());
 			},
-			[&](auto points) {
-				return static_cast<size_t>(points);
+			[&](auto score) {
+				return static_cast<size_t>(score.points());
 			}
 		);
 	}
@@ -235,18 +235,20 @@ namespace muskat {
 		const std::vector<int> &spitzen,
 		Contract contract,
 		int bidding_value,
-		uint8_t current_score
+		Score current_score
 	) {
 		return get_additive_scores(
 			sample,
 			spitzen,
-			[&](auto future_points_and_skat, auto sp) {
+			[&](Score future_points_and_skat, auto sp) {
 				//TODO: Correct number of tricks.
+				auto final_score = current_score;
+				final_score.add(future_points_and_skat);
 				auto game_result = get_game_result(
 					contract,
 					sp,
 					bidding_value,
-					Score{static_cast<uint8_t>(future_points_and_skat + current_score), 5}
+					final_score
 				);
 				return score_classical(game_result);
 			}
@@ -259,7 +261,7 @@ namespace muskat {
 		const std::vector<int> &spitzen,
 		Contract contract,
 		int bidding_value,
-		uint8_t current_score,
+		Score current_score,
 		Role active_role
 	) {
 		auto scores = get_accumulated_game_results(
@@ -284,33 +286,32 @@ namespace muskat {
 
 	[[nodiscard]] inline auto analyze_for_defender(
 		const PerfectInformationSample &sample,
-		uint8_t threshold
+		Score threshold
 	) {
 		return highest_additive_score(
 			sample,
-			[&](auto points) {
+			[&](Score points) {
 				return static_cast<size_t>(points < threshold);
 			},
 			[&](auto points) {
-				return static_cast<size_t>(120 - points);
+				return static_cast<size_t>(120 - points.points());
 			}
 		);
 	}
 
-	[[nodiscard]] inline auto missing_for(uint8_t target, uint8_t current_score) {
-		return current_score < target
-			? static_cast<uint8_t>(target - current_score)
-			: uint8_t{};
+	//TODO
+	[[nodiscard]] inline auto missing_for(Score target, Score current_score) {
+		return required_beyond_to_reach(current_score, target);
 	}
 
 	[[nodiscard]] inline auto analyze(
 		const PerfectInformationSample &sample,
-		uint8_t current_score,
+		Score current_score,
 		Role active_role 
 	) {
 		
 		//We primarily optimize proability getting over/staying under this threshold.
-		auto threshold = missing_for(61, current_score);
+		auto threshold = required_beyond_to_reach(current_score, Score{61, 0});
 
 		return active_role == Role::Declarer
 			? analyze_for_declarer(sample, threshold)
@@ -319,10 +320,10 @@ namespace muskat {
 
 
 	struct cmp_to_helper{
-		uint8_t threshold;
+		Score threshold;
 		Role active_role;
 
-		[[nodiscard]] auto operator()(uint8_t score) -> size_t {
+		[[nodiscard]] auto operator()(Score score) -> size_t {
 			return active_role == Role::Declarer
 				? threshold <= score
 				: score < threshold;
@@ -400,13 +401,13 @@ namespace muskat {
 		std::cout << '\n';
 	}
 
-		inline constexpr auto unmodified_threshold_win = 61;
-		inline constexpr auto unmodified_threshold_win_schneider = 90;
-		inline constexpr auto unmodified_threshold_not_lost_schneider = 31;
+		inline constexpr auto unmodified_threshold_win = Score{61, 0};
+		inline constexpr auto unmodified_threshold_win_schneider = Score{90, 0};
+		inline constexpr auto unmodified_threshold_not_lost_schneider = Score{31, 0};
 
 	[[nodiscard]] inline auto show_statistics(
 		const PerfectInformationSample &sample,
-		uint8_t current_score_without_skat,
+		Score current_score_without_skat,
 		Role active_role,
 		Cards highlighted_cards,
 		const std::vector<int> &spitzen,
@@ -419,7 +420,7 @@ namespace muskat {
 		auto threshold_win_schneider = missing_for(unmodified_threshold_win_schneider, current_score_without_skat);
 		auto threshold_not_lost_schneider = missing_for(unmodified_threshold_not_lost_schneider, current_score_without_skat);
 
-		auto size_t_cmp_to = [&](auto threshold) {
+		auto size_t_cmp_to = [&](Score threshold) {
 			return cmp_to_helper{threshold, active_role};
 		};
 		auto cmp_str = active_role == Role::Declarer ? ""s : "<"s;
@@ -441,7 +442,7 @@ namespace muskat {
 		
 		auto average_scores = get_averages(sample);
 		std::transform(RANGE(average_scores), average_scores.begin(), [&](auto score) {
-			return score + current_score_without_skat;
+			return score + current_score_without_skat.points();
 		});
 		if (active_role != Role::Declarer) {
 			std::transform(RANGE(average_scores), average_scores.begin(), [](auto score) {
@@ -477,7 +478,7 @@ namespace muskat {
 
 		auto max_probabilities_not_lost_schneider = *std::max_element(RANGE(probabilities_not_lost_schneider));
 		print_statistics(
-			cmp_str + std::to_string(unmodified_threshold_not_lost_schneider),
+			cmp_str + std::to_string(unmodified_threshold_not_lost_schneider.points()),
 			probabilities_not_lost_schneider,
 			to_percent,
 			[&](auto p) { return p == max_probabilities_not_lost_schneider; }
@@ -485,7 +486,7 @@ namespace muskat {
 
 		auto max_probabilities_win = *std::max_element(RANGE(probabilities_win));
 		print_statistics(
-			cmp_str + std::to_string(unmodified_threshold_win),
+			cmp_str + std::to_string(unmodified_threshold_win.points()),
 			probabilities_win,
 			to_percent,
 			[&](auto p) { return p == max_probabilities_win; }
@@ -493,7 +494,7 @@ namespace muskat {
 
 		auto max_probabilities_win_schneider = *std::max_element(RANGE(probabilities_win_schneider));
 		print_statistics(
-			cmp_str + std::to_string(unmodified_threshold_win_schneider),
+			cmp_str + std::to_string(unmodified_threshold_win_schneider.points()),
 			probabilities_win_schneider,
 			to_percent,
 			[&](auto p) { return p == max_probabilities_win_schneider; }

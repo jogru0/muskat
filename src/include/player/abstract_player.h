@@ -1,5 +1,7 @@
 #pragma once
 
+#include "situation.h"
+
 namespace muskat {
 	class AbstractPlayer {
 	private:

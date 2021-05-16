@@ -2,6 +2,7 @@
 
 #include "cards.h"
 #include "trick.h"
+#include "score.h"
 
 #include <stdc/utility.h>
 #include <stdc/algorithm.h>
@@ -293,44 +294,50 @@ private:
 	}
 public:
 	//Returns what points the declarer makes with this move.
-	[[nodiscard]] auto play_card(Card card, GameType game) -> Points {
+	[[nodiscard]] auto play_card(Card card, GameType game) -> Score {
 		assert(next_possible_plays(*this, game).contains(card));
 		auto &hand = mutable_hand(m_active_role);
 		hand.remove(card);
 
 		m_active_role = next(m_active_role);
 
-		auto result = Points{};
-
-		if (!m_maybe_first_trick_card) {
-			m_maybe_first_trick_card = card;
-		} else if (!m_maybe_second_trick_card) {
-			m_maybe_second_trick_card = card;
-		} else {
-			auto trick = Trick{
-				*m_maybe_first_trick_card,
-				*m_maybe_second_trick_card,
-				card
-			};
-			auto pos = trick_winner_position(trick, TrickAndGameType{
-				*m_maybe_first_trick_card,
-				game
-			});
-
-			//Active role currently is Vorhand.
-			switch (pos) {
-				case Position::Vorhand: break;
-				case Position::Mittelhand: m_active_role = next(m_active_role); break;
-				case Position::Hinterhand: m_active_role = next(next(m_active_role));
+		if (!m_maybe_second_trick_card) {
+			//Trick not completed.
+			if (!m_maybe_first_trick_card) {
+				m_maybe_first_trick_card = card;
+			} else {
+				m_maybe_second_trick_card = card;
 			}
 
-			if (m_active_role == Role::Declarer) {
-				result += to_points(trick, game);
-			}
-			
-			m_maybe_first_trick_card = nocard;
-			m_maybe_second_trick_card = nocard;
+			assert_invariants();
+			return Score{0, 0};
 		}
+
+		auto result = Score {0, 0};
+
+		auto trick = Trick{
+			*m_maybe_first_trick_card,
+			*m_maybe_second_trick_card,
+			card
+		};
+		auto pos = trick_winner_position(trick, TrickAndGameType{
+			*m_maybe_first_trick_card,
+			game
+		});
+
+		//Active role currently is Vorhand.
+		switch (pos) {
+			case Position::Vorhand: break;
+			case Position::Mittelhand: m_active_role = next(m_active_role); break;
+			case Position::Hinterhand: m_active_role = next(next(m_active_role));
+		}
+
+		if (m_active_role == Role::Declarer) {
+			result.add_trick(trick, game);
+		}
+		
+		m_maybe_first_trick_card = nocard;
+		m_maybe_second_trick_card = nocard;
 
 		assert_invariants();
 		return result;

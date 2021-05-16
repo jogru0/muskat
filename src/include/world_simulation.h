@@ -412,7 +412,7 @@ public:
 	}
 
 	//Returns what points the declarer makes with this move.
-	[[nodiscard]] auto play_card(Card card) -> Points {
+	[[nodiscard]] auto play_card(Card card) -> Score {
 		assert(probably_could_be_played_next(card));
 
 		if (active_role == Role::Declarer) {
@@ -440,40 +440,48 @@ public:
 		//Update the rest and calculated the score.
 		active_role = next(active_role);
 
-		auto result = Points{};
 
-		if (!maybe_first_trick_card) {
-			maybe_first_trick_card = card;
-		} else if (!maybe_second_trick_card) {
-			maybe_second_trick_card = card;
-		} else {
-			gone_cards.add(*maybe_first_trick_card);
-			gone_cards.add(*maybe_second_trick_card);
-			gone_cards.add(card);
-			
-			
-			auto trick = Trick{
-				*maybe_first_trick_card,
-				*maybe_second_trick_card,
-				card
-			};
-			assert(maybe_forced_trick_game_type);
-			auto pos = trick_winner_position(trick, *maybe_forced_trick_game_type);
+		if (!maybe_second_trick_card) {
+			//Trick not done.
 
-			//Active role currently is Vorhand.
-			switch (pos) {
-				case Position::Vorhand: break;
-				case Position::Mittelhand: active_role = next(active_role); break;
-				case Position::Hinterhand: active_role = next(next(active_role));
+			if (!maybe_first_trick_card) {
+				maybe_first_trick_card = card;
+			} else {
+				maybe_second_trick_card = card;
 			}
 
-			if (active_role == Role::Declarer) {
-				result += to_points(trick, game);
-			}
-			
-			maybe_first_trick_card = nocard;
-			maybe_second_trick_card = nocard;
+			assert_invariants();
+			return Score{0, 0};
 		}
+		
+		auto result = Score{0, 0};
+
+		gone_cards.add(*maybe_first_trick_card);
+		gone_cards.add(*maybe_second_trick_card);
+		gone_cards.add(card);
+		
+		
+		auto trick = Trick{
+			*maybe_first_trick_card,
+			*maybe_second_trick_card,
+			card
+		};
+		assert(maybe_forced_trick_game_type);
+		auto pos = trick_winner_position(trick, *maybe_forced_trick_game_type);
+
+		//Active role currently is Vorhand.
+		switch (pos) {
+			case Position::Vorhand: break;
+			case Position::Mittelhand: active_role = next(active_role); break;
+			case Position::Hinterhand: active_role = next(next(active_role));
+		}
+
+		if (active_role == Role::Declarer) {
+			result.add_trick(trick, game);
+		}
+		
+		maybe_first_trick_card = nocard;
+		maybe_second_trick_card = nocard;
 
 		assert_invariants();
 		return result;

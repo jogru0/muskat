@@ -47,7 +47,7 @@ namespace muskat {
 inline void execute_worker_sampling(
 	std::stop_token stoken,
 	const std::vector<std::tuple<Situation, Card, Card, GameType>> &inputs,
-	stdc::ConcurrentResultVector<std::array<uint8_t, 32>> &results,
+	stdc::ConcurrentResultVector<std::array<Score, 32>> &results,
 	size_t worker_id,
 	std::vector<double> &times_in_ms,
 	std::vector<std::vector<double>> &numbers_of_nodes
@@ -84,9 +84,9 @@ inline void execute_worker_sampling(
 		//We want to return how many points the declarer makes not already observed with the tricks so far.
 		//So the points gedrückt have to be added as well.
 		//TODO: In the future, it might be nicer to also add the points already made here.
-		auto points_from_gedrueckt = to_points(skat_0, game) + to_points(skat_1, game);
+		auto points_from_gedrueckt = Score{static_cast<uint8_t>(to_points(skat_0, game) + to_points(skat_1, game)), 0};
 		for (auto &points : points_arr) {
-			points += points_from_gedrueckt;
+			points.add(points_from_gedrueckt);
 		}
 
 		auto nodes = std::vector{static_cast<double>(solver.number_of_nodes()) / 1000.};
@@ -154,7 +154,7 @@ template<typename SituationDistribution>
 	}
 
 	//Uses shared_ptr because threads might be finished before or after this function returns.
-	auto results = stdc::ConcurrentResultVector<std::array<uint8_t, 32>>{number_samples};
+	auto results = stdc::ConcurrentResultVector<std::array<Score, 32>>{number_samples};
 
 	auto times_in_ms = std::vector<double>(number_samples);
 	auto numbers_of_nodes = std::vector<std::vector<double>>(number_samples);
@@ -265,7 +265,7 @@ inline void log_multithreaded_performance(
 [[nodiscard]] inline auto pick_best_card(
 	const PossibleWorlds &worlds,
 	//TODO: Track in worlds!!!!!!
-	uint8_t current_score_without_skat,
+	Score current_score_without_skat,
 	size_t number_samples_to_do,
 	Contract contract,
 	int bidding_value

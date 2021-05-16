@@ -13,3 +13,4 @@
 -Wno-exit-time-destructors
 -Wno-float-equal
 -Wno-date-time
+-Wno-zero-as-null-pointer-constant

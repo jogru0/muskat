@@ -143,8 +143,8 @@ namespace muskat {
 	return result;
 }
 
-[[nodiscard]] inline auto to_points(const Cards &cards, GameType game) -> Points {
-	auto result = Points{};
+[[nodiscard]] inline auto to_points(const Cards &cards, GameType game) -> uint8_t {
+	auto result = uint8_t{};
 	for (auto i = 0; i < 32; ++i) {
 		auto card = static_cast<Card>(i);
 		if (cards.contains(card)) {

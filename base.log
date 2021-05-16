@@ -7,11 +7,11 @@ Number of 1000 nodes:
 	median:     216
 	max:       7002
 Run time in ms:
-	mean:       550
-	median:     210
-	max:      12566
-Time to finished 1000 tasks with 12 threads: 49.6s
-	-> effective time per task: 595ms
+	mean:       569
+	median:     212
+	max:      12503
+Time to finished 1000 tasks with 12 threads: 51.1s
+	-> effective time per task: 613ms
 Hash: 6684485687524044615
 
 Start calculate_initial_games(1000, Herz, First Defender).
@@ -20,11 +20,11 @@ Number of 1000 nodes:
 	median:     171
 	max:       6878
 Run time in ms:
-	mean:       517
-	median:     180
-	max:      15566
-Time to finished 1000 tasks with 12 threads: 44.9s
-	-> effective time per task: 539ms
+	mean:       509
+	median:     175
+	max:      15290
+Time to finished 1000 tasks with 12 threads: 44.2s
+	-> effective time per task: 531ms
 Hash: 17083496934778515621
 
 Start calculate_initial_games(1000, Schell, Second Defender).
@@ -33,11 +33,11 @@ Number of 1000 nodes:
 	median:     187
 	max:       4183
 Run time in ms:
-	mean:       492
-	median:     197
-	max:      10904
-Time to finished 1000 tasks with 12 threads: 44.4s
-	-> effective time per task: 533ms
+	mean:       484
+	median:     194
+	max:      10774
+Time to finished 1000 tasks with 12 threads: 43.7s
+	-> effective time per task: 525ms
 Hash: 16930506936662340584
 
 Start calculate_initial_games(1000, Grand, Declarer).
@@ -46,11 +46,11 @@ Number of 1000 nodes:
 	median:     172
 	max:       3013
 Run time in ms:
-	mean:       360
-	median:     148
-	max:       5607
-Time to finished 1000 tasks with 12 threads: 30.2s
-	-> effective time per task: 363ms
+	mean:       354
+	median:     145
+	max:       5473
+Time to finished 1000 tasks with 12 threads: 29.7s
+	-> effective time per task: 356ms
 Hash: 1736709235389755963
 
 Start calculate_initial_games(1000, Grand, First Defender).
@@ -59,11 +59,11 @@ Number of 1000 nodes:
 	median:     143
 	max:       2650
 Run time in ms:
-	mean:       294
-	median:     134
-	max:       4374
-Time to finished 1000 tasks with 12 threads: 24.7s
-	-> effective time per task: 297ms
+	mean:       291
+	median:     132
+	max:       4302
+Time to finished 1000 tasks with 12 threads: 24.5s
+	-> effective time per task: 294ms
 Hash: 15184845790153445186
 
 Start calculate_initial_games(1000, Grand, Second Defender).
@@ -72,9 +72,9 @@ Number of 1000 nodes:
 	median:     141
 	max:       4641
 Run time in ms:
-	mean:       303
-	median:     129
-	max:       7095
-Time to finished 1000 tasks with 12 threads: 28.0s
-	-> effective time per task: 336ms
+	mean:       301
+	median:     128
+	max:       6985
+Time to finished 1000 tasks with 12 threads: 27.7s
+	-> effective time per task: 333ms
 Hash: 6735474228333394216
