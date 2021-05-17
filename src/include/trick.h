@@ -66,10 +66,10 @@ public:
 	[[nodiscard]] auto game() const {return m_game; }
 };
 
-[[nodiscard]] inline auto to_points(const Trick &trick, GameType game) {
-	return to_points(trick[0], game) +
-		to_points(trick[1], game) +
-		to_points(trick[2], game);
+[[nodiscard]] inline auto to_points(Trick trick) -> GamePlayPoints {
+	return to_points(trick[0]) +
+		to_points(trick[1]) +
+		to_points(trick[2]);
 }
 
 inline constexpr auto get_cards_following_trick_type(TrickAndGameType type) {

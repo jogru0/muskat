@@ -79,7 +79,7 @@ inline void execute_worker_sampling(
 		
 		//MEASURE BEGIN
 		
-		auto points_from_gedrueckt = Score{static_cast<uint8_t>(to_points(skat_0, game) + to_points(skat_1, game)), 0};
+		auto points_from_gedrueckt = Score{static_cast<uint8_t>(to_points(skat_0) + to_points(skat_1)), 0};
 		auto score_so_far = points_from_gedrueckt;
 		score_so_far.add(current_score_without_skat);
 		
@@ -404,8 +404,6 @@ inline void log_multithreaded_performance(
 	// }
 }
 
-
-
 inline void calculate_initial_games(size_t number_samples_to_do, GameType game, Role initial_role) {
 	using namespace stdc::literals;
 	
@@ -432,8 +430,77 @@ inline void calculate_initial_games(size_t number_samples_to_do, GameType game, 
 
 	log_multithreaded_performance(watch_simulation.elapsed(), 12, number_samples_to_do);
 
+	auto lb = 0;
+	auto ls = 0;
+	auto l = 0;
+	auto w = 0;
+	auto ws = 0;
+	auto wb = 0;
 
-	stdc::log("Hash: {}", stdc::GeneralHasher{}(results, spitzen));
+	auto points = std::array<uint8_t, 121>{};
+
+	for (auto i = 0_z; i < 32; ++i) {
+		for (auto res : results) {
+			auto r = res[i];
+			if (121 <= r.points()) {
+				continue;
+			}
+
+			++points[r.points()];
+
+			if (r.tricks() == 0) {
+				assert(r.points() <= 22);
+				++lb;
+				continue;
+			}
+			if (r.points() <= 30) {
+				++ls;
+				continue;
+			}
+			if (r.points() <= 60) {
+				++l;
+				continue;
+			}
+			if (r.points() <= 89) {
+				++w;
+				continue;
+			}
+			if (r.tricks() <= 9) {
+				++ws;
+				continue;
+			}
+			assert(r.points() == 120);
+			++wb;
+		}
+	}
+
+
+		stdc::log(
+			"{} {} {} {} {} {}",
+			lb, ls, l, w, ws, wb
+		);
+		stdc::log(
+			"{} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {}",
+			points[0], points[1], points[2], points[3], points[4], points[5], points[6], points[7], points[8], points[9],
+			points[10], points[11], points[12], points[13], points[14], points[15], points[16], points[17], points[18], points[19],
+			points[20], points[21], points[22], points[23], points[24], points[25], points[26], points[27], points[28], points[29],
+			points[30], points[31], points[32], points[33], points[34], points[35], points[36], points[37], points[38], points[39],
+			points[40], points[41], points[42], points[43], points[44], points[45], points[46], points[47], points[48], points[49],
+			points[50], points[51], points[52], points[53], points[54], points[55], points[56], points[57], points[58], points[59],
+			points[60], points[61], points[62], points[63], points[64], points[65], points[66], points[67], points[68], points[69],
+			points[70], points[71], points[72], points[73], points[74], points[75], points[76], points[77], points[78], points[79],
+			points[80], points[81], points[82], points[83], points[84], points[85], points[86], points[87], points[88], points[89],
+			points[90], points[91], points[92], points[93], points[94], points[95], points[96], points[97], points[98], points[99],
+			points[100], points[101], points[102], points[103], points[104], points[105], points[106], points[107], points[108], points[109],
+			points[110], points[111], points[112], points[113], points[114], points[115], points[116], points[117], points[118], points[119],
+			points[120]
+		);
+
+	//So we are very sure we see when something changes in the result of multithreaded_sampling.
+	stdc::log("Hash Result: {}", stdc::GeneralHasher{}(results, spitzen));
+	
+	//So we are very sure we see when the generated situations changed.
+	stdc::log("Hash Spitzen: {}", stdc::GeneralHasher{}(spitzen));
 	stdc::detail::log.flush();
 }
 

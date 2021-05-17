@@ -34,7 +34,7 @@ namespace muskat {
 			assert(skat.size() == 2);
 			
 			//TODO: New. Forgotten before? Or is this wrong?
-			m_points_declarer = Score{to_points(skat, m_game), 0};
+			m_points_declarer = Score{to_points(skat), 0};
 			
 			auto skat_0 = skat.remove_next();
 			auto skat_1 = skat.remove_next();

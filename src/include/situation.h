@@ -333,7 +333,7 @@ public:
 		}
 
 		if (m_active_role == Role::Declarer) {
-			result.add_trick(trick, game);
+			result.add_trick(trick);
 		}
 		
 		m_maybe_first_trick_card = nocard;

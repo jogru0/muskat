@@ -11,6 +11,8 @@
 
 namespace muskat {
 
+	using GamePlayPoints = uint8_t;
+
 	template<typename Enum>
 	constexpr auto to_underlying(Enum e) {
 		return static_cast<std::underlying_type_t<Enum>>(e);
@@ -117,14 +119,10 @@ enum class Rank {
 enum class GameType {
 	Schell, Herz, Green, Eichel, Null, Grand
 };
-
-using PointsOnly = uint8_t;
 	
-//TODO: Is it okay everywhere to use these values for Null too?
-[[nodiscard]] inline auto to_points(Card card, [[maybe_unused]] GameType game) -> PointsOnly {
-	// assert(game != GameType::Null);
+[[nodiscard]] inline auto to_points(Card card) -> GamePlayPoints {
 	switch (to_rank(card)) {
-	case Rank::L7: [[fallthrough]];
+		case Rank::L7: [[fallthrough]];
 		case Rank::L8: [[fallthrough]];
 		case Rank::L9: return 0;
 		case Rank::Z: return 10;

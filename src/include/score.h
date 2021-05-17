@@ -8,6 +8,7 @@
 #include "trick.h"
 
 namespace muskat {
+
 class Score {
 private:
 	uint8_t m_points;
@@ -43,8 +44,8 @@ public:
 	}
 
 	friend constexpr auto operator<=>(Score, Score) = default;
-	void add_trick(const Trick &trick, GameType game) {
-		m_points += to_points(trick, game);
+	void add_trick(Trick trick) {
+		m_points += to_points(trick);
 		++m_tricks;
 		assert(makes_probably_sense());
 	}

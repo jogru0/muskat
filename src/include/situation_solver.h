@@ -117,14 +117,14 @@ namespace muskat {
 		return threshold <= bounds.lower() || bounds.upper() < threshold;
 	}
 
-	[[nodiscard]] inline auto quick_bounds(Situation sit, GameType game) {
+	[[nodiscard]] inline auto quick_bounds(Situation sit) {
 		constexpr auto max_score = Score{120, 10};
 		auto lower = Score{0, 0};
 		//TODO: How many tricks left?
 		auto cellar = sit.cellar();
 		assert(cellar.size() % 3 == 2);
 		auto gone_tricks = cellar.size() / 3;
-		auto cellar_score = Score{to_points(sit.cellar(), game), static_cast<uint8_t>(gone_tricks)};
+		auto cellar_score = Score{to_points(sit.cellar()), static_cast<uint8_t>(gone_tricks)};
 
 		auto upper = required_beyond_to_reach(cellar_score, max_score);
 		return std::pair{Bounds{lower, upper}, MaybeCard{}};
@@ -162,7 +162,7 @@ namespace muskat {
 				return it->second;
 			}
 
-			auto [it, succ] = m_look_up.emplace(key, quick_bounds(sit, m_game));
+			auto [it, succ] = m_look_up.emplace(key, quick_bounds(sit));
 			assert(succ);
 			return it->second;
 		}
@@ -317,7 +317,7 @@ namespace muskat {
 			}
 
 			//New path.
-			auto bounds_pref = quick_bounds(sit, m_game);
+			auto bounds_pref = quick_bounds(sit);
 			if (!decides_threshold(bounds_pref.first, threshold)) {
 				if (is_maximizer(sit.active_role())) {
 					bounds_pref = improve_bounds_to_decide_threshold<true>(bounds_pref, sit, threshold);
@@ -408,8 +408,8 @@ namespace muskat {
 				return Score{0, 0};
 			}
 			
-			auto max_doable = quick_bounds(sit, m_game).first.upper();
-			[[maybe_unused]] auto min_doable = quick_bounds(sit, m_game).first.lower();
+			auto max_doable = quick_bounds(sit).first.upper();
+			[[maybe_unused]] auto min_doable = quick_bounds(sit).first.lower();
 
 			auto needed_for_schwarz = required_beyond_to_reach(score_so_far, Score{120, 10});
 			assert(max_doable <= needed_for_schwarz);

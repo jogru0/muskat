@@ -75,7 +75,7 @@ namespace muskat {
 		hoerer.inform_about_game(game_type);
 		sager.inform_about_game(game_type);
 
-		auto points_declarer = to_points(gedrueckt, game_type);
+		auto points_declarer = to_points(gedrueckt);
 		auto points_defender = uint8_t{};
 
 		auto situation = Situation{
@@ -125,7 +125,7 @@ namespace muskat {
 				case Position::Hinterhand: role_of_winner_last_tick = role_hinterhand;
 			}
 
-			auto trick_points = to_points(trick, game_type);
+			auto trick_points = to_points(trick);
 			if (role_of_winner_last_tick == Role::Declarer) {
 				points_declarer += trick_points;
 			} else {

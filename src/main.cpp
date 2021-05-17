@@ -100,17 +100,18 @@ inline auto parse_iterations_or_exit(std::string_view sv) {
 }
 
 inline void test_calculating_initial_games(size_t iterations) {
-	muskat::calculate_initial_games(iterations, muskat::GameType::Eichel, muskat::Role::Declarer);
+	muskat::calculate_initial_games(iterations / 100, muskat::GameType::Eichel, muskat::Role::Declarer);
+	muskat::calculate_initial_games(iterations / 50, muskat::GameType::Grand, muskat::Role::FirstDefender);
+	muskat::calculate_initial_games(iterations / 10, muskat::GameType::Null, muskat::Role::SecondDefender);
+	
 	muskat::calculate_initial_games(iterations, muskat::GameType::Herz, muskat::Role::FirstDefender);
 	muskat::calculate_initial_games(iterations, muskat::GameType::Schell, muskat::Role::SecondDefender);
 
 	muskat::calculate_initial_games(iterations, muskat::GameType::Grand, muskat::Role::Declarer);
-	muskat::calculate_initial_games(iterations, muskat::GameType::Grand, muskat::Role::FirstDefender);
 	muskat::calculate_initial_games(iterations, muskat::GameType::Grand, muskat::Role::SecondDefender);
 	
 	muskat::calculate_initial_games(iterations, muskat::GameType::Null, muskat::Role::Declarer);
 	muskat::calculate_initial_games(iterations, muskat::GameType::Null, muskat::Role::FirstDefender);
-	muskat::calculate_initial_games(iterations, muskat::GameType::Null, muskat::Role::SecondDefender);
 }
 
 } //namespace detail
