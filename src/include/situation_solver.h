@@ -399,7 +399,15 @@ namespace muskat {
 		// 	return goal;
 		// }
 
+		//TODO: For null, this is not what it does.
 		auto calculate_potential_points_and_schwarz(Situation sit, Score score_so_far) -> Score {
+			if (m_game == GameType::Null) {
+				if (still_makes_at_least(sit, Score{0, 1})) {
+					return Score{0, 1};
+				}
+				return Score{0, 0};
+			}
+			
 			auto max_doable = quick_bounds(sit, m_game).first.upper();
 			[[maybe_unused]] auto min_doable = quick_bounds(sit, m_game).first.lower();
 
@@ -461,6 +469,7 @@ namespace muskat {
 
 		//How many points will still follow for the declarer due to finishing tricks?
 		//Not counting tricks already won, or points gedrückt.
+		//TODO: Null schould be handled more elegantly.
 		auto score_for_possible_plays(Situation sit, Score score_so_far) {
 			using namespace stdc::literals;
 			
@@ -488,7 +497,11 @@ namespace muskat {
 
 				auto child = sit;
 				auto points_to_get_to_child = child.play_card(card, m_game);
-				auto points_as_child = calculate_potential_points_and_schwarz(child, score_so_far);
+				auto score_so_far_child = score_so_far;
+				score_so_far_child.add(points_to_get_to_child);
+				//TODO: For null, it makes no sense to see if the child results in subschwarz if points are obtained to get there.
+				//TODO: It also makes no sense to look for schwarz results that are impossible due to points_to_get_to_child.
+				auto points_as_child = calculate_potential_points_and_schwarz(child, score_so_far_child);
 				auto future_points_for_tricks_when_choosing_child = points_as_child;
 				future_points_for_tricks_when_choosing_child.add(points_to_get_to_child);
 				result[i] = future_points_for_tricks_when_choosing_child;

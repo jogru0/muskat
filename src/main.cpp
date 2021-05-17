@@ -107,6 +107,10 @@ inline void test_calculating_initial_games(size_t iterations) {
 	muskat::calculate_initial_games(iterations, muskat::GameType::Grand, muskat::Role::Declarer);
 	muskat::calculate_initial_games(iterations, muskat::GameType::Grand, muskat::Role::FirstDefender);
 	muskat::calculate_initial_games(iterations, muskat::GameType::Grand, muskat::Role::SecondDefender);
+	
+	muskat::calculate_initial_games(iterations, muskat::GameType::Null, muskat::Role::Declarer);
+	muskat::calculate_initial_games(iterations, muskat::GameType::Null, muskat::Role::FirstDefender);
+	muskat::calculate_initial_games(iterations, muskat::GameType::Null, muskat::Role::SecondDefender);
 }
 
 } //namespace detail
