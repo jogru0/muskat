@@ -16,6 +16,10 @@ namespace muskat {
 
 enum class Role : uint8_t {Declarer, FirstDefender, SecondDefender};
 
+[[nodiscard]] inline auto is_maximizer(Role role, GameType game) -> bool {
+	return (role == Role::Declarer) != (game == GameType::Null);
+}
+
 [[nodiscard]] inline auto to_string(Role role) -> std::string {
 	switch (role) {
 		case Role::Declarer: return "Declarer";

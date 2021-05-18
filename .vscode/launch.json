@@ -7,7 +7,7 @@
             "request": "launch",
             "program": "${workspaceFolder}/bin/muskat-debug",
             "preLaunchTask": "Build C++ project for debug",
-            "args": ["-t", "1000"],
+            "args": ["-a", "res/sl012.json", "2"],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],

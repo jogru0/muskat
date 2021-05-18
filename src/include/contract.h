@@ -144,11 +144,15 @@ struct Contract{
 	Score final_score
 ) -> bool {
 	if (contract.game == GameType::Null) {
-		return final_score == Score{0, 0};
+		auto is_won_null = final_score.tricks() == 0;
+		assert(IMPLIES(is_won_null, final_score.points() <= 22));
+		return is_won_null;
 	}
 
 	if (contract.schwarz) {
-		return final_score == Score{120, 10};
+		auto is_schwarz = final_score.tricks() == 10;
+		assert(IMPLIES(is_schwarz, final_score.points() == 120));
+		return is_schwarz;
 	}
 
 	if (contract.schneider) {

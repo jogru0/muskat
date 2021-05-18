@@ -154,14 +154,14 @@ namespace muskat {
 	return result;
 }
 
-// [[nodiscard]] inline auto to_points(Cards cards) -> GamePlayPoints {
-// 	auto result = GamePlayPoints{};
-// 	while (!cards.empty()) {
-// 		auto card = cards.remove_next();
-// 		result += to_points(card);
-// 	}
-// 	return result;
-// }
+[[nodiscard]] inline auto to_points_clever(Cards cards) -> GamePlayPoints {
+	auto result = GamePlayPoints{};
+	while (!cards.empty()) {
+		auto card = cards.remove_next();
+		result += to_points(card);
+	}
+	return result;
+}
 
 inline constexpr auto number_of_cards_per_suit = 8;
 

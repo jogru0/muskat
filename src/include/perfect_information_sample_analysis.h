@@ -272,6 +272,7 @@ namespace muskat {
 			current_score
 		);
 
+		//Here, Null is a maximizer …
 		auto best_score = active_role == Role::Declarer
 			? *std::max_element(RANGE(scores))
 			: *std::min_element(RANGE(scores));
@@ -299,32 +300,12 @@ namespace muskat {
 		);
 	}
 
-	//TODO
-	[[nodiscard]] inline auto missing_for(Score target, Score current_score) {
-		return required_beyond_to_reach(current_score, target);
-	}
-
-	[[nodiscard]] inline auto analyze_old(
-		const PerfectInformationSample &sample,
-		Score current_score,
-		Role active_role 
-	) {
-		
-		//We primarily optimize proability getting over/staying under this threshold.
-		auto threshold = required_beyond_to_reach(current_score, Score{61, 0});
-
-		return active_role == Role::Declarer
-			? analyze_for_declarer(sample, threshold)
-			: analyze_for_defender(sample, threshold);
-	}
-
-
 	struct cmp_to_helper{
 		Score threshold;
-		Role active_role;
+		bool is_maximizer;
 
 		[[nodiscard]] auto operator()(Score score) -> size_t {
-			return active_role == Role::Declarer
+			return is_maximizer
 				? threshold <= score
 				: score < threshold;
 		}
@@ -406,8 +387,7 @@ namespace muskat {
 	inline /*constexpr*/ const auto unmodified_threshold_win = Score{61, 0};
 	inline /*constexpr*/ const auto unmodified_threshold_win_schneider = Score{90, 0};
 	inline /*constexpr*/ const auto unmodified_threshold_not_lost_schneider = Score{31, 0};
-	inline /*constexpr*/ const auto unmodified_threshold_win_schwarz = Score{120, 10};
-	inline /*constexpr*/ const auto unmodified_threshold_not_lost_schwarz = Score{0, 1};
+	// There is no threshold for schwarz, as e.g. stuff like {22, 0} can happen.
 
 	[[nodiscard]] inline auto show_statistics(
 		const PerfectInformationSample &sample,
@@ -419,75 +399,6 @@ namespace muskat {
 		int bidding_value
 	) {
 		using namespace stdc::literals;
-		
-		auto threshold_win = missing_for(unmodified_threshold_win, current_score_without_skat);
-		auto threshold_win_schneider = missing_for(unmodified_threshold_win_schneider, current_score_without_skat);
-		auto threshold_not_lost_schneider = missing_for(unmodified_threshold_not_lost_schneider, current_score_without_skat);
-		auto threshold_win_schwarz = missing_for(unmodified_threshold_win_schwarz, current_score_without_skat);
-		auto threshold_not_lost_schwarz = missing_for(unmodified_threshold_not_lost_schwarz, current_score_without_skat);
-
-
-		auto size_t_cmp_to = [&](Score threshold) {
-			return cmp_to_helper{threshold, active_role};
-		};
-		auto cmp_str = active_role == Role::Declarer ? ""s : "<"s;
-
-		auto sample_size = sample.points_for_situations().size();
-
-		auto probabilities_win = get_propability(
-			get_additive_scores(sample, size_t_cmp_to(threshold_win)),
-			sample_size
-		);
-		auto probabilities_win_schneider = get_propability(
-			get_additive_scores(sample, size_t_cmp_to(threshold_win_schneider)),
-			sample_size
-		);
-		auto probabilities_not_lost_schneider = get_propability(
-			get_additive_scores(sample, size_t_cmp_to(threshold_not_lost_schneider)),
-			sample_size
-		);
-		auto probabilities_win_schwarz = get_propability(
-			get_additive_scores(sample, size_t_cmp_to(threshold_win_schwarz)),
-			sample_size
-		);
-		auto probabilities_not_lost_schwarz = get_propability(
-			get_additive_scores(sample, size_t_cmp_to(threshold_not_lost_schwarz)),
-			sample_size
-		);
-
-		if (active_role != Role::Declarer) {
-			std::swap(probabilities_win_schneider, probabilities_not_lost_schneider);
-			std::swap(probabilities_win_schwarz, probabilities_not_lost_schwarz);
-		}
-		
-		auto average_scores = get_averages(sample);
-		std::transform(RANGE(average_scores), average_scores.begin(), [&](auto score) {
-			return score + current_score_without_skat.points();
-		});
-		if (active_role != Role::Declarer) {
-			std::transform(RANGE(average_scores), average_scores.begin(), [](auto score) {
-				return 120. - score;
-			});
-		}
-
-		auto average_game_results = get_propability(
-			get_accumulated_game_results(
-				sample,
-				spitzen,
-				contract,
-				bidding_value,
-				current_score_without_skat
-			),
-			sample_size
-		);
-
-		auto to_average_score = [&](auto sc) {
-			return fmt::format("{:.2f}", sc);
-		};
-
-		auto to_card = [](auto card) {
-			return to_string(card);
-		};
 
 		auto print_props = [](
 			const auto &probs,
@@ -519,35 +430,119 @@ namespace muskat {
 			);
 		};
 
+		auto size_t_cmp_to = [&](Score threshold) {
+			return cmp_to_helper{threshold, is_maximizer(active_role, contract.game)};
+		};
+		auto sample_size = sample.points_for_situations().size();
+
+
 		auto vert_line = "------"s;
 		for (auto i = 0_z; i < sample.playable_cards().size(); ++i) {
 			vert_line += "--------";
 		}
 		vert_line.push_back('\n');
 
-		//TODO: Relevant score …
-		// std::cout << "Current Score: " << std::to_string(current_score_without_skat) << "\n\n";
-		
+		auto to_average_score = [&](auto sc) {
+			return fmt::format("{:.2f}", sc);
+		};
 
-		auto max_average_score = *std::max_element(RANGE(average_scores));
-		print_statistics(
-			"avg.",
-			average_scores,
-			to_average_score,
-			[&](auto p) { return p == max_average_score; }
+		if (contract.game != GameType::Null) {
+			auto threshold_win = required_beyond_to_reach(current_score_without_skat, unmodified_threshold_win);
+			auto threshold_win_schneider = required_beyond_to_reach(current_score_without_skat, unmodified_threshold_win_schneider);
+			auto threshold_not_lost_schneider = required_beyond_to_reach(current_score_without_skat, unmodified_threshold_not_lost_schneider);
+
+			auto probabilities_win = get_propability(
+				get_additive_scores(sample, size_t_cmp_to(threshold_win)),
+				sample_size
+			);
+			auto probabilities_win_schneider = get_propability(
+				get_additive_scores(sample, size_t_cmp_to(threshold_win_schneider)),
+				sample_size
+			);
+			auto probabilities_not_lost_schneider = get_propability(
+				get_additive_scores(sample, size_t_cmp_to(threshold_not_lost_schneider)),
+				sample_size
+			);
+
+			auto probabilities_win_schwarz = get_propability(
+				get_additive_scores(sample, [&](auto score) {
+					return static_cast<size_t>(score.tricks() + current_score_without_skat.tricks() == (active_role == Role::Declarer ? 10 : 0));
+				}),
+				sample_size
+			);
+			auto probabilities_not_lost_schwarz = get_propability(
+				get_additive_scores(sample, [&](auto score) {
+					return static_cast<size_t>(score.tricks() + current_score_without_skat.tricks() != (active_role == Role::Declarer ? 0 : 10));
+				}),
+				sample_size
+			);
 			
+			if (active_role != Role::Declarer) {
+				std::swap(probabilities_win_schneider, probabilities_not_lost_schneider);
+				std::swap(probabilities_win_schwarz, probabilities_not_lost_schwarz);
+				std::swap(probabilities_win_schwarz, probabilities_not_lost_schwarz);
+			}
+			
+			auto average_scores = get_averages(sample);
+			std::transform(RANGE(average_scores), average_scores.begin(), [&](auto score) {
+				return score + current_score_without_skat.points();
+			});
+			if (active_role != Role::Declarer) {
+				std::transform(RANGE(average_scores), average_scores.begin(), [](auto score) {
+					return 120. - score;
+				});
+			}
+
+
+			//TODO: Relevant score …
+			// std::cout << "Current Score: " << std::to_string(current_score_without_skat) << "\n\n";
+			
+
+			auto max_average_score = *std::max_element(RANGE(average_scores));
+			print_statistics(
+				"avg.",
+				average_scores,
+				to_average_score,
+				[&](auto p) { return p == max_average_score; }
+				
+			);
+			
+			std::cout << vert_line;
+
+			print_props(probabilities_not_lost_schwarz, "nlb");
+			print_props(probabilities_not_lost_schneider, "nls");
+			print_props(probabilities_win, "w");
+			print_props(probabilities_win_schneider, "ws");
+			print_props(probabilities_win_schwarz, "wb");
+			
+		} else {
+			//Null game.
+			
+			auto probabilities_win = get_propability(
+				get_additive_scores(sample, [&](auto score) {
+					auto is_win_dec = score.tricks() + current_score_without_skat.tricks() == 0;
+					auto is_win = active_role == Role::Declarer ? is_win_dec : !is_win_dec;
+					return static_cast<size_t>(is_win);
+				}),
+				sample_size
+			);
+			print_props(probabilities_win, "w");
+		}
+		
+		std::cout << vert_line;
+
+		auto average_game_results = get_propability(
+			get_accumulated_game_results(
+				sample,
+				spitzen,
+				contract,
+				bidding_value,
+				current_score_without_skat
+			),
+			sample_size
 		);
-		
-		std::cout << vert_line;
 
-		print_props(probabilities_not_lost_schwarz, "nlb");
-		print_props(probabilities_not_lost_schneider, "nls");
-		print_props(probabilities_win, "w");
-		print_props(probabilities_win_schneider, "ws");
-		print_props(probabilities_win_schwarz, "wb");
-		
-		std::cout << vert_line;
-
+		//And here, the Null Spieler is a maximizer again …
 		auto best_game_result = active_role == Role::Declarer
 			? *std::max_element(RANGE(average_game_results))
 			: *std::min_element(RANGE(average_game_results));
@@ -561,6 +556,10 @@ namespace muskat {
 		);
 
 		auto cards = to_vector(sample.playable_cards());
+
+		auto to_card = [](auto card) {
+			return to_string(card);
+		};
 
 		std::cout << vert_line;
 		print_statistics(

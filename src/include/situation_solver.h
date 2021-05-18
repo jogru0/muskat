@@ -10,7 +10,6 @@
 
 namespace muskat {
 
-
 	[[nodiscard]] inline auto get_cards_to_consider(
 		Situation sit,
 		GameType game,
@@ -216,9 +215,6 @@ namespace muskat {
 		}
 
 	private:
-		[[nodiscard]] auto is_maximizer(Role role) -> bool {
-			return (role == Role::Declarer) != (m_game == GameType::Null);
-		}
 
 		//This is highly optimized, change with care.
 		template<bool is_max>
@@ -229,7 +225,7 @@ namespace muskat {
 		) -> std::pair<Bounds, MaybeCard> {
 			using namespace stdc::literals;
 			
-			assert(is_maximizer(sit.active_role()) == is_max);
+			assert(is_maximizer(sit.active_role(), m_game) == is_max);
 
 			auto &[bounds, pref] = bounds_pref;
 
@@ -304,7 +300,7 @@ namespace muskat {
 				//Old path.
 				auto bounds_pref = current_bounds(sit);
 				if (!decides_threshold(bounds_pref.first, threshold)) {
-					if (is_maximizer(sit.active_role())) {
+					if (is_maximizer(sit.active_role(), m_game)) {
 						bounds_pref = improve_bounds_to_decide_threshold<true>(bounds_pref, sit, threshold);
 					} else {
 						bounds_pref = improve_bounds_to_decide_threshold<false>(bounds_pref, sit, threshold);
@@ -319,7 +315,7 @@ namespace muskat {
 			//New path.
 			auto bounds_pref = quick_bounds(sit);
 			if (!decides_threshold(bounds_pref.first, threshold)) {
-				if (is_maximizer(sit.active_role())) {
+				if (is_maximizer(sit.active_role(), m_game)) {
 					bounds_pref = improve_bounds_to_decide_threshold<true>(bounds_pref, sit, threshold);
 				} else {
 					bounds_pref = improve_bounds_to_decide_threshold<false>(bounds_pref, sit, threshold);
@@ -362,11 +358,11 @@ namespace muskat {
 				auto makes_it_child = still_makes_at_least(child, expected_score_child);
 
 				if (makes_it_child) {
-					if (is_maximizer(sit.active_role())) {
+					if (is_maximizer(sit.active_role(), m_game)) {
 						return card;
 					}
 				} else {
-					if (!is_maximizer(sit.active_role())) {
+					if (!is_maximizer(sit.active_role(), m_game)) {
 						assert((expected_score != Score{0, 0}));
 						return card;
 					}
@@ -452,7 +448,7 @@ namespace muskat {
 		auto pick_best_card_in_situation(Situation sit, Score score_so_far) -> std::pair<Card, Score> {
 			auto final_additional_score_to_reach = calculate_potential_points_and_schwarz(sit, score_so_far);
 
-			if (is_maximizer(sit.active_role())) {
+			if (is_maximizer(sit.active_role(), m_game)) {
 				//Pick a card that forces at least this value.
 				return {stdc::surely(maybe_card_for_threshold(sit, final_additional_score_to_reach)), final_additional_score_to_reach};
 			}

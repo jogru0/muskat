@@ -98,7 +98,7 @@ namespace muskat {
 			WATCH("decide").start();
 			auto [card, worst_case_score_from_here] = m_solver.pick_best_card_in_situation(m_current_situation, m_points_declarer);
 			WATCH("decide").stop();
-			auto end_of_sentence = m_role == Role::Declarer ? std::string{" or more."} : std::string{" or less."};
+			auto end_of_sentence = is_maximizer(m_role, m_game) ? std::string{" or more."} : std::string{" or less."};
 			say(
 				"Decided on " +
 				to_string(card) +
