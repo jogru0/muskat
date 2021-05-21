@@ -205,21 +205,21 @@ struct GameResult {
 	if (result.is_won) {
 		return 50 + result.value;
 	}
-	return -(2 * result.value);
+	return -(50 + 2 * result.value);
 }
 
 [[nodiscard]] inline auto score_seeger_fabian_3p(GameResult result) {
 	if (result.is_won) {
 		return 50 + result.value;
 	}
-	return -(40 + 2 * result.value);
+	return -(40 + 50 + 2 * result.value);
 }
 
 [[nodiscard]] inline auto score_seeger_fabian_4p(GameResult result) {
 	if (result.is_won) {
 		return 50 + result.value;
 	}
-	return -(30 + 2 * result.value);
+	return -(30 + 50 + 2 * result.value);
 }
 
 
