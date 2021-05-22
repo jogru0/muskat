@@ -13,6 +13,43 @@
 
 namespace muskat {
 
+
+[[nodiscard]] inline auto choose(
+	uint8_t n,
+	uint8_t k
+) -> uint64_t {
+	assert(k <= n);
+	k = std::min(k, uint8_t(n - k));
+	auto numerator = uint64_t{1};
+	auto denominator = uint64_t{1};
+	for (auto i = uint8_t{1}; i <= k; ++i) {
+		numerator *= n + 1 - i;
+		denominator *= i;
+	}
+	assert(numerator % denominator == 0);
+	return numerator / denominator;
+}
+
+template<size_t I>
+[[nodiscard]] inline auto multichoose(
+	uint8_t n,
+	std::array<uint8_t, I> ks
+) -> uint64_t {
+	using namespace stdc::literals;
+	
+	if constexpr (I == 0) {
+		return 1;
+	} else {
+		auto k = ks[I - 1];
+		assert(k <= n);
+		auto rest_ks = std::array<uint8_t, I - 1> {};
+		for (auto i = 0_z; i < I - 1; ++i) {
+			rest_ks[i] = ks[i];
+		}
+		return choose(n, k) * multichoose(n - k, rest_ks);
+	}
+}
+
 struct KnownUnknownInSet {
 	uint8_t number = 0;
 	std::array<bool, 5> can_be_trick_type = {true, true, true, true, true};
@@ -25,21 +62,6 @@ struct KnownUnknownInSet {
 
 using TrickTypeSignature = std::array<uint8_t, 5>;
 
-[[nodiscard]] inline auto choose(
-	uint8_t n,
-	uint8_t k
-) -> uint64_t {
-	assert(n >= k);
-	k = std::min(k, uint8_t(n - k));
-	auto numerator = uint64_t{1};
-	auto denominator = uint64_t{1};
-	for (auto i = uint8_t{1}; i <= k; ++i) {
-		numerator *= n + 1 - i;
-		denominator *= i;
-	}
-	assert(numerator % denominator == 0);
-	return numerator / denominator;
-}
 
 [[nodiscard]] inline auto distribute(
 	std::array<KnownUnknownInSet, 4> known_about_remaining_dec_fdef_sdef_skat,

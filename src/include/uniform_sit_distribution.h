@@ -6,7 +6,75 @@
 
 #include <random>
 
+#include <stdc/type_traits.h>
+
 namespace muskat {
+
+using WeirdDistResult = std::pair<std::tuple<Situation, Card, Card, GameType>, int>;
+
+namespace detail {
+
+template<typename ...Dist>
+[[nodiscard]] auto combine_distributions(Dist ...distributions) {
+	static_assert(stdc::are_same_v<std::array<Cards, 4>, Dist ...>);
+	auto dec = (... | distributions[0]);
+	auto fdef = (... | distributions[1]);
+	auto sdef = (... | distributions[2]);
+	auto skat = (... | distributions[3]);
+
+	assert(dec.size() == 10);
+	assert(fdef.size() == 10);
+	assert(sdef.size() == 10);
+	assert(skat.size() == 2);
+	assert((dec | fdef | sdef | skat) == ~Cards{});
+	return std::array{dec, fdef, sdef, skat};
+	
+	
+}
+
+[[nodiscard]] inline auto get_all_distributions_to_buckets(
+	Cards cards_to_distribute,
+	std::array<uint8_t, 4> sizes
+) {
+	using namespace stdc::literals;
+
+	auto size = static_cast<uint8_t>(cards_to_distribute.size());
+	assert(size = std::accumulate(RANGE(sizes), uint8_t{}));
+	auto result = std::vector<std::array<Cards, 4>>{};
+	result.reserve(multichoose(size, sizes));
+
+	auto distribute_next_card_or_add_to_result = [&](
+		std::array<Cards, 4> distribution_so_far,
+		Cards remaining_cards,
+		auto self
+	) {
+		if (remaining_cards.empty()) {
+			result.push_back(distribution_so_far);
+			return;
+		}
+
+		auto next_card = remaining_cards.remove_next();
+
+		for (auto i = 0_z; i < 4; ++i) {
+			auto cards = distribution_so_far[i];
+			if (cards.size() == sizes[i]) {
+				continue;
+			}
+			cards.add(next_card);
+			auto new_distribution = distribution_so_far;
+			new_distribution[i] = cards;
+			self(new_distribution, remaining_cards, self);
+		}
+	};
+	
+	auto initial = std::array<Cards, 4>{Cards{}, Cards{}, Cards{}, Cards{}};
+	distribute_next_card_or_add_to_result(initial, cards_to_distribute, distribute_next_card_or_add_to_result);
+	assert(result.size() == multichoose(size, sizes));
+	return result;
+}
+
+} //namespace detail
+
 
 [[nodiscard]] inline auto get_signatures_dec_fdef_sdef_skat_and_entropy_and_number_of_possibilities(
 	std::array<Cards, 5> unknown_cards_per_trick_type,
@@ -90,17 +158,19 @@ namespace muskat {
 }
 
 
-struct UniformInitialSitDistribution {
+class UniformInitialSitDistribution {
+private:
 	GameType game;
 	Role active_role;
 
+public:
 	UniformInitialSitDistribution(GameType a_game, Role a_active_role) :
 		game{a_game},
 		active_role{a_active_role}
 	{}
 
 	template<typename Generator>
-	[[nodiscard]] auto operator()(Generator &rng) const -> std::pair<std::tuple<Situation, Card, Card, GameType>, int> {
+	[[nodiscard]] auto operator()(Generator &rng) const -> WeirdDistResult {
 		using namespace stdc::literals;
 		
 		auto shuffled_deck = get_shuffled_deck(rng);
@@ -149,6 +219,51 @@ private:
 	GameType m_game;
 	Cards m_already_played_cards_dec;
 
+
+	template<typename RNG>
+	[[nodiscard]] const auto &choose_signature_weighted(RNG &rng) const {
+		using namespace stdc::literals;
+		
+		auto sig_id = 0_z;
+		{
+			auto number = std::uniform_int_distribution{uint64_t{1}, number_of_possibilities}(rng);
+			auto partial_sum = uint64_t{0_z};
+			for (;;) {
+				assert(sig_id < signatures_dec_fdef_sdef_skat_and_entropy.size());
+				partial_sum += signatures_dec_fdef_sdef_skat_and_entropy[sig_id].second;
+				if (partial_sum >= number) {
+					break;
+				}
+				++sig_id;
+			}
+		}
+		return signatures_dec_fdef_sdef_skat_and_entropy[sig_id].first;
+	}
+
+	private:
+	[[nodiscard]] auto create_weird_dist_result(
+		std::array<Cards, 4> cards_for_simulator
+	) const -> WeirdDistResult {
+		auto skat = cards_for_simulator[3];
+		assert(skat.size() == 2);
+		auto skat_0 = skat.remove_next();
+		auto skat_1 = skat.remove_next();
+
+		auto h_dec_at_start_of_game = cards_for_simulator[0] | m_already_played_cards_dec;
+		auto cards_declarer = h_dec_at_start_of_game | cards_for_simulator[3];
+		auto spitzen = get_spitzen(cards_declarer, m_game);
+		
+		return {{Situation{
+			cards_for_simulator[0],
+			cards_for_simulator[1],
+			cards_for_simulator[2],
+			cards_for_simulator[3],
+			active_role,
+			maybe_first_trick_card,
+			maybe_second_trick_card
+		}, skat_0, skat_1, m_game}, spitzen};
+	}
+
 public:
 	explicit UniformSitDistribution(
 		PossibleWorlds worlds
@@ -177,23 +292,10 @@ public:
 	}
 
 	template<typename Generator>
-	[[nodiscard]] auto operator()(Generator &rng) const -> std::pair<std::tuple<Situation, Card, Card, GameType>, int> {
+	[[nodiscard]] auto operator()(Generator &rng) const -> WeirdDistResult {
 		using namespace stdc::literals;
-
-		auto sig_id = 0_z;
-		{
-			auto number = std::uniform_int_distribution{uint64_t{1}, number_of_possibilities}(rng);
-			auto partial_sum = uint64_t{0_z};
-			for (;;) {
-				assert(sig_id < signatures_dec_fdef_sdef_skat_and_entropy.size());
-				partial_sum += signatures_dec_fdef_sdef_skat_and_entropy[sig_id].second;
-				if (partial_sum >= number) {
-					break;
-				}
-				++sig_id;
-			}
-		}
-		const auto &selected_signature = signatures_dec_fdef_sdef_skat_and_entropy[sig_id].first;
+		
+		const auto &selected_signature = choose_signature_weighted(rng);
 
 		std::array<std::vector<Card>, 5> cards_to_distribute_by_trick_type;
 		for (auto tt = 0_z; tt < 5; ++tt) {
@@ -225,25 +327,67 @@ public:
 			assert(cards_to_distribute_by_trick_type[tt].empty());
 		}
 
-		auto skat = cards_for_simulator[3];
-		assert(skat.size() == 2);
-		auto skat_0 = skat.remove_next();
-		auto skat_1 = skat.remove_next();
-
-		auto h_dec_at_start_of_game = cards_for_simulator[0] | m_already_played_cards_dec;
-		auto cards_declarer = h_dec_at_start_of_game | cards_for_simulator[3];
-		auto spitzen = get_spitzen(cards_declarer, m_game);
-		
-		return {{Situation{
-			cards_for_simulator[0],
-			cards_for_simulator[1],
-			cards_for_simulator[2],
-			cards_for_simulator[3],
-			active_role,
-			maybe_first_trick_card,
-			maybe_second_trick_card
-		}, skat_0, skat_1, m_game}, spitzen};
+		return create_weird_dist_result(cards_for_simulator);
 	}
+
+	[[nodiscard]] auto get_all_possibilities() const -> std::vector<WeirdDistResult> {
+		auto result = std::vector<WeirdDistResult>{};
+		result.reserve(get_number_of_possibilities());
+
+		auto get_dists = [&]<size_t I>(const auto &signature){
+			static_assert(I < 5);
+			return detail::get_all_distributions_to_buckets(
+				unknown_cards_per_trick_type[I],
+				std::array{
+					signature[0][I],
+					signature[1][I],
+					signature[2][I],
+					signature[3][I]
+				}
+			);
+		};
+
+
+		for (const auto &[signature, entropy] : signatures_dec_fdef_sdef_skat_and_entropy) {
+			auto dists_0 = get_dists.operator()<0>(signature);
+			auto dists_1 = get_dists.operator()<1>(signature);
+			auto dists_2 = get_dists.operator()<2>(signature);
+			auto dists_3 = get_dists.operator()<3>(signature);
+			auto dists_4 = get_dists.operator()<4>(signature);
+			
+			assert(
+				dists_0.size() * dists_1.size() * dists_2.size() * dists_3.size() * dists_4.size() ==
+				entropy
+			);
+			
+			for (auto dist_0 : dists_0) {
+				for (auto dist_1 : dists_1) {
+					for (auto dist_2 : dists_2) {
+						for (auto dist_3 : dists_3) {
+							for (auto dist_4 : dists_4) {
+								auto cards_for_simulator = detail::combine_distributions(
+									dist_0,
+									dist_1,
+									dist_2,
+									dist_3,
+									dist_4
+								);
+								result.push_back(create_weird_dist_result(cards_for_simulator));
+							}
+						}
+					}
+				}
+			}
+
+		}
+
+		assert(result.size() == get_number_of_possibilities());
+		return result;
+	}
+
+
 };
+
+
 
 } // namespace muskat

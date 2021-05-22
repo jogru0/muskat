@@ -216,7 +216,7 @@ template<typename SituationDistribution>
 		return in;
 	});
 	watch_sampling.stop();
-	stdc::log_debug(
+	stdc::log(
 		"Sampling of {} situations took {}.",
 		number_samples,
 		stdc::to_string_us(watch_sampling.elapsed())
