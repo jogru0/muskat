@@ -22,11 +22,16 @@ template<typename ...Dist>
 	auto sdef = (... | distributions[2]);
 	auto skat = (... | distributions[3]);
 
-	assert(dec.size() == 10);
-	assert(fdef.size() == 10);
-	assert(sdef.size() == 10);
+	assert(dec.size() <= 10);
+	assert(fdef.size() <= 10);
+	assert(sdef.size() <= 10);
 	assert(skat.size() == 2);
-	assert((dec | fdef | sdef | skat) == ~Cards{});
+	assert((dec & fdef) == Cards{});
+	assert((dec & sdef) == Cards{});
+	assert((dec & skat) == Cards{});
+	assert((fdef & sdef) == Cards{});
+	assert((fdef & skat) == Cards{});
+	assert((sdef & skat) == Cards{});
 	return std::array{dec, fdef, sdef, skat};
 	
 	
@@ -39,7 +44,7 @@ template<typename ...Dist>
 	using namespace stdc::literals;
 
 	auto size = static_cast<uint8_t>(cards_to_distribute.size());
-	assert(size = std::accumulate(RANGE(sizes), uint8_t{}));
+	assert(size == std::accumulate(RANGE(sizes), uint8_t{}));
 	auto result = std::vector<std::array<Cards, 4>>{};
 	result.reserve(multichoose(size, sizes));
 
@@ -370,7 +375,8 @@ public:
 									dist_1,
 									dist_2,
 									dist_3,
-									dist_4
+									dist_4,
+									known_cards_dec_fdef_sdef_skat
 								);
 								result.push_back(create_weird_dist_result(cards_for_simulator));
 							}

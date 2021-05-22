@@ -165,15 +165,10 @@ inline void execute_worker_sampling(
 	throw;
 }
 
-template<typename SituationDistribution>
 [[nodiscard]] inline auto multithreaded_sampling(
-	const SituationDistribution &situation_dist,
-	size_t number_samples,
+	const std::vector<std::tuple<Situation, Card, Card, GameType>> &inputs,
 	Score current_score_without_skat
-) -> std::pair<
-	std::vector<PerfectInformationResult>,
-	std::vector<int>
-> {
+) -> std::vector<PerfectInformationResult> {
 	using namespace stdc::literals;
 	
 	auto number_of_threads = std::thread::hardware_concurrency();
@@ -190,37 +185,13 @@ template<typename SituationDistribution>
 		};
 	}
 
+	auto number_samples = inputs.size();
+
 	//Uses shared_ptr because threads might be finished before or after this function returns.
 	auto results = stdc::ConcurrentResultVector<std::array<Score, 32>>{number_samples};
 
 	auto times_in_ms = std::vector<double>(number_samples);
 	auto numbers_of_nodes = std::vector<std::vector<double>>(number_samples);
-		
-	// Seed with a real random value, if available
-	// auto seed_source = pcg_extras::seed_seq_from<std::random_device>{};
-
-	// Make a random number engine
-	auto rng = pcg32(/*seed_source*/);
-
-	auto inputs = std::vector<std::tuple<Situation, Card, Card, GameType>>{};
-	inputs.reserve(number_samples);
-
-	auto spitzen = std::vector<int>{};
-	spitzen.reserve(number_samples);
-
-	auto watch_sampling = stdc::SWatch{};
-	watch_sampling.start();
-	std::generate_n(std::back_inserter(inputs), number_samples, [&](){
-		auto [in, sp] = situation_dist(rng);
-		spitzen.push_back(sp);
-		return in;
-	});
-	watch_sampling.stop();
-	stdc::log(
-		"Sampling of {} situations took {}.",
-		number_samples,
-		stdc::to_string_us(watch_sampling.elapsed())
-	);
 	
 	auto threads = std::vector<std::jthread>{};
 	threads.reserve(number_of_threads);
@@ -283,7 +254,7 @@ template<typename SituationDistribution>
 	stdc::log("Run time in ms:");
 	stdc::display_statistics(times_in_ms);
 
-	return {result, spitzen};
+	return result;
 }
 
 inline void log_multithreaded_performance(
@@ -298,6 +269,40 @@ inline void log_multithreaded_performance(
 		stdc::to_string_s(total_time, 1),
 		stdc::to_string_ms((total_time * 12) / number_of_tasks)
 	);
+}
+
+template<typename Dist>
+[[nodiscard]] auto sample_situations_and_spitzen(
+	const Dist &situation_dist,
+	size_t number_samples
+) {
+	// Seed with a real random value, if available
+	// auto seed_source = pcg_extras::seed_seq_from<std::random_device>{};
+
+	// Make a random number engine
+	auto rng = pcg32(/*seed_source*/);
+
+	auto inputs = std::vector<std::tuple<Situation, Card, Card, GameType>>{};
+	inputs.reserve(number_samples);
+
+	auto spitzen = std::vector<int>{};
+	spitzen.reserve(number_samples);
+
+	auto watch_sampling = stdc::SWatch{};
+	watch_sampling.start();
+	std::generate_n(std::back_inserter(inputs), number_samples, [&](){
+		auto [in, sp] = situation_dist(rng);
+		spitzen.push_back(sp);
+		return in;
+	});
+	watch_sampling.stop();
+	stdc::log(
+		"Sampling of {} situations took {}.",
+		number_samples,
+		stdc::to_string_us(watch_sampling.elapsed())
+	);
+
+	return std::pair{inputs, spitzen};
 }
 
 [[nodiscard]] inline auto pick_best_card(
@@ -335,8 +340,41 @@ inline void log_multithreaded_performance(
 	// stdc::log(fmt::format("Start simulation of {} worlds.", number_samples_to_do));
 	auto watch_simulation = stdc::SWatch{};
 	watch_simulation.start();
+
+
+
+	auto [situations, spitzen] = [&]() {
+		if (10000 < dist.get_number_of_possibilities()) {
+			return sample_situations_and_spitzen(
+				dist,
+				number_samples_to_do
+			);
+		}
+
+		
+		number_samples_to_do = dist.get_number_of_possibilities();
+		stdc::log("We do all {} situations possible.", number_samples_to_do);
+		std::cout << "Calculating all " << number_samples_to_do << " situations possible.\n";
+
+		auto watch_sampling = stdc::SWatch{};
+		watch_sampling.start();
+		auto result = dist.get_all_possibilities();
+		watch_sampling.stop();
+		stdc::log(
+			"Sampling of {} situations took {}.",
+			number_samples_to_do,
+			stdc::to_string_us(watch_sampling.elapsed())
+		);
+		return std::pair{
+			stdc::transformed_vector(RANGE(result), [](auto p) {return p.first; }),
+			stdc::transformed_vector(RANGE(result), [](auto p) {return p.second; })
+		};
+	}();
+
+
+
 	
-	auto [results, spitzen] = multithreaded_sampling(dist, number_samples_to_do, current_score_without_skat);
+	auto results = multithreaded_sampling(situations, current_score_without_skat);
 	auto playable_cards = worlds.surely_get_playable_cards();
 	auto sample = muskat::PerfectInformationSample{std::move(playable_cards), std::move(results)};
 	
@@ -445,10 +483,14 @@ inline void calculate_initial_games(size_t number_samples_to_do, GameType game, 
 	// stdc::log(fmt::format("Start simulation of {} worlds.", number_samples_to_do));
 	auto watch_simulation = stdc::SWatch{};
 	watch_simulation.start();
-	
-	auto [results, spitzen] = muskat::multithreaded_sampling(
+
+	auto [situations, spitzen] = sample_situations_and_spitzen(
 		UniformInitialSitDistribution{game, initial_role},
-		number_samples_to_do,
+		number_samples_to_do
+	);
+	
+	auto results = muskat::multithreaded_sampling(
+		situations,
 		Score{0, 0}
 	);
 	

@@ -10,19 +10,19 @@ namespace stdc{
 
 inline void display_statistics(std::vector<double> data) {
 	auto size = data.size();
-	assert(2 <= size);
+	assert(1 <= size);
 
 	auto sample_max = *std::max_element(RANGE(data));
 	
 	auto sum = std::accumulate(RANGE(data), 0.);
 	auto sample_mean = sum / static_cast<double>(size);
 
-	auto sum_of_squared_distances = stdc::transform_accumulate(RANGE(data), [&](auto x) {
-		auto dist = std::abs(x - sample_mean);
-		return dist * dist;
-	});
-	auto unbiased_sample_variance = sum_of_squared_distances / static_cast<double>(size - 1);
-	auto corrected_sample_standard_deviation = std::sqrt(unbiased_sample_variance);
+	// auto sum_of_squared_distances = stdc::transform_accumulate(RANGE(data), [&](auto x) {
+	// 	auto dist = std::abs(x - sample_mean);
+	// 	return dist * dist;
+	// });
+	// auto unbiased_sample_variance = sum_of_squared_distances / static_cast<double>(size - 1);
+	// auto corrected_sample_standard_deviation = std::sqrt(unbiased_sample_variance);
 
 	auto index_median_l = (size - 1) / 2;
 	auto index_median_r = size / 2;
@@ -36,7 +36,7 @@ inline void display_statistics(std::vector<double> data) {
 	auto sample_median = std::midpoint(median_l, median_r);
 
 	stdc::log("\tmean:     {:5.0f}", sample_mean);
-	stdc::log_debug("\tstddev:   {}", corrected_sample_standard_deviation);
+	// stdc::log_debug("\tstddev:   {}", corrected_sample_standard_deviation);
 	stdc::log("\tmedian:   {:5.0f}", sample_median);
 	stdc::log("\tmax:      {:5.0f}", sample_max);
 	

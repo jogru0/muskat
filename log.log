@@ -2,91 +2,111 @@
 =====================================
 
 Start pick_best_card with 1000 iterations.
-Creation of the uniform sit distribution took 51us.
+Creation of the uniform sit distribution took 42us.
 Have 184756 possible situations, spread over 140 different color distributions.
-Sampling of 1000 situations took 1015us.
+Sampling of 1000 situations took 983us.
 Number of 1000 nodes:
-	mean:       755
-	median:     376
-	max:      10790
+	mean:       529
+	median:     386
+	max:       5973
 Run time in ms:
-	mean:      1669
-	median:     563
-	max:      39743
-Time to finished 1000 tasks with 12 threads: 143.9s
-	-> effective time per task: 1727ms
+	mean:      1554
+	median:     916
+	max:      32656
+Time to finished 1000 tasks with 12 threads: 131.2s
+	-> effective time per task: 1574ms
 
 Start pick_best_card with 1000 iterations.
-Creation of the uniform sit distribution took 38us.
-Have 48620 possible situations, spread over 100 different color distributions.
-Sampling of 1000 situations took 988us.
+Creation of the uniform sit distribution took 21us.
+Have 12870 possible situations, spread over 70 different color distributions.
+Sampling of 1000 situations took 888us.
 Number of 1000 nodes:
-	mean:       179
-	median:      97
-	max:       1447
+	mean:        16
+	median:      10
+	max:        222
 Run time in ms:
-	mean:       299
-	median:     123
-	max:       4409
-Time to finished 1000 tasks with 12 threads: 25.5s
-	-> effective time per task: 306ms
+	mean:        28
+	median:      16
+	max:        585
+Time to finished 1000 tasks with 12 threads: 2.4s
+	-> effective time per task: 29ms
 
 Start pick_best_card with 1000 iterations.
-Creation of the uniform sit distribution took 15us.
-Have 3432 possible situations, spread over 38 different color distributions.
-Sampling of 1000 situations took 874us.
+Creation of the uniform sit distribution took 9us.
+Have 3432 possible situations, spread over 46 different color distributions.
+We do all 3432 situations possible.
+Sampling of 3432 situations took 901us.
 Number of 1000 nodes:
-	mean:         3
-	median:       1
-	max:         27
+	mean:        11
+	median:       6
+	max:         65
 Run time in ms:
-	mean:         3
+	mean:        18
+	median:      10
+	max:        162
+Time to finished 3432 tasks with 12 threads: 5.3s
+	-> effective time per task: 19ms
+
+Start pick_best_card with 1000 iterations.
+Creation of the uniform sit distribution took 10us.
+Have 3432 possible situations, spread over 46 different color distributions.
+We do all 3432 situations possible.
+Sampling of 3432 situations took 997us.
+Number of 1000 nodes:
+	mean:         6
+	median:       5
+	max:         26
+Run time in ms:
+	mean:         9
+	median:       8
+	max:         60
+Time to finished 3432 tasks with 12 threads: 2.7s
+	-> effective time per task: 9ms
+
+Start pick_best_card with 1000 iterations.
+Creation of the uniform sit distribution took 6us.
+Have 462 possible situations, spread over 14 different color distributions.
+We do all 462 situations possible.
+Sampling of 462 situations took 143us.
+Number of 1000 nodes:
+	mean:         2
 	median:       2
-	max:         33
-Time to finished 1000 tasks with 12 threads: 0.3s
+	max:          6
+Run time in ms:
+	mean:         3
+	median:       3
+	max:         13
+Time to finished 462 tasks with 12 threads: 0.1s
 	-> effective time per task: 3ms
 
 Start pick_best_card with 1000 iterations.
-Creation of the uniform sit distribution took 7us.
-Have 1716 possible situations, spread over 29 different color distributions.
-Sampling of 1000 situations took 471us.
-Number of 1000 nodes:
-	mean:         5
-	median:       4
-	max:         22
-Run time in ms:
-	mean:         5
-	median:       4
-	max:         38
-Time to finished 1000 tasks with 12 threads: 0.4s
-	-> effective time per task: 5ms
-
-Start pick_best_card with 1000 iterations.
 Creation of the uniform sit distribution took 4us.
-Have 56 possible situations, spread over 4 different color distributions.
-Sampling of 1000 situations took 443us.
+Have 126 possible situations, spread over 11 different color distributions.
+We do all 126 situations possible.
+Sampling of 126 situations took 38us.
 Number of 1000 nodes:
-	mean:         1
-	median:       1
-	max:          2
-Run time in ms:
-	mean:         1
+	mean:         0
 	median:       0
-	max:          8
-Time to finished 1000 tasks with 12 threads: 0.1s
-	-> effective time per task: 1ms
+	max:          0
+Run time in ms:
+	mean:         0
+	median:       0
+	max:          0
+Time to finished 126 tasks with 12 threads: 0.0s
+	-> effective time per task: 0ms
 
 Start pick_best_card with 1000 iterations.
-Creation of the uniform sit distribution took 3us.
-Have 56 possible situations, spread over 4 different color distributions.
-Sampling of 1000 situations took 469us.
+Creation of the uniform sit distribution took 2us.
+Have 35 possible situations, spread over 6 different color distributions.
+We do all 35 situations possible.
+Sampling of 35 situations took 13us.
 Number of 1000 nodes:
 	mean:         0
 	median:       0
-	max:          1
+	max:          0
 Run time in ms:
 	mean:         0
 	median:       0
-	max:          9
-Time to finished 1000 tasks with 12 threads: 0.0s
+	max:          0
+Time to finished 35 tasks with 12 threads: 0.0s
 	-> effective time per task: 0ms
