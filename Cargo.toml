@@ -12,3 +12,14 @@ categories = ["games", "algorithms"]
 exclude = [".vscode"]
 
 [dependencies]
+derive_more = { version = "2.0.1", features = ["add", "add_assign", "not"] }
+rand = "0.9.2"
+rand_xoshiro = "0.7.0"
+rustc-hash = "2.1.1"
+static_assertions = "1.1.0"
+strum = { version = "0.27.2", features = ["derive"] }
+
+# Optimizations and no debug symbols overhead, but still debug_assertions. 
+[profile.test]
+opt-level = 3
+debug = false
