@@ -17,6 +17,14 @@ pub enum Suit {
 assert_eq_size!(Suit, u8);
 
 #[derive(Clone, Copy)]
+pub enum CardType {
+    Trump,
+    Suit(Suit),
+}
+
+assert_eq_size!(CardType, u8);
+
+#[derive(Clone, Copy)]
 #[repr(u8)]
 pub enum Rank {
     L7,

@@ -1,5 +1,3 @@
-use rustc_hash::FxHashMap;
-
 use crate::{
     open_situation_solver::bounds_and_preference::BoundsAndMaybePreference, role::Role,
     situation::OpenSituation,
@@ -11,8 +9,8 @@ pub fn open_situation_reachable_from_to_u32_key(
 ) -> impl Fn(OpenSituation) -> u32 {
     let mut cellar = reachable_from.cellar();
     //TODO: Faster to prepare cards as Cards?
-    let first_defener_card = cellar.remove_next();
-    let second_defener_card = cellar.remove_next();
+    let first_defener_card = unsafe { cellar.remove_next_unchecked() };
+    let second_defener_card = unsafe { cellar.remove_next_unchecked() };
 
     move |open_situation| {
         //TODO: Assert it is reachable from (and other invariants like no empy partial trick etc).

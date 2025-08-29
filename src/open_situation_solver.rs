@@ -7,7 +7,7 @@ use crate::open_situation_solver::bounds_and_preference::BoundsAndMaybePreferenc
 use crate::open_situation_solver::bounds_cache::OpenSituationSolverCache;
 use crate::power::CardPower;
 use crate::situation::OpenSituation;
-use crate::trick_yield::TrickYield;
+use crate::trick_yield::{TrickYield, YieldSoFar};
 use std::cmp::Reverse;
 
 mod bounds_and_preference;
@@ -56,7 +56,7 @@ fn get_cards_to_consider(
     //TODO: Can't we store the values, or even sort?
     while !cards.is_empty() {
         let mut cards_copy = cards;
-        let mut best_card = cards_copy.remove_next();
+        let mut best_card = unsafe { cards_copy.remove_next_unchecked() };
 
         // lower is better
         let mut best_options = get_options(best_card);
@@ -68,8 +68,7 @@ fn get_cards_to_consider(
             game_type,
         );
 
-        while !cards_copy.is_empty() {
-            let card = cards_copy.remove_next();
+        while let Some(card) = cards_copy.remove_next() {
             let options = get_options(card);
             let card_power = CardPower::of(
                 card,
@@ -255,24 +254,23 @@ impl<C: OpenSituationSolverCache> OpenSituationSolver<C> {
     // So this makes only sense to be called with completely new games? Or is there some outside logic
     // making sure that we calculate the total yield correctly?
     // If this is meant to abort when it's clear that we can't reach the target, could that be used for non null as well?
-    // TODO: pub?
     pub fn calculate_future_yield_with_optimal_open_play(
         &mut self,
         open_situation: OpenSituation,
-        yield_so_far: TrickYield,
+        yield_so_far: YieldSoFar,
     ) -> TrickYield {
         if matches!(self.game_type, GameType::Null) {
             // TODO: Should we check whether score so far is NONE?
             if self.still_makes_at_least(open_situation, TrickYield::new(CardPoints(0), 1)) {
                 return TrickYield::new(CardPoints(0), 1);
             }
-            return TrickYield::NONE;
+            return TrickYield::ZERO_TRICKS;
         }
 
         // TODO: Duplication to call this here, should we instead just use MAX and then let the cache work for us?
         let quick_bounds = open_situation.quick_bounds();
 
-        let needed_for_schwarz = TrickYield::MAX.saturating_sub(yield_so_far);
+        let needed_for_schwarz = YieldSoFar::MAX.saturating_sub(yield_so_far);
         debug_assert!(quick_bounds.upper() <= needed_for_schwarz);
 
         if needed_for_schwarz == quick_bounds.upper() {
@@ -289,8 +287,8 @@ impl<C: OpenSituationSolverCache> OpenSituationSolver<C> {
             debug_assert!(
                 !self.still_makes_at_least(open_situation, TrickYield::new(CardPoints(0), 1))
             );
-            debug_assert_eq!(quick_bounds.lower(), TrickYield::NONE);
-            return TrickYield::NONE;
+            debug_assert_eq!(quick_bounds.lower(), TrickYield::ZERO_TRICKS);
+            return TrickYield::ZERO_TRICKS;
         }
 
         //See if we make points (and therefore one trick), and how many, or no points, but at least one trick.
@@ -300,8 +298,8 @@ impl<C: OpenSituationSolverCache> OpenSituationSolver<C> {
         while !self.still_makes_at_least(open_situation, goal) {
             if goal.card_points().0 == 0 {
                 //Looks like the declarer cannot make a single trick.
-                debug_assert_eq!(quick_bounds.lower(), TrickYield::NONE);
-                return TrickYield::NONE;
+                debug_assert_eq!(quick_bounds.lower(), TrickYield::ZERO_TRICKS);
+                return TrickYield::ZERO_TRICKS;
             }
             goal = TrickYield::new(CardPoints(goal.card_points().0 - 1), 1);
         }
@@ -326,113 +324,11 @@ impl<C: OpenSituationSolverCache> OpenSituationSolver<C> {
         debug_assert!(bounds.upper() < threshold);
         false
     }
+
+    pub fn game_type(&self) -> GameType {
+        self.game_type
+    }
 }
 
 #[cfg(test)]
-mod tests {
-    use rand::SeedableRng;
-    use rand_xoshiro::Xoshiro256PlusPlus;
-
-    use crate::{
-        bidding_role::BiddingRole,
-        card::Suit,
-        card_points::CardPoints,
-        deck::Deck,
-        game_type::GameType,
-        open_situation_solver::{
-            OpenSituationSolver,
-            bounds_cache::{
-                FastOpenSituationSolverCache, open_situation_reachable_from_to_u32_key,
-            },
-        },
-        situation::OpenSituation,
-        trick_yield::TrickYield,
-    };
-
-    fn test_calculate_potential_score(
-        deck: Deck,
-        game_type: GameType,
-        declarer: BiddingRole,
-        expected: TrickYield,
-    ) {
-        let deal = deck.deal();
-        let open_situation = OpenSituation::new(deal, declarer);
-        // dbg!(open_situation);
-
-        let mut solver = OpenSituationSolver::new(
-            FastOpenSituationSolverCache::new(open_situation_reachable_from_to_u32_key(
-                open_situation,
-            )),
-            game_type,
-        );
-
-        let actual = solver.calculate_future_yield_with_optimal_open_play(
-            open_situation,
-            TrickYield::new(open_situation.cellar().to_points(), 0),
-        );
-
-        assert_eq!(actual, expected);
-    }
-
-    fn test_calculate_potential_score_rng_batch(
-        game_type: GameType,
-        declarer: BiddingRole,
-        seed: u64,
-        expecteds: &[TrickYield],
-    ) {
-        let mut rng = Xoshiro256PlusPlus::seed_from_u64(seed);
-
-        for &expected in expecteds {
-            let deck = Deck::shuffled(&mut rng);
-            test_calculate_potential_score(deck, game_type, declarer, expected);
-        }
-    }
-
-    #[test]
-    fn test_calculate_potential_score_suit_declarer() {
-        test_calculate_potential_score_rng_batch(
-            GameType::Suit(Suit::Hearts),
-            BiddingRole::FirstCaller,
-            432,
-            &[
-                TrickYield::new(CardPoints(25), 1),
-                TrickYield::new(CardPoints(14), 1),
-                TrickYield::new(CardPoints(59), 1),
-                TrickYield::new(CardPoints(30), 1),
-                TrickYield::new(CardPoints(0), 0),
-            ],
-        );
-    }
-
-    #[test]
-    fn test_calculate_potential_score_grand_first_receiver() {
-        test_calculate_potential_score_rng_batch(
-            GameType::Grand,
-            BiddingRole::FirstReceiver,
-            32,
-            &[
-                TrickYield::new(CardPoints(6), 1),
-                TrickYield::new(CardPoints(21), 1),
-                TrickYield::new(CardPoints(11), 1),
-                TrickYield::new(CardPoints(30), 1),
-                TrickYield::new(CardPoints(10), 1),
-            ],
-        );
-    }
-
-    #[test]
-    fn test_calculate_potential_score_null_second_caller() {
-        test_calculate_potential_score_rng_batch(
-            GameType::Null,
-            BiddingRole::SecondCaller,
-            3,
-            &[
-                TrickYield::new(CardPoints(0), 0),
-                TrickYield::new(CardPoints(0), 1),
-                TrickYield::new(CardPoints(0), 1),
-                TrickYield::new(CardPoints(0), 1),
-                TrickYield::new(CardPoints(0), 1),
-            ],
-        );
-    }
-}
+mod tests;

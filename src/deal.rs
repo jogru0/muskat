@@ -14,8 +14,8 @@ pub struct Deal {
 assert_eq_size!(Deal, u128);
 
 impl Deal {
-    pub fn hand(self, role: BiddingRole) -> Cards {
-        match role {
+    pub fn hand(self, bidding_role: BiddingRole) -> Cards {
+        match bidding_role {
             BiddingRole::FirstReceiver => self.first_receiver,
             BiddingRole::FirstCaller => self.first_caller,
             BiddingRole::SecondCaller => self.second_caller,

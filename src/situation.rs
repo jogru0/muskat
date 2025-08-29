@@ -1,9 +1,17 @@
 use static_assertions::assert_eq_size;
 
 use crate::{
-    bidding_role::BiddingRole, bounds::Bounds, card::Card, cards::Cards, deal::Deal,
-    game_type::GameType, minimax_role::MinimaxRole, position::Position, role::Role,
-    situation::partial_trick::PartialTrick, trick_yield::TrickYield,
+    bidding_role::BiddingRole,
+    bounds::Bounds,
+    card::Card,
+    cards::Cards,
+    deal::Deal,
+    game_type::GameType,
+    minimax_role::MinimaxRole,
+    position::Position,
+    role::Role,
+    situation::partial_trick::PartialTrick,
+    trick_yield::{TrickYield, YieldSoFar},
 };
 
 mod partial_trick;
@@ -79,7 +87,7 @@ impl OpenSituation {
 
         let Some(trick) = self.partial_trick.add(card) else {
             self.assert_invariants();
-            return TrickYield::NONE;
+            return TrickYield::ZERO_TRICKS;
         };
 
         let position = trick.winner_position(game_type);
@@ -96,7 +104,7 @@ impl OpenSituation {
         if matches!(self.active_role, Role::Declarer) {
             TrickYield::from_trick(trick)
         } else {
-            TrickYield::NONE
+            TrickYield::ZERO_TRICKS
         }
     }
 
@@ -121,16 +129,13 @@ impl OpenSituation {
     }
 
     pub fn quick_bounds(self) -> Bounds {
-        let lower = TrickYield::NONE;
+        let lower = TrickYield::ZERO_TRICKS;
 
         //TODO: How many tricks left?
         let cellar = self.cellar();
-        // TODO: Assert in `fn cellar`?
-        debug_assert_eq!(cellar.len() % 3, 2);
         let gone_tricks = cellar.len() / 3;
-        let cellar_score = TrickYield::new(cellar.to_points(), gone_tricks);
-
-        let upper = TrickYield::MAX.saturating_sub(cellar_score);
+        let cellar_score = YieldSoFar::new(cellar.to_points(), gone_tricks);
+        let upper = YieldSoFar::MAX.saturating_sub(cellar_score);
         Bounds::new(lower, upper)
     }
 
@@ -143,9 +148,11 @@ impl OpenSituation {
     /// Everything already face down.
     pub fn cellar(self) -> Cards {
         // TODO: Better to remove trick cards individually?
-        Cards::ALL
+        let result = Cards::ALL
             .without(self.remaining_cards_in_hands())
-            .without(self.partial_trick.cards())
+            .without(self.partial_trick.cards());
+        assert_eq!(result.len() % 3, 2);
+        result
     }
 
     pub fn new(deal: Deal, bidding_winner: BiddingRole) -> Self {

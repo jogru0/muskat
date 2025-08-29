@@ -146,8 +146,18 @@ impl Cards {
         }
     }
 
-    pub const fn remove_next(&mut self) -> Card {
-        debug_assert!(!self.is_empty());
+    pub const fn remove_next(&mut self) -> Option<Card> {
+        if self.is_empty() {
+            return None;
+        }
+
+        Some(unsafe { self.remove_next_unchecked() })
+    }
+
+    /// # Safety
+    ///
+    /// self must not be empty.
+    pub const unsafe fn remove_next_unchecked(&mut self) -> Card {
         let id_card = self.bits.trailing_zeros() as u8;
         debug_assert!(id_card < 32);
 

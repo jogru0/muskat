@@ -11,6 +11,43 @@ pub struct TrickYield {
     number_of_tricks: u8,
 }
 
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug)]
+// Order of the member fields is important for deriving Ord.
+// Ordering this way, we have for example:
+// 28 card points with 2 tricks is better than 24 card point with 3 tricks.
+/// ALWAYS CONTAINS POINTS FROM THE SKAT
+pub struct YieldSoFar {
+    card_points: CardPoints,
+    number_of_tricks: u8,
+}
+impl YieldSoFar {
+    // TODO: Make clear and assert that this has to contain the skat.
+    pub fn new(card_points: CardPoints, number_of_tricks: u8) -> Self {
+        Self {
+            card_points,
+            number_of_tricks,
+        }
+    }
+
+    pub const MAX: Self = Self {
+        card_points: CardPoints(120),
+        number_of_tricks: 10,
+    };
+
+    pub fn add_assign(&mut self, trick_yield: TrickYield) {
+        self.card_points = CardPoints(self.card_points.0 + trick_yield.card_points.0);
+        self.number_of_tricks += trick_yield.number_of_tricks
+    }
+
+    //TODO: Can that destroy the invariant that it is actually a yield from tricks?
+    pub fn saturating_sub(self, other: Self) -> TrickYield {
+        TrickYield {
+            card_points: CardPoints(self.card_points.0.saturating_sub(other.card_points.0)),
+            number_of_tricks: self.number_of_tricks.saturating_sub(other.number_of_tricks),
+        }
+    }
+}
+
 assert_eq_size!(TrickYield, u16);
 
 impl TrickYield {
@@ -35,24 +72,22 @@ impl TrickYield {
         true
     }
 
-    pub const NONE: TrickYield = TrickYield {
+    pub const ZERO_TRICKS: TrickYield = TrickYield {
         card_points: CardPoints(0),
         number_of_tricks: 0,
     };
 
-    pub const MAX: TrickYield = TrickYield {
-        card_points: CardPoints(120),
-        number_of_tricks: 10,
-    };
-
     pub fn worst(minimax_role: MinimaxRole) -> Self {
         match minimax_role {
-            MinimaxRole::Min => TrickYield::MAX,
-            MinimaxRole::Max => TrickYield::NONE,
+            MinimaxRole::Min => TrickYield {
+                card_points: CardPoints(120),
+                number_of_tricks: 10,
+            },
+            MinimaxRole::Max => Self::ZERO_TRICKS,
         }
     }
 
-    pub const fn from_trick(trick: Trick) -> TrickYield {
+    pub const fn from_trick(trick: Trick) -> Self {
         Self {
             card_points: trick.to_points(),
             number_of_tricks: 1,

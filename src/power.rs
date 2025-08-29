@@ -30,7 +30,7 @@ impl CardPower {
 
         let result = CardPower(match game_type {
             GameType::Null => rank as i8,
-            GameType::Suit(..) | GameType::Grand => {
+            GameType::Trump(_) => {
                 let mut result = match rank {
                     Rank::Z => 7,
                     Rank::A => 8,
