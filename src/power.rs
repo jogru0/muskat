@@ -1,5 +1,5 @@
 use crate::{
-    card::{Card, Rank},
+    card::{Card, CardType, Rank},
     game_type::GameType,
 };
 use static_assertions::assert_eq_size;
@@ -16,13 +16,10 @@ impl CardPower {
         self == Self::DEACTIVATED
     }
 
-    pub fn of(card: Card, first_card_in_trick: Card, game_type: GameType) -> Self {
-        let card_is_trump = game_type.trump_cards().contains(card);
-        let card_follows_trick_type = first_card_in_trick
-            .cards_following_suite(game_type)
-            .contains(card);
+    pub fn of(card: Card, trick_type: CardType, game_type: GameType) -> Self {
+        let card_type = card.card_type(game_type);
 
-        if !card_is_trump && !card_follows_trick_type {
+        if !matches!(card_type, CardType::Trump) && card_type != trick_type {
             return CardPower::DEACTIVATED;
         }
 
@@ -38,7 +35,7 @@ impl CardPower {
                     other_rank => other_rank as i8,
                 };
 
-                if card_is_trump {
+                if matches!(card_type, CardType::Trump) {
                     //TODO: Why not 9?
                     result += 10;
                 }

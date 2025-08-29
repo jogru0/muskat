@@ -64,7 +64,10 @@ fn get_cards_to_consider(
         //higher is better
         let mut best_card_power = CardPower::of(
             best_card,
-            maybe_fixed_first_trick_card.unwrap_or(best_card),
+            //TODO: Is this calculation for free or should we buffer?
+            maybe_fixed_first_trick_card
+                .unwrap_or(best_card)
+                .card_type(game_type),
             game_type,
         );
 
@@ -72,7 +75,9 @@ fn get_cards_to_consider(
             let options = get_options(card);
             let card_power = CardPower::of(
                 card,
-                maybe_fixed_first_trick_card.unwrap_or(card),
+                maybe_fixed_first_trick_card
+                    .unwrap_or(card)
+                    .card_type(game_type),
                 game_type,
             );
 

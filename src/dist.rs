@@ -1,8 +1,27 @@
-use crate::card::{CardType, Suit};
+use derive_more::AddAssign;
+use rand::{
+    Rng,
+    distr::{
+        Distribution,
+        uniform::{UniformSampler, UniformUsize},
+    },
+    seq::SliceRandom,
+};
+
+use crate::{
+    bidding_role::BiddingRole,
+    card::{Card, CardType, Suit},
+    cards::Cards,
+    deal::Deal,
+    game_type::GameType,
+    observed_gameplay::ObservedGameplay,
+    situation::OpenSituation,
+    util::choose,
+};
 
 #[derive(Clone, Copy)]
 pub struct UnknownCards {
-    number: usize,
+    number: u8,
     hearts_possible: bool,
     spades_possible: bool,
     diamonds_possible: bool,
@@ -11,6 +30,28 @@ pub struct UnknownCards {
 }
 
 impl UnknownCards {
+    pub const fn unrestricted(number: u8) -> Self {
+        Self {
+            number,
+            hearts_possible: true,
+            spades_possible: true,
+            diamonds_possible: true,
+            clubs_possible: true,
+            trump_possible: true,
+        }
+    }
+
+    pub const ALL_KNOWN: Self = Self {
+        number: 0,
+        hearts_possible: false,
+        spades_possible: false,
+        diamonds_possible: false,
+        clubs_possible: false,
+        trump_possible: false,
+    };
+    pub const UNKNOWN_HAND: Self = Self::unrestricted(10);
+    pub const UNKNOWN_SKAT: Self = Self::unrestricted(2);
+
     fn possible(&self, card_type: CardType) -> bool {
         match card_type {
             CardType::Trump => self.trump_possible,
@@ -21,7 +62,7 @@ impl UnknownCards {
         }
     }
 
-    fn max_possible(&self, card_type: CardType) -> usize {
+    fn max_possible(&self, card_type: CardType) -> u8 {
         if self.possible(card_type) {
             self.number
         } else {
@@ -29,34 +70,124 @@ impl UnknownCards {
         }
     }
 
-    fn without(mut self, number: usize) -> Self {
-        self.number = self.number.checked_sub(number).expect("valid operation");
+    fn without(mut self, number: u8) -> Self {
+        self.remove(number);
         self
+    }
+
+    pub fn remove(&mut self, number: u8) {
+        self.number = self.number.checked_sub(number).expect("valid operation");
     }
 
     fn is_empty(&self) -> bool {
         self.number == 0
     }
+
+    pub fn retrict(&mut self, card_type: CardType) {
+        match card_type {
+            CardType::Trump => self.trump_possible = false,
+            CardType::Suit(Suit::Clubs) => self.clubs_possible = false,
+            CardType::Suit(Suit::Spades) => self.spades_possible = false,
+            CardType::Suit(Suit::Hearts) => self.hearts_possible = false,
+            CardType::Suit(Suit::Diamonds) => self.diamonds_possible = false,
+        }
+    }
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, AddAssign)]
 pub struct ColorDistribution {
-    hearts: usize,
-    spades: usize,
-    diamonds: usize,
-    clubs: usize,
-    trump: usize,
+    hearts: u8,
+    spades: u8,
+    diamonds: u8,
+    clubs: u8,
+    trump: u8,
 }
+
 impl ColorDistribution {
+    pub const fn new(cards: Cards, game_type: GameType) -> Self {
+        ColorDistribution {
+            hearts: Cards::of_card_type(CardType::Suit(Suit::Hearts), game_type)
+                .and(cards)
+                .len(),
+            spades: Cards::of_card_type(CardType::Suit(Suit::Spades), game_type)
+                .and(cards)
+                .len(),
+            diamonds: Cards::of_card_type(CardType::Suit(Suit::Diamonds), game_type)
+                .and(cards)
+                .len(),
+            clubs: Cards::of_card_type(CardType::Suit(Suit::Clubs), game_type)
+                .and(cards)
+                .len(),
+            trump: Cards::of_card_type(CardType::Trump, game_type)
+                .and(cards)
+                .len(),
+        }
+    }
+
+    pub const EMPTY: ColorDistribution = ColorDistribution {
+        hearts: 0,
+        spades: 0,
+        diamonds: 0,
+        clubs: 0,
+        trump: 0,
+    };
+
+    pub fn initial(game_type: GameType) -> Self {
+        match game_type {
+            GameType::Trump(CardType::Suit(Suit::Clubs)) => ColorDistribution {
+                hearts: 7,
+                spades: 7,
+                diamonds: 7,
+                clubs: 0,
+                trump: 11,
+            },
+            GameType::Trump(CardType::Suit(Suit::Hearts)) => ColorDistribution {
+                hearts: 0,
+                spades: 7,
+                diamonds: 7,
+                clubs: 7,
+                trump: 11,
+            },
+            GameType::Trump(CardType::Suit(Suit::Diamonds)) => ColorDistribution {
+                hearts: 7,
+                spades: 7,
+                diamonds: 0,
+                clubs: 7,
+                trump: 11,
+            },
+            GameType::Trump(CardType::Suit(Suit::Spades)) => ColorDistribution {
+                hearts: 7,
+                spades: 0,
+                diamonds: 7,
+                clubs: 7,
+                trump: 11,
+            },
+            GameType::Trump(CardType::Trump) => ColorDistribution {
+                hearts: 7,
+                spades: 7,
+                diamonds: 7,
+                clubs: 7,
+                trump: 4,
+            },
+            GameType::Null => ColorDistribution {
+                hearts: 8,
+                spades: 8,
+                diamonds: 8,
+                clubs: 8,
+                trump: 0,
+            },
+        }
+    }
+
     pub fn is_empty(&self) -> bool {
         self.len() == 0
     }
 
-    pub fn len(&self) -> usize {
+    pub fn len(&self) -> u8 {
         self.hearts + self.spades + self.diamonds + self.clubs + self.trump
     }
 
-    fn get_mut(&mut self, card_type: CardType) -> &mut usize {
+    fn get_mut(&mut self, card_type: CardType) -> &mut u8 {
         match card_type {
             CardType::Trump => &mut self.trump,
             CardType::Suit(Suit::Diamonds) => &mut self.diamonds,
@@ -66,7 +197,7 @@ impl ColorDistribution {
         }
     }
 
-    fn without(mut self, number: usize, card_type: CardType) -> Self {
+    fn without(mut self, number: u8, card_type: CardType) -> Self {
         let value = self.get_mut(card_type);
         *value = value.checked_sub(number).expect("valid operation");
         self
@@ -142,10 +273,10 @@ fn partially_distribute(
 pub fn distribute_colors(
     unknown_cards_slice: &[UnknownCards],
     open: ColorDistribution,
-) -> Vec<Vec<ColorDistribution>> {
+) -> Vec<ColorDistributions> {
     let Some(unknown_cards) = unknown_cards_slice.last() else {
         return if open.is_empty() {
-            vec![Vec::new()]
+            vec![ColorDistributions::new()]
         } else {
             Vec::new()
         };
@@ -168,6 +299,207 @@ pub fn distribute_colors(
     }
 
     result
+}
+
+#[derive(Clone)]
+struct OpenCards {
+    hearts: Vec<Card>,
+    spades: Vec<Card>,
+    diamonds: Vec<Card>,
+    clubs: Vec<Card>,
+    trump: Vec<Card>,
+}
+impl OpenCards {
+    pub fn ordered(open: Cards, game_type: GameType) -> Self {
+        OpenCards {
+            hearts: open
+                .and(Cards::of_card_type(CardType::Suit(Suit::Hearts), game_type))
+                .to_vec(),
+            spades: open
+                .and(Cards::of_card_type(CardType::Suit(Suit::Spades), game_type))
+                .to_vec(),
+            diamonds: open
+                .and(Cards::of_card_type(
+                    CardType::Suit(Suit::Diamonds),
+                    game_type,
+                ))
+                .to_vec(),
+            clubs: open
+                .and(Cards::of_card_type(CardType::Suit(Suit::Clubs), game_type))
+                .to_vec(),
+            trump: open
+                .and(Cards::of_card_type(CardType::Trump, game_type))
+                .to_vec(),
+        }
+    }
+
+    pub fn shuffle<R>(&mut self, rng: &mut R)
+    where
+        R: Rng + ?Sized,
+    {
+        self.clubs.shuffle(rng);
+    }
+}
+
+fn choose_in_order(open_cards: &mut OpenCards, color_distributions: &ColorDistributions) -> Deal {
+    let mut deal_iter = color_distributions.iter().map(|color_distribution| {
+        let mut cards = Cards::EMPTY;
+
+        for _ in 0..color_distribution.hearts {
+            cards.add_new(open_cards.hearts.pop().expect("valid inputs"));
+        }
+
+        for _ in 0..color_distribution.diamonds {
+            cards.add_new(open_cards.diamonds.pop().expect("valid inputs"));
+        }
+
+        for _ in 0..color_distribution.spades {
+            cards.add_new(open_cards.spades.pop().expect("valid inputs"));
+        }
+
+        for _ in 0..color_distribution.clubs {
+            cards.add_new(open_cards.clubs.pop().expect("valid inputs"));
+        }
+
+        for _ in 0..color_distribution.trump {
+            cards.add_new(open_cards.trump.pop().expect("valid inputs"));
+        }
+
+        cards
+    });
+
+    let first_receiver = deal_iter.next().expect("valid data");
+    let first_caller = deal_iter.next().expect("valid data");
+    let second_caller = deal_iter.next().expect("valid data");
+    let skat = deal_iter.next().expect("valid data");
+    debug_assert!(deal_iter.next().is_none());
+
+    Deal::new(first_receiver, first_caller, second_caller, skat)
+}
+
+pub struct UniformPossibleOpenSituationsFromObservedGameplay {
+    possible_color_distributions_vec: Vec<ColorDistributions>,
+    possibility_dist: UniformUsize,
+    possible_situations: usize,
+    open_cards_ordered: OpenCards,
+    observed_cards: Deal,
+    bidding_winner: BiddingRole,
+}
+
+impl UniformPossibleOpenSituationsFromObservedGameplay {
+    pub fn color_distributions(&self) -> usize {
+        self.possible_color_distributions_vec.len()
+    }
+
+    pub fn possible_situations(&self) -> usize {
+        self.possible_situations
+    }
+
+    pub fn new(
+        observed_gameplay: ObservedGameplay,
+        // Required to be able to know what `Role` we are in the generated `OpenSituation`s
+        bidding_winner: BiddingRole,
+    ) -> Self {
+        // TODO: Order important, should be better typed ...
+        let (unknown_cards_vec, observed_cards) =
+            observed_gameplay.unknown_cards_vec_and_observed_cards();
+
+        let unobserved_cards = Cards::ALL.without(observed_cards.cards());
+        let open = ColorDistribution::new(unobserved_cards, observed_gameplay.game_type());
+
+        let possible_color_distributions_vec = distribute_colors(&unknown_cards_vec, open);
+
+        let possible_situations = possible_color_distributions_vec
+            .iter()
+            .map(|color_distributions| color_distributions.possibilities())
+            .sum();
+
+        let possibility_dist = UniformUsize::new(0, possible_situations)
+            .expect("there is a correct distribution, so possibilities is at least 1");
+
+        let open_cards_ordered =
+            OpenCards::ordered(unobserved_cards, observed_gameplay.game_type());
+
+        Self {
+            possible_color_distributions_vec,
+            possibility_dist,
+            open_cards_ordered,
+            observed_cards,
+            bidding_winner,
+            possible_situations,
+        }
+    }
+}
+
+pub struct ColorDistributions {
+    // If not exhausting, `possibilities` would not be correct.
+    exhausting_color_distributions: Vec<ColorDistribution>,
+}
+
+impl Default for ColorDistributions {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl ColorDistributions {
+    /// Distribute nothing via no `ColorDistribution`s.
+    pub fn new() -> Self {
+        Self {
+            exhausting_color_distributions: Vec::new(),
+        }
+    }
+
+    fn push(&mut self, distributed: ColorDistribution) {
+        self.exhausting_color_distributions.push(distributed);
+    }
+}
+
+impl ColorDistributions {
+    pub fn possibilities(&self) -> usize {
+        let mut distrution_so_far = ColorDistribution::EMPTY;
+        let mut result = 1;
+
+        for &color_distribution in &self.exhausting_color_distributions {
+            distrution_so_far += color_distribution;
+            result *= choose(distrution_so_far.clubs, color_distribution.clubs);
+            result *= choose(distrution_so_far.hearts, color_distribution.hearts);
+            result *= choose(distrution_so_far.diamonds, color_distribution.diamonds);
+            result *= choose(distrution_so_far.spades, color_distribution.spades);
+            result *= choose(distrution_so_far.trump, color_distribution.trump);
+        }
+
+        result
+    }
+
+    fn iter(&self) -> impl Iterator<Item = &ColorDistribution> {
+        self.exhausting_color_distributions.iter()
+    }
+}
+
+impl Distribution<OpenSituation> for UniformPossibleOpenSituationsFromObservedGameplay {
+    fn sample<R: rand::Rng + ?Sized>(&self, rng: &mut R) -> OpenSituation {
+        let mut distribution_id = self.possibility_dist.sample(rng);
+
+        for color_distributions in &self.possible_color_distributions_vec {
+            if color_distributions.possibilities() <= distribution_id {
+                distribution_id -= color_distributions.possibilities();
+                continue;
+            }
+
+            let mut open_cards = self.open_cards_ordered.clone();
+            open_cards.shuffle(rng);
+
+            let deal = choose_in_order(&mut open_cards, color_distributions);
+
+            return OpenSituation::new(
+                deal.combined_with_disjoint(self.observed_cards),
+                self.bidding_winner,
+            );
+        }
+
+        unreachable!("did not find any color distribution");
+    }
 }
 
 #[cfg(test)]

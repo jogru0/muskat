@@ -1,0 +1,21 @@
+{
+	"position": "geber",
+	"hand": ["HA", "HK", "H8", "SA", "GU", "HU", "SU", "GK", "G9", "G7"],
+	"skat": ["EO", "S9"],
+	"game_mode": {
+		"declarer": "geber",
+		"type": "Green"
+	},
+	"bidding_value": 18,
+	"played_cards": [
+		["S7", "SO", "SA"],
+		["GU", "GZ", "EU"],
+		["SK", "G7", "S8"],
+		["HU", "H9", "G8"],
+		["H8", "HZ", "HO"],
+		["SZ", "H7", "GK"],
+		["HA", "EA", "GA"]
+		
+
+	]
+}

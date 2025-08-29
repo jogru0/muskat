@@ -1,0 +1,13 @@
+{
+	"position": "hoerer",
+	"hand": ["H8", "H9", "E8", "EO", "GZ", "GA", "SZ", "SA", "GU", "EU"],
+	"skat": null,
+	"game_mode": {
+		"declarer": "hoerer",
+		"type": "Grand",
+		"hand": true
+	},
+	"bidding_value": 18,
+	"played_cards": [
+	]
+}

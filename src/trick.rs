@@ -1,5 +1,6 @@
 use crate::{
-    card::Card, card_points::CardPoints, game_type::GameType, position::Position, power::CardPower,
+    card::Card, card_points::CardPoints, cards::Cards, game_type::GameType, position::Position,
+    power::CardPower,
 };
 use static_assertions::assert_eq_size;
 
@@ -25,10 +26,23 @@ impl Trick {
         }
     }
 
+    pub fn first(self) -> Card {
+        self.first
+    }
+
+    pub fn second(self) -> Card {
+        self.second
+    }
+
+    pub fn third(self) -> Card {
+        self.third
+    }
+
     pub fn winner_position(self, game_type: GameType) -> Position {
-        let power_forehand = CardPower::of(self.first, self.first, game_type);
-        let power_middlehand = CardPower::of(self.second, self.first, game_type);
-        let power_rearhand = CardPower::of(self.third, self.first, game_type);
+        let power_forehand = CardPower::of(self.first, self.first.card_type(game_type), game_type);
+        let power_middlehand =
+            CardPower::of(self.second, self.first.card_type(game_type), game_type);
+        let power_rearhand = CardPower::of(self.third, self.first.card_type(game_type), game_type);
 
         debug_assert!(!power_forehand.comes_from_deactivated_card());
         debug_assert_ne!(power_forehand, power_middlehand);
@@ -51,7 +65,15 @@ impl Trick {
         }
     }
 
-    pub const fn to_points(self) -> CardPoints {
-        CardPoints(self.first.to_points().0 + self.second.to_points().0 + self.third.to_points().0)
+    pub fn to_points(self) -> CardPoints {
+        self.cards().to_points()
+    }
+
+    pub const fn cards(&self) -> Cards {
+        let mut result = Cards::EMPTY;
+        result.add_new(self.first);
+        result.add_new(self.second);
+        result.add_new(self.third);
+        result
     }
 }

@@ -8,13 +8,11 @@ use crate::{
     deal::Deal,
     game_type::GameType,
     minimax_role::MinimaxRole,
+    partial_trick::PartialTrick,
     position::Position,
     role::Role,
-    situation::partial_trick::PartialTrick,
     trick_yield::{TrickYield, YieldSoFar},
 };
-
-mod partial_trick;
 
 /// This is meant to be used to extensively analyze possible plays in OpenSituationSolver
 /// regarding expected future trick yield, so it needs to be optimized for that:
@@ -112,7 +110,7 @@ impl OpenSituation {
         let number_of_appearing_cards = self.hand_declarer.len()
             + self.hand_first_defender.len()
             + self.hand_second_defender.len()
-            + self.partial_trick.len();
+            + self.partial_trick.number_of_cards();
 
         //All cards appear at most once.
         debug_assert_eq!(number_of_appearing_cards + self.cellar().len(), 32);
@@ -156,9 +154,9 @@ impl OpenSituation {
     }
 
     pub fn new(deal: Deal, bidding_winner: BiddingRole) -> Self {
-        let hand_declarer = deal.hand(bidding_winner);
-        let hand_first_defender = deal.hand(bidding_winner.next());
-        let hand_second_defender = deal.hand(bidding_winner.next().next());
+        let &hand_declarer = deal.hand(bidding_winner);
+        let &hand_first_defender = deal.hand(bidding_winner.next());
+        let &hand_second_defender = deal.hand(bidding_winner.next().next());
         let partial_trick = PartialTrick::EMPTY;
         let active_role = Role::first_active(bidding_winner);
 

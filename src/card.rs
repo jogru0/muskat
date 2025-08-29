@@ -1,11 +1,12 @@
 use std::mem::transmute;
 
+use serde::Deserialize;
 use static_assertions::assert_eq_size;
 use strum::{EnumCount, VariantArray};
 
 use crate::{card_points::CardPoints, cards::Cards, game_type::GameType};
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
 pub enum Suit {
     Diamonds,
@@ -16,7 +17,7 @@ pub enum Suit {
 
 assert_eq_size!(Suit, u8);
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub enum CardType {
     Trump,
     Suit(Suit),
@@ -52,7 +53,7 @@ impl Rank {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug, VariantArray, EnumCount)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, VariantArray, EnumCount, Deserialize)]
 #[repr(u8)]
 pub enum Card {
     S7,
@@ -92,16 +93,6 @@ pub enum Card {
 assert_eq_size!(Card, u8);
 
 impl Card {
-    pub const fn cards_following_suite(self, game_type: GameType) -> Cards {
-        let trump = game_type.trump_cards();
-
-        if trump.contains(self) {
-            return trump;
-        }
-
-        Cards::of_suit(self.suit()).without(trump)
-    }
-
     pub const fn to_u8(self) -> u8 {
         self as u8
     }
@@ -124,5 +115,15 @@ impl Card {
         let rank_id = self.to_u8() % 8;
         debug_assert!(rank_id < 8);
         unsafe { transmute(rank_id) }
+    }
+
+    pub const fn card_type(self, game_type: GameType) -> CardType {
+        let trump = Cards::of_card_type(CardType::Trump, game_type);
+
+        if trump.contains(self) {
+            return CardType::Trump;
+        }
+
+        CardType::Suit(self.suit())
     }
 }

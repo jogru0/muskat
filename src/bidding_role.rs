@@ -1,7 +1,7 @@
 use static_assertions::assert_eq_size;
 use strum::VariantArray;
 
-#[derive(Clone, Copy, VariantArray)]
+#[derive(Clone, Copy, VariantArray, PartialEq, Eq)]
 pub enum BiddingRole {
     FirstReceiver,
     FirstCaller,

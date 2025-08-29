@@ -75,7 +75,7 @@ impl PartialTrick {
         }
     }
 
-    pub fn len(self) -> u8 {
+    pub fn number_of_cards(self) -> u8 {
         match self.0 {
             PartialTrickImpl::Empty => 0,
             PartialTrickImpl::OneCard(_) => 1,

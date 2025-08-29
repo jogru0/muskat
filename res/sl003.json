@@ -1,0 +1,51 @@
+{
+	"position": "hoerer",
+	"hand": [
+		"EU",
+		"HU",
+		"SU",
+		"E9",
+		"E8",
+		"E7",
+		"SA",
+		"SK",
+		"SO",
+		"H8"
+	],
+	"skat": [
+		"H9",
+		"G9"
+	],
+	"game_mode": {
+		"declarer": "hoerer",
+		"type": "Eichel"
+	},
+	"bidding_value": 18,
+	"played_cards": [
+		[
+			"EU",
+			"EO",
+			"EK"
+		],
+		[
+			"HU",
+			"GU",
+			"EA"
+		],
+		[
+			"HO",
+			"HA",
+			"H8"
+		],
+		[
+			"HZ",
+			"E7",
+			"EZ"
+		],
+		[
+			"GO",
+			"GA",
+			"E8"
+		]
+	]
+}

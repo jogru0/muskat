@@ -17,8 +17,8 @@ pub fn open_situation_reachable_from_to_u32_key(
         let mut key = open_situation.remaining_cards_in_hands();
         match open_situation.active_role() {
             Role::Declarer => {}
-            Role::FirstDefender => key.add(first_defener_card),
-            Role::SecondDefender => key.add(second_defener_card),
+            Role::FirstDefender => key.add_new(first_defener_card),
+            Role::SecondDefender => key.add_new(second_defener_card),
         }
 
         key.detail_to_bits()

@@ -1,0 +1,24 @@
+{
+	"position": "geber",
+	"hand": ["EO", "GA", "G7", "HA", "HZ", "H9", "H7", "SK", "SO", "S9"],
+	"skat": null,
+	"game_mode": {
+		"declarer": "sager",
+		"type": "Eichel"
+	},
+	"bidding_value": 23,
+	"played_cards": [
+		["G9", "G8", "GA"],
+		["G7", "GO", "EZ"],
+		["HU", "EO", "SU"],
+		["GU", "H7", "E9"],
+		["EU", "S9", "EA"],
+		["E7", "SO", "H8"],
+		["HO", "HA", "GZ"],
+		["HZ", "SA", "HK"],
+		["SK", "S8", "E8"],
+		["EK", "H9", "S7"]
+		
+
+	]
+}

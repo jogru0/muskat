@@ -1,0 +1,24 @@
+{
+	"position": "sager",
+	"hand": ["EA", "SO", "GK", "G8", "HZ", "H9", "H8", "H7", "SA", "SZ"],
+	"skat": ["GZ", "E7"],
+	"game_mode": {
+		"declarer": "sager",
+		"type": "Herz"
+	},
+	"bidding_value": 18,
+	"played_cards": [
+		["S7", "SA", "S8"],
+		["H7", "SU", "HK"],
+		["SK", "S9", "SZ"],
+		["EA", "E8", "E9"],
+		["H8", "EU", "HO"],
+		["G7", "GO", "GK"],
+		["G8", "GA", "EZ"],
+		["G9", "HA", "SO"],
+		["GU", "H9", "EK"],
+		["HU", "HZ", "EO"]
+		
+
+	]
+}

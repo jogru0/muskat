@@ -1,9 +1,10 @@
+use serde::{Deserialize, de::Visitor};
 use static_assertions::assert_eq_size;
 use std::{fmt::Debug, mem::transmute};
 use strum::VariantArray;
 
 use crate::{
-    card::{Card, Rank, Suit},
+    card::{Card, CardType, Rank, Suit},
     card_points::CardPoints,
     game_type::GameType,
 };
@@ -11,6 +12,39 @@ use crate::{
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub struct Cards {
     bits: u32,
+}
+
+struct MySeqVisitor;
+
+impl<'de> Visitor<'de> for MySeqVisitor {
+    type Value = Cards;
+
+    fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+        formatter.write_str("a set of cards")
+    }
+
+    fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
+    where
+        A: serde::de::SeqAccess<'de>,
+    {
+        let mut result = Cards::EMPTY;
+
+        while let Some(card) = seq.next_element()? {
+            // TODO: Error handling
+            result.add_new(card);
+        }
+
+        Ok(result)
+    }
+}
+
+impl<'de> Deserialize<'de> for Cards {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        deserializer.deserialize_seq(MySeqVisitor)
+    }
 }
 
 assert_eq_size!(Cards, u32);
@@ -84,6 +118,19 @@ impl Cards {
         Self::via_rank_id(rank_id(rank))
     }
 
+    pub const fn of_card_type(card_type: CardType, game_type: GameType) -> Self {
+        let trump = match game_type {
+            GameType::Trump(CardType::Suit(suit)) => Self::of_rank(Rank::U).or(Self::of_suit(suit)),
+            GameType::Trump(CardType::Trump) => Self::of_rank(Rank::U),
+            GameType::Null => Self::EMPTY,
+        };
+
+        match card_type {
+            CardType::Trump => trump,
+            CardType::Suit(suit) => Self::of_suit(suit).without(trump),
+        }
+    }
+
     pub const fn is_empty(self) -> bool {
         self.bits == 0
     }
@@ -119,7 +166,10 @@ impl Cards {
             return self;
         };
 
-        let self_and_following_suit = self.and(first_trick_card.cards_following_suite(game_type));
+        let self_and_following_suit = self.and(Cards::of_card_type(
+            first_trick_card.card_type(game_type),
+            game_type,
+        ));
 
         if self_and_following_suit.is_empty() {
             return self;
@@ -179,12 +229,27 @@ impl Cards {
         result
     }
 
-    pub fn add(&mut self, card: Card) {
+    pub const fn add_new(&mut self, card: Card) {
         debug_assert!(!self.contains(card));
         self.bits |= card.detail_to_bit()
     }
 
     pub(crate) fn detail_to_bits(self) -> u32 {
         self.bits
+    }
+
+    pub fn combined_with_dosjoint(&self, other: Cards) -> Cards {
+        assert!(self.and(other).is_empty());
+        self.or(other)
+    }
+
+    pub fn to_vec(mut self) -> Vec<Card> {
+        let mut result = Vec::new();
+
+        while let Some(card) = self.remove_next() {
+            result.push(card);
+        }
+
+        result
     }
 }

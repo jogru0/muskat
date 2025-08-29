@@ -87,7 +87,7 @@ impl TrickYield {
         }
     }
 
-    pub const fn from_trick(trick: Trick) -> Self {
+    pub fn from_trick(trick: Trick) -> Self {
         Self {
             card_points: trick.to_points(),
             number_of_tricks: 1,
