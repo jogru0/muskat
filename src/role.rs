@@ -19,8 +19,8 @@ impl Role {
         }
     }
 
-    pub fn first_active(declarer: BiddingRole) -> Self {
-        match declarer {
+    pub fn first_active(bidding_winner: BiddingRole) -> Self {
+        match bidding_winner {
             BiddingRole::FirstReceiver => Self::Declarer,
             BiddingRole::FirstCaller => Self::SecondDefender,
             BiddingRole::SecondCaller => Self::FirstDefender,

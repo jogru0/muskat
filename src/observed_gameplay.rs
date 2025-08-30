@@ -2,7 +2,8 @@ use serde::Deserialize;
 
 use crate::{
     bidding_role::BiddingRole, cards::Cards, deal::Deal, dist::UnknownCards, game_type::GameType,
-    partial_trick::PartialTrick, position::Position, trick::Trick,
+    partial_trick::PartialTrick, position::Position, situation::OpenSituation, trick::Trick,
+    trick_yield::YieldSoFar,
 };
 
 pub struct ObservedGameplay {
@@ -22,15 +23,20 @@ pub struct GameModeDto {
 
 #[derive(Deserialize)]
 pub struct Dto {
-    position: String,
-    hand: Cards,
-    skat: Cards,
-    game_mode: GameModeDto,
+    //TODO pub
+    pub position: String,
+    pub hand: Cards,
+    pub skat: Cards,
+    pub game_mode: GameModeDto,
     // bidding_value: u8,
     // played_cards: Vec<Trick>,
 }
 
 impl ObservedGameplay {
+    pub fn bidding_role(&self) -> BiddingRole {
+        self.bidding_role
+    }
+
     pub fn new(
         start_hand: Cards,
         skat_if_known: Option<Cards>,
@@ -90,7 +96,6 @@ impl ObservedGameplay {
         let (mut unknown_cards, mut deal) = self.unknown_cards_and_observed_cards_before_tricks();
 
         let mut first_player = BiddingRole::FIRST_ACTIVE_PLAYER;
-
         for trick in &self.done_tricks {
             let second_player = first_player.next();
             let third_player = second_player.next();
@@ -161,6 +166,39 @@ impl ObservedGameplay {
 
         (unknown_cards, deal)
     }
+
+    /// Deal has to be possible.
+    pub fn to_open_game_state(&self, deal: Deal, bidding_winner: BiddingRole) -> OpenGameState {
+        let matadors = deal.matadors(bidding_winner, self.game_type);
+
+        let mut open_situation = OpenSituation::new(deal, bidding_winner);
+        let mut yield_so_far = deal.initial_yield();
+
+        for trick in &self.done_tricks {
+            for card in [trick.first(), trick.second(), trick.third()] {
+                yield_so_far.add_assign(open_situation.play_card(card, self.game_type));
+            }
+        }
+
+        if let Some(card) = self.current_trick.first() {
+            yield_so_far.add_assign(open_situation.play_card(card, self.game_type));
+            if let Some(card) = self.current_trick.second() {
+                yield_so_far.add_assign(open_situation.play_card(card, self.game_type));
+            }
+        }
+
+        OpenGameState {
+            open_situation,
+            yield_so_far,
+            matadors,
+        }
+    }
+}
+
+pub struct OpenGameState {
+    pub open_situation: OpenSituation,
+    pub yield_so_far: YieldSoFar,
+    pub matadors: Option<u8>,
 }
 
 #[cfg(test)]
@@ -172,7 +210,7 @@ mod tests {
     use crate::{
         bidding_role::BiddingRole,
         card::{CardType, Suit},
-        dist::UniformPossibleOpenSituationsFromObservedGameplay,
+        dist::UniformPossibleDealsFromObservedGameplay,
         game_type::GameType,
         observed_gameplay::{Dto, ObservedGameplay},
     };
@@ -185,16 +223,13 @@ mod tests {
             result.hand,
             Some(result.skat),
             GameType::Trump(CardType::Suit(Suit::Clubs)),
-            BiddingRole::SecondCaller,
+            BiddingRole::FirstReceiver,
         );
 
-        let dist = UniformPossibleOpenSituationsFromObservedGameplay::new(
-            observed_gameplay,
-            BiddingRole::FirstCaller,
-        );
+        let dist = UniformPossibleDealsFromObservedGameplay::new(&observed_gameplay);
 
         assert_eq!(dist.color_distributions(), 140);
-        assert_eq!(dist.possible_situations(), 184756);
+        assert_eq!(dist.number_of_possibilities(), 184756);
 
         Ok(())
     }

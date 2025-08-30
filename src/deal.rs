@@ -1,8 +1,16 @@
 use static_assertions::assert_eq_size;
 
-use crate::{bidding_role::BiddingRole, cards::Cards, deck::Deck};
+use crate::{
+    bidding_role::BiddingRole,
+    card::{Card, CardType},
+    cards::Cards,
+    deck::Deck,
+    game_type::GameType,
+    power::CardPower,
+    trick_yield::YieldSoFar,
+};
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct Deal {
     first_receiver: Cards,
     first_caller: Cards,
@@ -68,6 +76,36 @@ impl Deal {
             .combined_with_dosjoint(self.second_caller)
             .combined_with_dosjoint(self.first_receiver)
             .combined_with_dosjoint(self.skat)
+    }
+
+    pub fn matadors(self, bidding_winner: BiddingRole, game_type: GameType) -> Option<u8> {
+        // TODO and/or naming.
+        let hand_and_skat = self.hand(bidding_winner).or(self.skat);
+
+        let mut trumps = Cards::of_trump(game_type).to_vec();
+        // TODO: Maybe we don't need that for clever card bit selection. Then we could even use `Cards::remove_next`.
+        trumps.sort_by_key(|&card| CardPower::of(card, CardType::Trump, game_type));
+
+        let Some(highest_trump) = trumps.pop() else {
+            debug_assert!(matches!(game_type, GameType::Null));
+            return None;
+        };
+        assert!(matches!(highest_trump, Card::EU));
+
+        let count_with = hand_and_skat.contains(highest_trump);
+
+        let mut result = 1;
+        while let Some(next_lower_trump) = trumps.pop() {
+            if count_with != hand_and_skat.contains(next_lower_trump) {
+                break;
+            }
+            result += 1;
+        }
+        Some(result)
+    }
+
+    pub fn initial_yield(self) -> YieldSoFar {
+        YieldSoFar::new(self.skat.to_points(), 0)
     }
 }
 

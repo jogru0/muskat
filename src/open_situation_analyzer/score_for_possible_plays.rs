@@ -2,17 +2,17 @@ use crate::{
     open_situation_analyzer::{AnalyzedPossiblePlays, analyze_all_possible_plays},
     open_situation_solver::{OpenSituationSolver, bounds_cache::OpenSituationSolverCache},
     situation::OpenSituation,
-    trick_yield::{TrickYield, YieldSoFar},
+    trick_yield::YieldSoFar,
 };
 
 //How many points will still follow for the declarer due to finishing tricks?
 //Not counting tricks already won, or points gedrückt.
 //TODO: Null schould be handled more elegantly.
-pub fn score_for_possible_plays<C: OpenSituationSolverCache>(
+pub fn final_declarer_yield_for_possible_plays<C: OpenSituationSolverCache>(
     open_situation: OpenSituation,
     yield_so_far: YieldSoFar,
     open_situation_solver: &mut OpenSituationSolver<C>,
-) -> AnalyzedPossiblePlays<TrickYield> {
+) -> AnalyzedPossiblePlays<YieldSoFar> {
     analyze_all_possible_plays(
         open_situation,
         open_situation_solver.game_type(),
@@ -22,4 +22,5 @@ pub fn score_for_possible_plays<C: OpenSituationSolverCache>(
                 .calculate_future_yield_with_optimal_open_play(child, yield_so_far_child)
         },
     )
+    .map(|&future_yield| yield_so_far.add(future_yield))
 }

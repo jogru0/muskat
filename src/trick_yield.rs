@@ -46,6 +46,19 @@ impl YieldSoFar {
             number_of_tricks: self.number_of_tricks.saturating_sub(other.number_of_tricks),
         }
     }
+
+    pub fn card_points(self) -> CardPoints {
+        self.card_points
+    }
+
+    pub fn number_of_tricks(self) -> u8 {
+        self.number_of_tricks
+    }
+
+    pub fn add(mut self, trick_yield: TrickYield) -> YieldSoFar {
+        self.add_assign(trick_yield);
+        self
+    }
 }
 
 assert_eq_size!(TrickYield, u16);
@@ -70,6 +83,14 @@ impl TrickYield {
         //     return self.card_points.0 <= 22;
         // }
         true
+    }
+
+    pub fn card_points(self) -> CardPoints {
+        self.card_points
+    }
+
+    pub fn number_of_tricks(self) -> u8 {
+        self.number_of_tricks
     }
 
     pub const ZERO_TRICKS: TrickYield = TrickYield {
@@ -119,13 +140,5 @@ impl TrickYield {
         };
         debug_assert!(result.makes_probably_sense());
         result
-    }
-
-    pub fn card_points(self) -> CardPoints {
-        self.card_points
-    }
-
-    pub fn number_of_tricks(self) -> u8 {
-        self.number_of_tricks
     }
 }

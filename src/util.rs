@@ -13,6 +13,23 @@ pub fn choose(total: u8, selected: u8) -> usize {
     numerator / denominator
 }
 
+pub fn all_choices(total: u8, selected: u8) -> Vec<Vec<usize>> {
+    let Some(rest_selected) = selected.checked_sub(1) else {
+        return vec![Vec::new()];
+    };
+
+    let mut result = Vec::new();
+
+    for last_selection in 0..total {
+        for mut previous_choices in all_choices(last_selection, rest_selected) {
+            previous_choices.push(last_selection as usize);
+            result.push(previous_choices);
+        }
+    }
+
+    result
+}
+
 #[cfg(test)]
 mod tests {
     use crate::util::choose;

@@ -1,8 +1,59 @@
-use crate::{game_type::GameType, situation::OpenSituation, trick_yield::YieldSoFar};
+use std::{collections::HashMap, iter::Sum, ops::Index};
+
+use crate::{
+    card::Card, cards::Cards, game_type::GameType, situation::OpenSituation,
+    trick_yield::YieldSoFar,
+};
 
 pub mod score_for_possible_plays;
 
-pub struct AnalyzedPossiblePlays<R>([Option<R>; 32]);
+#[derive(Debug)]
+pub struct AnalyzedPossiblePlays<R>(HashMap<Card, R>);
+
+impl Sum for AnalyzedPossiblePlays<f64> {
+    fn sum<I: Iterator<Item = Self>>(mut iter: I) -> Self {
+        let mut result = iter.next().expect("no empty sum possible");
+
+        for next in iter {
+            debug_assert_eq!(result.0.len(), next.0.len());
+            for (k, v) in &mut result.0 {
+                *v += next.0[k];
+            }
+        }
+
+        result
+    }
+}
+
+impl<R> Index<&Card> for AnalyzedPossiblePlays<R> {
+    type Output = R;
+
+    fn index(&self, index: &Card) -> &Self::Output {
+        self.0.index(index)
+    }
+}
+
+impl<R> AnalyzedPossiblePlays<R> {
+    pub fn map<F, Q>(&self, f: F) -> AnalyzedPossiblePlays<Q>
+    where
+        F: Fn(&R) -> Q,
+    {
+        AnalyzedPossiblePlays(self.0.iter().map(|(&k, v)| (k, f(v))).collect())
+    }
+
+    pub fn cards(&self) -> Cards {
+        self.0.keys().collect()
+    }
+
+    pub fn new() -> Self {
+        Self(HashMap::new())
+    }
+
+    pub fn add_new(&mut self, card: Card, value: R) {
+        let old = self.0.insert(card, value);
+        debug_assert!(old.is_none());
+    }
+}
 
 //How many points will still follow for the declarer due to finishing tricks?
 //Not counting tricks already won, or points gedrückt.
@@ -17,7 +68,7 @@ pub fn analyze_all_possible_plays<R, A>(
 where
     A: FnMut(OpenSituation, YieldSoFar) -> R,
 {
-    let mut result = [const { None }; 32];
+    let mut result = AnalyzedPossiblePlays::new();
 
     let mut possible_plays = open_situation.next_possible_plays(game_type);
     debug_assert!(!possible_plays.is_empty());
@@ -33,8 +84,8 @@ where
 
         //TODO: For the equivalent of the cpp way to analyze, make sure that the result
         // contains points_to_get_to_child (and probaly also yield_so_far, which is added later in the cpp version)
-        result[card.to_u8() as usize] = Some(analyzer(child, yield_so_far_child));
+        result.add_new(card, analyzer(child, yield_so_far_child));
     }
 
-    AnalyzedPossiblePlays(result)
+    result
 }

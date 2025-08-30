@@ -34,6 +34,10 @@ impl OpenSituation {
         self.partial_trick.is_in_progress()
     }
 
+    pub fn is_initial_situation(self) -> bool {
+        self.cellar().len() == 2
+    }
+
     pub fn maybe_first_trick_card(self) -> Option<Card> {
         self.partial_trick.first()
     }
@@ -170,5 +174,10 @@ impl OpenSituation {
         debug_assert_eq!(deal.skat(), result.cellar());
         result.assert_invariants();
         result
+    }
+
+    pub fn yield_from_skat(self) -> YieldSoFar {
+        debug_assert!(self.is_initial_situation());
+        YieldSoFar::new(self.cellar().to_points(), 0)
     }
 }

@@ -53,7 +53,7 @@ impl Rank {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug, VariantArray, EnumCount, Deserialize)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, VariantArray, EnumCount, Deserialize, Hash)]
 #[repr(u8)]
 pub enum Card {
     S7,

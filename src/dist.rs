@@ -1,4 +1,5 @@
 use derive_more::AddAssign;
+use itertools::Itertools;
 use rand::{
     Rng,
     distr::{
@@ -9,14 +10,12 @@ use rand::{
 };
 
 use crate::{
-    bidding_role::BiddingRole,
     card::{Card, CardType, Suit},
     cards::Cards,
     deal::Deal,
     game_type::GameType,
     observed_gameplay::ObservedGameplay,
-    situation::OpenSituation,
-    util::choose,
+    util::{all_choices, choose},
 };
 
 #[derive(Clone, Copy)]
@@ -101,6 +100,32 @@ pub struct ColorDistribution {
     diamonds: u8,
     clubs: u8,
     trump: u8,
+}
+
+fn remove_by_index(to_be_shortened: &mut Vec<Card>, sorted_indices_to_remove: Vec<usize>) -> Cards {
+    let mut i = 0;
+    let mut j = 0;
+    let mut removed = Cards::EMPTY;
+
+    to_be_shortened.retain(|&card| {
+        let old_i = i;
+        i += 1;
+
+        if let Some(&next_removal_i) = sorted_indices_to_remove.get(j)
+            && old_i == next_removal_i
+        {
+            removed.add_new(card);
+            j += 1;
+            return false;
+        }
+
+        true
+    });
+
+    assert_eq!(i, to_be_shortened.len() + removed.len() as usize);
+    assert_eq!(j, removed.len() as usize);
+
+    removed
 }
 
 impl ColorDistribution {
@@ -201,6 +226,53 @@ impl ColorDistribution {
         let value = self.get_mut(card_type);
         *value = value.checked_sub(number).expect("valid operation");
         self
+    }
+
+    fn get_all(&self, open_cards: &OpenCards) -> Vec<(Cards, OpenCards)> {
+        let mut result = Vec::new();
+
+        for hearts_choices in all_choices(open_cards.hearts.len() as u8, self.hearts) {
+            let mut remaining_hearts = open_cards.hearts.clone();
+            let selected_hearts = remove_by_index(&mut remaining_hearts, hearts_choices);
+
+            for diamonds_choices in all_choices(open_cards.diamonds.len() as u8, self.diamonds) {
+                let mut remaining_diamonds = open_cards.diamonds.clone();
+                let selected_diamonds = remove_by_index(&mut remaining_diamonds, diamonds_choices);
+
+                for spades_choices in all_choices(open_cards.spades.len() as u8, self.spades) {
+                    let mut remaining_spades = open_cards.spades.clone();
+                    let selected_spades = remove_by_index(&mut remaining_spades, spades_choices);
+
+                    for clubs_choices in all_choices(open_cards.clubs.len() as u8, self.clubs) {
+                        let mut remaining_clubs = open_cards.clubs.clone();
+                        let selected_clubs = remove_by_index(&mut remaining_clubs, clubs_choices);
+
+                        for trump_choices in all_choices(open_cards.trump.len() as u8, self.trump) {
+                            let mut remaining_trump = open_cards.trump.clone();
+                            let selected_trump =
+                                remove_by_index(&mut remaining_trump, trump_choices);
+
+                            result.push((
+                                selected_hearts
+                                    .combined_with_dosjoint(selected_clubs)
+                                    .combined_with_dosjoint(selected_diamonds)
+                                    .combined_with_dosjoint(selected_spades)
+                                    .combined_with_dosjoint(selected_trump),
+                                OpenCards {
+                                    hearts: remaining_hearts.clone(),
+                                    spades: remaining_spades.clone(),
+                                    diamonds: remaining_diamonds.clone(),
+                                    clubs: remaining_clubs.clone(),
+                                    trump: remaining_trump,
+                                },
+                            ));
+                        }
+                    }
+                }
+            }
+        }
+
+        result
     }
 }
 
@@ -310,6 +382,14 @@ struct OpenCards {
     trump: Vec<Card>,
 }
 impl OpenCards {
+    pub fn is_empty(&self) -> bool {
+        self.clubs.is_empty()
+            && self.spades.is_empty()
+            && self.hearts.is_empty()
+            && self.trump.is_empty()
+            && self.diamonds.is_empty()
+    }
+
     pub fn ordered(open: Cards, game_type: GameType) -> Self {
         OpenCards {
             hearts: open
@@ -377,41 +457,74 @@ fn choose_in_order(open_cards: &mut OpenCards, color_distributions: &ColorDistri
     Deal::new(first_receiver, first_caller, second_caller, skat)
 }
 
-pub struct UniformPossibleOpenSituationsFromObservedGameplay {
+pub struct UniformPossibleDealsFromObservedGameplay {
     possible_color_distributions_vec: Vec<ColorDistributions>,
     possibility_dist: UniformUsize,
-    possible_situations: usize,
+    number_of_possibilities: usize,
     open_cards_ordered: OpenCards,
     observed_cards: Deal,
-    bidding_winner: BiddingRole,
 }
 
-impl UniformPossibleOpenSituationsFromObservedGameplay {
+impl UniformPossibleDealsFromObservedGameplay {
+    pub fn get_all_possibilities(&self) -> Vec<Deal> {
+        let mut result = Vec::new();
+
+        for possible_color_distributions in &self.possible_color_distributions_vec {
+            result.extend(
+                possible_color_distributions
+                    .get_all_possibilities(&self.open_cards_ordered)
+                    .into_iter()
+                    .map(|vec| {
+                        Deal::new(vec[0], vec[1], vec[2], vec[3])
+                            .combined_with_disjoint(self.observed_cards)
+                    }),
+            );
+        }
+
+        debug_assert_eq!(result.len(), self.number_of_possibilities());
+        debug_assert!(result.iter().all_unique());
+
+        result
+    }
+
+    fn sample_color_distribution<R>(&self, rng: &mut R) -> &ColorDistributions
+    where
+        R: Rng + ?Sized,
+    {
+        let mut id = self.possibility_dist.sample(rng);
+
+        for color_distributions in &self.possible_color_distributions_vec {
+            match id.checked_sub(color_distributions.number_of_possibilities()) {
+                Some(new_id) => id = new_id,
+                None => return color_distributions,
+            }
+        }
+
+        unreachable!("out of bounds for possible color distributions")
+    }
+
     pub fn color_distributions(&self) -> usize {
         self.possible_color_distributions_vec.len()
     }
 
-    pub fn possible_situations(&self) -> usize {
-        self.possible_situations
+    pub fn number_of_possibilities(&self) -> usize {
+        self.number_of_possibilities
     }
 
-    pub fn new(
-        observed_gameplay: ObservedGameplay,
-        // Required to be able to know what `Role` we are in the generated `OpenSituation`s
-        bidding_winner: BiddingRole,
-    ) -> Self {
+    pub fn new(observed_gameplay: &ObservedGameplay) -> Self {
         // TODO: Order important, should be better typed ...
         let (unknown_cards_vec, observed_cards) =
             observed_gameplay.unknown_cards_vec_and_observed_cards();
 
         let unobserved_cards = Cards::ALL.without(observed_cards.cards());
-        let open = ColorDistribution::new(unobserved_cards, observed_gameplay.game_type());
+        let open: ColorDistribution =
+            ColorDistribution::new(unobserved_cards, observed_gameplay.game_type());
 
         let possible_color_distributions_vec = distribute_colors(&unknown_cards_vec, open);
 
         let possible_situations = possible_color_distributions_vec
             .iter()
-            .map(|color_distributions| color_distributions.possibilities())
+            .map(|color_distributions| color_distributions.number_of_possibilities())
             .sum();
 
         let possibility_dist = UniformUsize::new(0, possible_situations)
@@ -425,8 +538,7 @@ impl UniformPossibleOpenSituationsFromObservedGameplay {
             possibility_dist,
             open_cards_ordered,
             observed_cards,
-            bidding_winner,
-            possible_situations,
+            number_of_possibilities: possible_situations,
         }
     }
 }
@@ -442,7 +554,40 @@ impl Default for ColorDistributions {
     }
 }
 
+//TODO: Return iterator
+fn get_all_possibilities_impl(
+    exhausting_color_distributions: &[ColorDistribution],
+    open_cards: &OpenCards,
+) -> Vec<Vec<Cards>> {
+    let Some(last_color_distribution) = exhausting_color_distributions.last() else {
+        debug_assert!(open_cards.is_empty());
+        return vec![Vec::new()];
+    };
+
+    let mut result = Vec::new();
+
+    for (distributed_cards, remaining_open_cards) in last_color_distribution.get_all(open_cards) {
+        for mut remaining_distributions in get_all_possibilities_impl(
+            &exhausting_color_distributions[..exhausting_color_distributions.len() - 1],
+            &remaining_open_cards,
+        ) {
+            remaining_distributions.push(distributed_cards);
+            result.push(remaining_distributions);
+        }
+    }
+
+    result
+}
+
 impl ColorDistributions {
+    //TODO: Return iterator
+    fn get_all_possibilities(&self, open_cards: &OpenCards) -> Vec<Vec<Cards>> {
+        let result = get_all_possibilities_impl(&self.exhausting_color_distributions, open_cards);
+        assert_eq!(result.len(), self.number_of_possibilities());
+        assert!(result.iter().all_unique());
+        result
+    }
+
     /// Distribute nothing via no `ColorDistribution`s.
     pub fn new() -> Self {
         Self {
@@ -456,7 +601,7 @@ impl ColorDistributions {
 }
 
 impl ColorDistributions {
-    pub fn possibilities(&self) -> usize {
+    pub fn number_of_possibilities(&self) -> usize {
         let mut distrution_so_far = ColorDistribution::EMPTY;
         let mut result = 1;
 
@@ -477,34 +622,25 @@ impl ColorDistributions {
     }
 }
 
-impl Distribution<OpenSituation> for UniformPossibleOpenSituationsFromObservedGameplay {
-    fn sample<R: rand::Rng + ?Sized>(&self, rng: &mut R) -> OpenSituation {
-        let mut distribution_id = self.possibility_dist.sample(rng);
+impl Distribution<Deal> for UniformPossibleDealsFromObservedGameplay {
+    fn sample<R: rand::Rng + ?Sized>(&self, rng: &mut R) -> Deal {
+        let color_distributions: &ColorDistributions = self.sample_color_distribution(rng);
 
-        for color_distributions in &self.possible_color_distributions_vec {
-            if color_distributions.possibilities() <= distribution_id {
-                distribution_id -= color_distributions.possibilities();
-                continue;
-            }
+        let mut open_cards = self.open_cards_ordered.clone();
+        open_cards.shuffle(rng);
 
-            let mut open_cards = self.open_cards_ordered.clone();
-            open_cards.shuffle(rng);
+        let deal = choose_in_order(&mut open_cards, color_distributions);
 
-            let deal = choose_in_order(&mut open_cards, color_distributions);
-
-            return OpenSituation::new(
-                deal.combined_with_disjoint(self.observed_cards),
-                self.bidding_winner,
-            );
-        }
-
-        unreachable!("did not find any color distribution");
+        deal.combined_with_disjoint(self.observed_cards)
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::dist::{ColorDistribution, UnknownCards, distribute_colors};
+    use crate::{
+        card::Card,
+        dist::{ColorDistribution, OpenCards, UnknownCards, distribute_colors},
+    };
 
     #[test]
     fn test_distribution_correct_numbers() {
@@ -569,7 +705,25 @@ mod tests {
 
         assert!(distribute_colors(&unknown_cards_vec, too_few).is_empty());
         assert!(distribute_colors(&unknown_cards_vec, too_many).is_empty(),);
-        assert_eq!(distribute_colors(&unknown_cards_vec, right_amount).len(), 5);
+
+        let color_distributions_vec = distribute_colors(&unknown_cards_vec, right_amount);
+
+        assert_eq!(color_distributions_vec.len(), 5);
+
+        let open_cards = OpenCards {
+            hearts: vec![Card::H7, Card::H8, Card::H9],
+            spades: vec![Card::G7, Card::GZ],
+            diamonds: vec![Card::SK],
+            clubs: vec![Card::EA],
+            trump: vec![Card::EU],
+        };
+
+        for color_distributions in color_distributions_vec {
+            assert_eq!(
+                color_distributions.get_all_possibilities(&open_cards).len(),
+                color_distributions.number_of_possibilities()
+            );
+        }
     }
 
     #[test]

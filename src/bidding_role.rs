@@ -1,6 +1,8 @@
 use static_assertions::assert_eq_size;
 use strum::VariantArray;
 
+use crate::role::Role;
+
 #[derive(Clone, Copy, VariantArray, PartialEq, Eq)]
 pub enum BiddingRole {
     FirstReceiver,
@@ -22,6 +24,16 @@ impl BiddingRole {
             Self::FirstReceiver => Self::FirstCaller,
             Self::FirstCaller => Self::SecondCaller,
             Self::SecondCaller => Self::FirstReceiver,
+        }
+    }
+
+    pub fn to_role(self, bidding_winner: BiddingRole) -> Role {
+        let first_active = Role::first_active(bidding_winner);
+
+        match self {
+            BiddingRole::FirstReceiver => first_active,
+            BiddingRole::FirstCaller => first_active.next(),
+            BiddingRole::SecondCaller => first_active.next().next(),
         }
     }
 }

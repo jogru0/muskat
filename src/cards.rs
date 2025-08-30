@@ -9,9 +9,29 @@ use crate::{
     game_type::GameType,
 };
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Cards {
     bits: u32,
+}
+
+assert_eq_size!(Cards, u32);
+
+impl Iterator for Cards {
+    type Item = Card;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.remove_next()
+    }
+}
+
+impl<'a> FromIterator<&'a Card> for Cards {
+    fn from_iter<T: IntoIterator<Item = &'a Card>>(iter: T) -> Self {
+        let mut result = Cards::EMPTY;
+        for &card in iter {
+            result.add_new(card);
+        }
+        result
+    }
 }
 
 struct MySeqVisitor;
@@ -46,8 +66,6 @@ impl<'de> Deserialize<'de> for Cards {
         deserializer.deserialize_seq(MySeqVisitor)
     }
 }
-
-assert_eq_size!(Cards, u32);
 
 impl Debug for Cards {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -118,12 +136,16 @@ impl Cards {
         Self::via_rank_id(rank_id(rank))
     }
 
-    pub const fn of_card_type(card_type: CardType, game_type: GameType) -> Self {
-        let trump = match game_type {
+    pub const fn of_trump(game_type: GameType) -> Self {
+        match game_type {
             GameType::Trump(CardType::Suit(suit)) => Self::of_rank(Rank::U).or(Self::of_suit(suit)),
             GameType::Trump(CardType::Trump) => Self::of_rank(Rank::U),
             GameType::Null => Self::EMPTY,
-        };
+        }
+    }
+
+    pub const fn of_card_type(card_type: CardType, game_type: GameType) -> Self {
+        let trump = Cards::of_trump(game_type);
 
         match card_type {
             CardType::Trump => trump,
