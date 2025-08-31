@@ -50,6 +50,16 @@ impl Deal {
         second_caller: Cards,
         skat: Cards,
     ) -> Self {
+        debug_assert_eq!(first_receiver.len(), 10);
+        debug_assert_eq!(first_caller.len(), 10);
+        debug_assert_eq!(second_caller.len(), 10);
+        debug_assert_eq!(skat.len(), 2);
+
+        debug_assert_eq!(
+            first_receiver.or(first_caller).or(second_caller).or(skat),
+            Cards::ALL
+        );
+
         Self {
             first_receiver,
             first_caller,
@@ -62,20 +72,20 @@ impl Deal {
         Deal {
             first_receiver: self
                 .first_receiver
-                .combined_with_dosjoint(other.first_receiver),
-            first_caller: self.first_caller.combined_with_dosjoint(other.first_caller),
+                .combined_with_disjoint(other.first_receiver),
+            first_caller: self.first_caller.combined_with_disjoint(other.first_caller),
             second_caller: self
                 .second_caller
-                .combined_with_dosjoint(other.second_caller),
-            skat: self.skat.combined_with_dosjoint(other.skat),
+                .combined_with_disjoint(other.second_caller),
+            skat: self.skat.combined_with_disjoint(other.skat),
         }
     }
 
     pub fn cards(&self) -> Cards {
         self.first_caller
-            .combined_with_dosjoint(self.second_caller)
-            .combined_with_dosjoint(self.first_receiver)
-            .combined_with_dosjoint(self.skat)
+            .combined_with_disjoint(self.second_caller)
+            .combined_with_disjoint(self.first_receiver)
+            .combined_with_disjoint(self.skat)
     }
 
     pub fn matadors(self, bidding_winner: BiddingRole, game_type: GameType) -> Option<u8> {

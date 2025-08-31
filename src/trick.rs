@@ -1,5 +1,9 @@
 use crate::{
-    card::Card, card_points::CardPoints, cards::Cards, game_type::GameType, position::Position,
+    card::{Card, CardType},
+    card_points::CardPoints,
+    cards::Cards,
+    game_type::GameType,
+    position::Position,
     power::CardPower,
 };
 use static_assertions::assert_eq_size;
@@ -38,11 +42,16 @@ impl Trick {
         self.third
     }
 
+    pub fn trick_type(self, game_type: GameType) -> CardType {
+        self.first.card_type(game_type)
+    }
+
     pub fn winner_position(self, game_type: GameType) -> Position {
-        let power_forehand = CardPower::of(self.first, self.first.card_type(game_type), game_type);
-        let power_middlehand =
-            CardPower::of(self.second, self.first.card_type(game_type), game_type);
-        let power_rearhand = CardPower::of(self.third, self.first.card_type(game_type), game_type);
+        let trick_type = self.trick_type(game_type);
+
+        let power_forehand = CardPower::of(self.first, trick_type, game_type);
+        let power_middlehand = CardPower::of(self.second, trick_type, game_type);
+        let power_rearhand = CardPower::of(self.third, trick_type, game_type);
 
         debug_assert!(!power_forehand.comes_from_deactivated_card());
         debug_assert_ne!(power_forehand, power_middlehand);
@@ -51,7 +60,6 @@ impl Trick {
             power_middlehand != power_rearhand || power_middlehand.comes_from_deactivated_card()
         );
 
-        // TODO: Where is the lint for return?
         if power_forehand <= power_middlehand {
             if power_middlehand <= power_rearhand {
                 Position::Rearhand

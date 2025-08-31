@@ -1,10 +1,12 @@
+use serde::Deserialize;
 use static_assertions::assert_eq_size;
 use strum::VariantArray;
 
 use crate::role::Role;
 
-#[derive(Clone, Copy, VariantArray, PartialEq, Eq)]
+#[derive(Clone, Copy, VariantArray, PartialEq, Eq, Deserialize, Debug)]
 pub enum BiddingRole {
+    #[serde(alias = "hoerer")]
     FirstReceiver,
     FirstCaller,
     SecondCaller,

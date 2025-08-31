@@ -34,7 +34,7 @@ impl YieldSoFar {
         number_of_tricks: 10,
     };
 
-    pub fn add_assign(&mut self, trick_yield: TrickYield) {
+    pub const fn add_assign(&mut self, trick_yield: TrickYield) {
         self.card_points = CardPoints(self.card_points.0 + trick_yield.card_points.0);
         self.number_of_tricks += trick_yield.number_of_tricks
     }
@@ -55,7 +55,7 @@ impl YieldSoFar {
         self.number_of_tricks
     }
 
-    pub fn add(mut self, trick_yield: TrickYield) -> YieldSoFar {
+    pub const fn add(mut self, trick_yield: TrickYield) -> YieldSoFar {
         self.add_assign(trick_yield);
         self
     }

@@ -1,8 +1,9 @@
 use crate::{
-    bidding_role::BiddingRole,
     cards::Cards,
     dist::UniformPossibleDealsFromObservedGameplay,
-    observed_gameplay::{ObservedGameplay, OpenGameState},
+    observed_gameplay::{
+        CardKnowledge, ObservedInitialGameState, ObservedPlayedCards, OpenGameState,
+    },
     open_situation_analyzer::{
         AnalyzedPossiblePlays, score_for_possible_plays::final_declarer_yield_for_possible_plays,
     },
@@ -16,8 +17,8 @@ use itertools::Itertools;
 use rand::{Rng, distr::Distribution};
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator as _};
 use std::{
-    io,
-    sync::atomic::{AtomicUsize, Ordering},
+    io::{self},
+    time::Instant,
 };
 
 pub enum GameConclusion {
@@ -110,42 +111,65 @@ impl<A> SampledWorldsData<A> {
     }
 }
 
-pub fn run_monte_carlo_simulation(
-    observed_gameplay: ObservedGameplay,
-    bidding_winner: BiddingRole,
+// TODO: Requirement for observed_gameplay to have the observer active.
+pub fn run_monte_carlo_simulation<R, W>(
+    initial_state: &ObservedInitialGameState,
+    observed_tricks: &ObservedPlayedCards,
     sample_size: usize,
-    rng: impl Rng,
-) -> SampledWorldsData<YieldSoFar> {
-    let dist = UniformPossibleDealsFromObservedGameplay::new(&observed_gameplay);
+    rng: &mut R,
+    w: &mut W,
+) -> Result<SampledWorldsData<YieldSoFar>, io::Error>
+where
+    R: Rng + ?Sized,
+    W: io::Write,
+{
+    let card_knowledge = CardKnowledge::from_observation(initial_state, observed_tricks);
+
+    let dist =
+        UniformPossibleDealsFromObservedGameplay::new(&card_knowledge, initial_state.game_type());
 
     dbg!(dist.color_distributions());
     dbg!(dist.number_of_possibilities());
 
-    let o = AtomicUsize::new(0);
+    let do_all_samples_threshold = 10_000.max(sample_size);
+    let do_all_samples = dist.number_of_possibilities() <= do_all_samples_threshold;
 
-    let sampled_deals = dist.sample_iter(rng).take(sample_size).collect_vec();
+    let sampled_deals = if do_all_samples {
+        dist.get_all_possibilities()
+    } else {
+        dist.sample_iter(rng).take(sample_size).collect_vec()
+    };
+
+    writeln!(w, "sampling from {} possible deals", sampled_deals.len())?;
+
+    let start_solve = Instant::now();
 
     let possible_world_data_vec = sampled_deals
         .par_iter()
         .map(|&possible_deal| {
-            dbg!(o.fetch_add(1, Ordering::Relaxed));
-
             let OpenGameState {
                 open_situation,
                 yield_so_far,
                 matadors,
-            } = observed_gameplay.to_open_game_state(possible_deal, bidding_winner);
-
-            assert_eq!(
-                open_situation.active_role(),
-                observed_gameplay.bidding_role().to_role(bidding_winner)
+            } = observed_tricks.to_open_game_state(
+                possible_deal,
+                initial_state.bidding_winner(),
+                initial_state.game_type(),
             );
+
+            debug_assert_eq!(
+                open_situation.active_role(),
+                initial_state
+                    .bidding_role()
+                    .to_role(initial_state.bidding_winner())
+            );
+            debug_assert_eq!(observed_tricks.active_role(), initial_state.bidding_role());
 
             let mut solver = OpenSituationSolver::new(
                 FastOpenSituationSolverCache::new(open_situation_reachable_from_to_u32_key(
                     open_situation,
                 )),
-                observed_gameplay.game_type(),
+                initial_state.game_type(),
             );
 
             //TODO: final_declarer_yield_for_possible_plays analogue for game conclusions
@@ -161,9 +185,17 @@ pub fn run_monte_carlo_simulation(
         })
         .collect();
 
-    SampledWorldsData {
+    let end_solve = Instant::now();
+
+    eprintln!(
+        "multithreaded solving of {} sample deals took {:?}",
+        sampled_deals.len(),
+        end_solve - start_solve
+    );
+
+    Ok(SampledWorldsData {
         possible_world_data_vec,
-    }
+    })
 }
 
 fn write_table_line(
@@ -186,8 +218,8 @@ fn write_table_header(w: &mut impl io::Write, cards: Cards) -> Result<(), io::Er
 }
 
 pub fn write_statistics(
-    w: &mut impl io::Write,
     data: SampledWorldsData<YieldSoFar>,
+    w: &mut impl io::Write,
 ) -> Result<(), io::Error> {
     let average_scores =
         data.weighted_average(|yield_so_far, _| yield_so_far.card_points().0 as f64);

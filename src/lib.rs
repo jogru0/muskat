@@ -1,3 +1,4 @@
+pub mod analyze_observation;
 pub mod bidding_role;
 pub mod bounds;
 pub mod card;
@@ -6,6 +7,7 @@ pub mod cards;
 pub mod deal;
 pub mod deck;
 pub mod dist;
+pub mod dto;
 pub mod game_type;
 pub mod minimax_role;
 pub mod monte_carlo;

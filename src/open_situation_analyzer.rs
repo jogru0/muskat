@@ -55,6 +55,12 @@ impl<R> AnalyzedPossiblePlays<R> {
     }
 }
 
+impl<R> Default for AnalyzedPossiblePlays<R> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 //How many points will still follow for the declarer due to finishing tricks?
 //Not counting tricks already won, or points gedrückt.
 //TODO: Null schould be handled more elegantly.

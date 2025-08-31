@@ -6,20 +6,22 @@ use strum::{EnumCount, VariantArray};
 
 use crate::{card_points::CardPoints, cards::Cards, game_type::GameType};
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, Deserialize)]
 #[repr(u8)]
 pub enum Suit {
     Diamonds,
     Hearts,
     Spades,
+    #[serde(alias = "Eichel")]
     Clubs,
 }
 
 assert_eq_size!(Suit, u8);
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, Deserialize)]
 pub enum CardType {
     Trump,
+    #[serde(untagged)]
     Suit(Suit),
 }
 
@@ -118,7 +120,7 @@ impl Card {
     }
 
     pub const fn card_type(self, game_type: GameType) -> CardType {
-        let trump = Cards::of_card_type(CardType::Trump, game_type);
+        let trump = Cards::of_trump(game_type);
 
         if trump.contains(self) {
             return CardType::Trump;

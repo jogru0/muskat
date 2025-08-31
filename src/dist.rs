@@ -14,7 +14,7 @@ use crate::{
     cards::Cards,
     deal::Deal,
     game_type::GameType,
-    observed_gameplay::ObservedGameplay,
+    observed_gameplay::CardKnowledge,
     util::{all_choices, choose},
 };
 
@@ -82,8 +82,8 @@ impl UnknownCards {
         self.number == 0
     }
 
-    pub fn retrict(&mut self, card_type: CardType) {
-        match card_type {
+    pub fn retrict(&mut self, trick_type: CardType) {
+        match trick_type {
             CardType::Trump => self.trump_possible = false,
             CardType::Suit(Suit::Clubs) => self.clubs_possible = false,
             CardType::Suit(Suit::Spades) => self.spades_possible = false,
@@ -254,10 +254,10 @@ impl ColorDistribution {
 
                             result.push((
                                 selected_hearts
-                                    .combined_with_dosjoint(selected_clubs)
-                                    .combined_with_dosjoint(selected_diamonds)
-                                    .combined_with_dosjoint(selected_spades)
-                                    .combined_with_dosjoint(selected_trump),
+                                    .combined_with_disjoint(selected_clubs)
+                                    .combined_with_disjoint(selected_diamonds)
+                                    .combined_with_disjoint(selected_spades)
+                                    .combined_with_disjoint(selected_trump),
                                 OpenCards {
                                     hearts: remaining_hearts.clone(),
                                     spades: remaining_spades.clone(),
@@ -418,10 +418,17 @@ impl OpenCards {
         R: Rng + ?Sized,
     {
         self.clubs.shuffle(rng);
+        self.hearts.shuffle(rng);
+        self.diamonds.shuffle(rng);
+        self.spades.shuffle(rng);
+        self.trump.shuffle(rng);
     }
 }
 
-fn choose_in_order(open_cards: &mut OpenCards, color_distributions: &ColorDistributions) -> Deal {
+fn choose_in_order(
+    open_cards: &mut OpenCards,
+    color_distributions: &ColorDistributions,
+) -> [Cards; 4] {
     let mut deal_iter = color_distributions.iter().map(|color_distribution| {
         let mut cards = Cards::EMPTY;
 
@@ -454,15 +461,16 @@ fn choose_in_order(open_cards: &mut OpenCards, color_distributions: &ColorDistri
     let skat = deal_iter.next().expect("valid data");
     debug_assert!(deal_iter.next().is_none());
 
-    Deal::new(first_receiver, first_caller, second_caller, skat)
+    [first_receiver, first_caller, second_caller, skat]
 }
 
+#[derive(Clone)]
 pub struct UniformPossibleDealsFromObservedGameplay {
     possible_color_distributions_vec: Vec<ColorDistributions>,
     possibility_dist: UniformUsize,
     number_of_possibilities: usize,
     open_cards_ordered: OpenCards,
-    observed_cards: Deal,
+    observed_cards_array: [Cards; 4],
 }
 
 impl UniformPossibleDealsFromObservedGameplay {
@@ -475,8 +483,12 @@ impl UniformPossibleDealsFromObservedGameplay {
                     .get_all_possibilities(&self.open_cards_ordered)
                     .into_iter()
                     .map(|vec| {
-                        Deal::new(vec[0], vec[1], vec[2], vec[3])
-                            .combined_with_disjoint(self.observed_cards)
+                        Deal::new(
+                            vec[0].combined_with_disjoint(self.observed_cards_array[0]),
+                            vec[1].combined_with_disjoint(self.observed_cards_array[1]),
+                            vec[2].combined_with_disjoint(self.observed_cards_array[2]),
+                            vec[3].combined_with_disjoint(self.observed_cards_array[3]),
+                        )
                     }),
             );
         }
@@ -511,16 +523,12 @@ impl UniformPossibleDealsFromObservedGameplay {
         self.number_of_possibilities
     }
 
-    pub fn new(observed_gameplay: &ObservedGameplay) -> Self {
-        // TODO: Order important, should be better typed ...
-        let (unknown_cards_vec, observed_cards) =
-            observed_gameplay.unknown_cards_vec_and_observed_cards();
+    pub fn new(card_knowledge: &CardKnowledge, game_type: GameType) -> Self {
+        let unobserved_cards = Cards::ALL.without(card_knowledge.observed_cards());
+        let open: ColorDistribution = ColorDistribution::new(unobserved_cards, game_type);
 
-        let unobserved_cards = Cards::ALL.without(observed_cards.cards());
-        let open: ColorDistribution =
-            ColorDistribution::new(unobserved_cards, observed_gameplay.game_type());
-
-        let possible_color_distributions_vec = distribute_colors(&unknown_cards_vec, open);
+        let possible_color_distributions_vec =
+            distribute_colors(card_knowledge.unknown_cards_slice(), open);
 
         let possible_situations = possible_color_distributions_vec
             .iter()
@@ -530,19 +538,21 @@ impl UniformPossibleDealsFromObservedGameplay {
         let possibility_dist = UniformUsize::new(0, possible_situations)
             .expect("there is a correct distribution, so possibilities is at least 1");
 
-        let open_cards_ordered =
-            OpenCards::ordered(unobserved_cards, observed_gameplay.game_type());
+        let open_cards_ordered = OpenCards::ordered(unobserved_cards, game_type);
+
+        let observed_cards_array = card_knowledge.observed_cards_array();
 
         Self {
             possible_color_distributions_vec,
             possibility_dist,
             open_cards_ordered,
-            observed_cards,
+            observed_cards_array,
             number_of_possibilities: possible_situations,
         }
     }
 }
 
+#[derive(Clone)]
 pub struct ColorDistributions {
     // If not exhausting, `possibilities` would not be correct.
     exhausting_color_distributions: Vec<ColorDistribution>,
@@ -629,9 +639,14 @@ impl Distribution<Deal> for UniformPossibleDealsFromObservedGameplay {
         let mut open_cards = self.open_cards_ordered.clone();
         open_cards.shuffle(rng);
 
-        let deal = choose_in_order(&mut open_cards, color_distributions);
+        let chosen = choose_in_order(&mut open_cards, color_distributions);
 
-        deal.combined_with_disjoint(self.observed_cards)
+        Deal::new(
+            chosen[0].combined_with_disjoint(self.observed_cards_array[0]),
+            chosen[1].combined_with_disjoint(self.observed_cards_array[1]),
+            chosen[2].combined_with_disjoint(self.observed_cards_array[2]),
+            chosen[3].combined_with_disjoint(self.observed_cards_array[3]),
+        )
     }
 }
 

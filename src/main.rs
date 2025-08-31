@@ -1,33 +1,43 @@
-use std::{
-    fs::{File, read_to_string},
-    io::stdout,
-};
+use std::{fs::read_to_string, io::stdout, path::PathBuf};
 
-use muskat::{
-    bidding_role::BiddingRole,
-    card::{CardType, Suit},
-    game_type::GameType,
-    monte_carlo::{run_monte_carlo_simulation, write_statistics},
-    observed_gameplay::{Dto, ObservedGameplay},
-    rng::cheap_rng,
-};
+use clap::{Parser, Subcommand};
+use muskat::{analyze_observation::analyze_observations, dto::Dto, rng::cheap_rng};
+
+#[derive(Parser)]
+// #[command(version, about, long_about = None)]
+struct Cli {
+    #[command(subcommand)]
+    command: Commands,
+}
+
+#[derive(Subcommand)]
+enum Commands {
+    File { path: PathBuf, iterations: usize },
+}
 
 fn main() -> Result<(), anyhow::Error> {
     println!("Hello, world!");
-    let input: Dto = serde_json::from_str(&read_to_string("res/sl003.json")?)?;
 
-    let observed_gameplay = ObservedGameplay::new(
-        input.hand,
-        Some(input.skat),
-        GameType::Trump(CardType::Suit(Suit::Clubs)),
-        BiddingRole::FirstReceiver,
-    );
+    let cli = Cli::parse();
 
-    let rng = cheap_rng(432);
+    match cli.command {
+        Commands::File { path, iterations } => {
+            let dto: Dto = serde_json::from_str(&read_to_string(path)?)?;
 
-    let data = run_monte_carlo_simulation(observed_gameplay, BiddingRole::FirstReceiver, 1000, rng);
+            let mut rng = cheap_rng(3421);
 
-    write_statistics(&mut stdout(), data)?;
+            let initial = dto.pre_game_observations();
+            let observed_turns = dto.played_cards();
+
+            analyze_observations(
+                &initial,
+                observed_turns,
+                iterations,
+                &mut rng,
+                &mut stdout(),
+            )?;
+        }
+    }
 
     Ok(())
 }

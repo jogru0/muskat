@@ -17,10 +17,11 @@ pub fn final_declarer_yield_for_possible_plays<C: OpenSituationSolverCache>(
         open_situation,
         open_situation_solver.game_type(),
         yield_so_far,
-        |child, yield_so_far_child| {
-            open_situation_solver
-                .calculate_future_yield_with_optimal_open_play(child, yield_so_far_child)
+        |child, mut yield_so_far_child| {
+            let future_yield_child = open_situation_solver
+                .calculate_future_yield_with_optimal_open_play(child, yield_so_far_child);
+            yield_so_far_child.add_assign(future_yield_child);
+            yield_so_far_child
         },
     )
-    .map(|&future_yield| yield_so_far.add(future_yield))
 }

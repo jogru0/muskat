@@ -94,7 +94,7 @@ impl OpenSituation {
 
         let position = trick.winner_position(game_type);
 
-        //Active role currently is Vorhand.
+        //Active role currently is same as `Position::Forehand`.
         match position {
             Position::Forehand => {}
             Position::Middlehand => self.active_role = self.active_role.next(),

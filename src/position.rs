@@ -12,7 +12,7 @@ pub enum Position {
 assert_eq_size!(Position, u8);
 
 impl Position {
-    pub fn role(self, first_player: BiddingRole) -> BiddingRole {
+    pub fn bidding_role(self, first_player: BiddingRole) -> BiddingRole {
         match self {
             Position::Forehand => first_player,
             Position::Middlehand => first_player.next(),

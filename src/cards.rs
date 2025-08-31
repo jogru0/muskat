@@ -260,7 +260,7 @@ impl Cards {
         self.bits
     }
 
-    pub fn combined_with_dosjoint(&self, other: Cards) -> Cards {
+    pub fn combined_with_disjoint(&self, other: Cards) -> Cards {
         assert!(self.and(other).is_empty());
         self.or(other)
     }
