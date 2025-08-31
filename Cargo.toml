@@ -24,8 +24,12 @@ serde = { version = "1.0.219", features = ["derive"] }
 serde_json = "1.0.143"
 static_assertions = "1.1.0"
 strum = { version = "0.27.2", features = ["derive"] }
+thiserror = "2.0.16"
 
 # Optimizations and no debug symbols overhead, but still debug_assertions. 
 [profile.dev]
 opt-level = 3
 debug = false
+
+[dev-dependencies]
+assert_cmd = "2.0.17"

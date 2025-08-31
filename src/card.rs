@@ -24,6 +24,17 @@ pub enum CardType {
     #[serde(untagged)]
     Suit(Suit),
 }
+impl CardType {
+    pub(crate) fn base_value(&self) -> i16 {
+        match self {
+            CardType::Trump => 24,
+            CardType::Suit(Suit::Clubs) => 12,
+            CardType::Suit(Suit::Spades) => 11,
+            CardType::Suit(Suit::Hearts) => 10,
+            CardType::Suit(Suit::Diamonds) => 9,
+        }
+    }
+}
 
 assert_eq_size!(CardType, u8);
 

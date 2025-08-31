@@ -417,6 +417,7 @@ impl OpenCards {
     where
         R: Rng + ?Sized,
     {
+        
         self.clubs.shuffle(rng);
         self.hearts.shuffle(rng);
         self.diamonds.shuffle(rng);

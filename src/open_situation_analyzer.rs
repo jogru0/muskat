@@ -7,7 +7,7 @@ use crate::{
 
 pub mod score_for_possible_plays;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct AnalyzedPossiblePlays<R>(HashMap<Card, R>);
 
 impl Sum for AnalyzedPossiblePlays<f64> {
@@ -33,6 +33,12 @@ impl<R> Index<&Card> for AnalyzedPossiblePlays<R> {
     }
 }
 
+impl<R: PartialEq> AnalyzedPossiblePlays<R> {
+    pub fn are_all(&self, val: &R) -> bool {
+        self.0.iter().all(|(_, v)| v == val)
+    }
+}
+
 impl<R> AnalyzedPossiblePlays<R> {
     pub fn map<F, Q>(&self, f: F) -> AnalyzedPossiblePlays<Q>
     where
@@ -43,6 +49,10 @@ impl<R> AnalyzedPossiblePlays<R> {
 
     pub fn cards(&self) -> Cards {
         self.0.keys().collect()
+    }
+
+    pub fn map_to_card(&self) -> AnalyzedPossiblePlays<Card> {
+        AnalyzedPossiblePlays(self.0.iter().map(|(&k, _)| (k, k)).collect())
     }
 
     pub fn new() -> Self {

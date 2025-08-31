@@ -1,4 +1,8 @@
-use std::{fs::read_to_string, io::stdout, path::PathBuf};
+use std::{
+    fs::{File, read_to_string},
+    io::{self, BufWriter, stdout},
+    path::PathBuf,
+};
 
 use clap::{Parser, Subcommand};
 use muskat::{analyze_observation::analyze_observations, dto::Dto, rng::cheap_rng};
@@ -12,7 +16,13 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    File { path: PathBuf, iterations: usize },
+    File {
+        path: PathBuf,
+        iterations: usize,
+        /// lists test values
+        #[arg(short, long)]
+        output: Option<PathBuf>,
+    },
 }
 
 fn main() -> Result<(), anyhow::Error> {
@@ -21,23 +31,35 @@ fn main() -> Result<(), anyhow::Error> {
     let cli = Cli::parse();
 
     match cli.command {
-        Commands::File { path, iterations } => {
-            let dto: Dto = serde_json::from_str(&read_to_string(path)?)?;
-
-            let mut rng = cheap_rng(3421);
-
-            let initial = dto.pre_game_observations();
-            let observed_turns = dto.played_cards();
-
-            analyze_observations(
-                &initial,
-                observed_turns,
-                iterations,
-                &mut rng,
-                &mut stdout(),
-            )?;
+        Commands::File {
+            path,
+            iterations,
+            output,
+        } => {
+            if let Some(output) = output {
+                let outpup_file = File::create(output)?;
+                let mut w = BufWriter::new(outpup_file);
+                main_file(path, iterations, &mut w)
+            } else {
+                main_file(path, iterations, &mut stdout())
+            }
         }
     }
+}
+
+fn main_file(
+    path: PathBuf,
+    iterations: usize,
+    w: &mut impl io::Write,
+) -> Result<(), anyhow::Error> {
+    let dto: Dto = serde_json::from_str(&read_to_string(path)?)?;
+
+    let mut rng = cheap_rng(3421);
+
+    let initial = dto.pre_game_observations()?;
+    let observed_turns = dto.played_cards();
+
+    analyze_observations(&initial, observed_turns, iterations, &mut rng, w)?;
 
     Ok(())
 }

@@ -7,6 +7,7 @@ use crate::{
     deal::Deal,
     dist::UnknownCards,
     game_type::GameType,
+    monte_carlo::Contract,
     partial_trick::PartialTrick,
     position::Position,
     situation::OpenSituation,
@@ -154,6 +155,7 @@ pub struct ObservedInitialGameState {
     // TODO: Whould this be part of this?
     // Have to come up with what this type represents and that should settle it.
     bidding_winner: BiddingRole,
+    contract: Contract,
 }
 
 pub struct CardKnowledge {
@@ -269,6 +271,7 @@ impl ObservedInitialGameState {
         game_type: GameType,
         bidding_role: BiddingRole,
         bidding_winner: BiddingRole,
+        contract: Contract,
     ) -> Self {
         Self {
             start_hand,
@@ -276,6 +279,7 @@ impl ObservedInitialGameState {
             game_type,
             bidding_role,
             bidding_winner,
+            contract,
         }
     }
 
@@ -285,6 +289,10 @@ impl ObservedInitialGameState {
 
     pub fn bidding_winner(&self) -> BiddingRole {
         self.bidding_winner
+    }
+
+    pub fn contract(&self) -> Contract {
+        self.contract
     }
 }
 
@@ -310,7 +318,7 @@ mod tests {
     fn test_deserialize_sl003() -> Result<(), anyhow::Error> {
         let result: Dto = serde_json::from_reader(File::open("res/sl003.json")?)?;
 
-        let observed_initial = result.pre_game_observations();
+        let observed_initial = result.pre_game_observations()?;
 
         let card_knowledge =
             CardKnowledge::from_observation(&observed_initial, &ObservedPlayedCards::initial());
