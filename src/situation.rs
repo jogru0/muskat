@@ -180,4 +180,14 @@ impl OpenSituation {
         debug_assert!(self.is_initial_situation());
         YieldSoFar::new(self.cellar().to_points(), 0)
     }
+
+    pub fn leaf(active_role: Role) -> Self {
+        Self {
+            hand_declarer: Cards::EMPTY,
+            hand_first_defender: Cards::EMPTY,
+            hand_second_defender: Cards::EMPTY,
+            partial_trick: PartialTrick::EMPTY,
+            active_role,
+        }
+    }
 }

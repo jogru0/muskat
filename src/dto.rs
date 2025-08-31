@@ -46,24 +46,18 @@ impl AnnouncementDto {
 pub struct Dto {
     position: BiddingRole,
     hand: Cards,
-    skat: Cards,
+    skat: Option<Cards>,
     game_mode: AnnouncementDto,
     bidding_value: i16,
     played_cards: Vec<Vec<Card>>,
 }
 impl Dto {
     pub fn pre_game_observations(&self) -> Result<ObservedInitialGameState, AnnouncementError> {
-        let skat_if_known = match self.skat.len() {
-            0 => None,
-            2 => Some(self.skat),
-            _ => panic!("data makes no sense"),
-        };
-
         let contract = Contract::new(self.bidding_value, self.game_mode.announcement()?);
 
         Ok(ObservedInitialGameState::new(
             self.hand,
-            skat_if_known,
+            self.skat,
             self.game_mode.game_type(),
             self.position,
             self.game_mode.bidding_winner(),

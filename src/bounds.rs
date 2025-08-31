@@ -3,7 +3,7 @@ use static_assertions::assert_eq_size;
 use crate::trick_yield::TrickYield;
 
 /// With perfect play, the TrickYield is at least lower, at most upper.
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Bounds {
     lower: TrickYield,
     upper: TrickYield,

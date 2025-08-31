@@ -1,6 +1,6 @@
 use crate::{
-    open_situation_solver::bounds_and_preference::BoundsAndMaybePreference, role::Role,
-    situation::OpenSituation,
+    bounds::Bounds, open_situation_solver::bounds_and_preference::BoundsAndMaybePreference,
+    role::Role, situation::OpenSituation, trick_yield::TrickYield,
 };
 use std::{collections::HashMap, hash::Hash};
 
@@ -28,6 +28,7 @@ pub fn open_situation_reachable_from_to_u32_key(
 pub trait OpenSituationSolverCache {
     fn get_copy(&mut self, situation: OpenSituation) -> BoundsAndMaybePreference;
     fn update_existing(&mut self, situation: OpenSituation, updated: BoundsAndMaybePreference);
+    fn nodes_generated(&self) -> usize;
 }
 
 pub struct DebugOpenSituationSolverCache<Key, OpenSituationToKey> {
@@ -82,6 +83,10 @@ where
         debug_assert_eq!(existing.1, open_situation);
         existing.0 = updated;
     }
+
+    fn nodes_generated(&self) -> usize {
+        self.key_to_bounds.len()
+    }
 }
 
 pub struct FastOpenSituationSolverCache<Key, OpenSituationToKey> {
@@ -96,11 +101,29 @@ pub struct FastOpenSituationSolverCache<Key, OpenSituationToKey> {
     key_to_bounds: HashMap<Key, BoundsAndMaybePreference>,
 }
 
-impl<Key, OpenSituationToKey> FastOpenSituationSolverCache<Key, OpenSituationToKey> {
+impl<Key: Hash + Eq, OpenSituationToKey: Fn(OpenSituation) -> Key>
+    FastOpenSituationSolverCache<Key, OpenSituationToKey>
+{
     pub fn new(open_situation_to_key: OpenSituationToKey) -> Self {
+        let mut key_to_bounds = HashMap::default();
+
+        let strict_bounds_leaf = Bounds::new(TrickYield::ZERO_TRICKS, TrickYield::ZERO_TRICKS);
+
+        for leaf in [
+            OpenSituation::leaf(Role::Declarer),
+            OpenSituation::leaf(Role::FirstDefender),
+            OpenSituation::leaf(Role::SecondDefender),
+        ] {
+            debug_assert_eq!(leaf.quick_bounds(), strict_bounds_leaf);
+            key_to_bounds.insert(
+                open_situation_to_key(leaf),
+                BoundsAndMaybePreference::new(strict_bounds_leaf, None),
+            );
+        }
+
         Self {
             open_situation_to_key,
-            key_to_bounds: HashMap::default(),
+            key_to_bounds,
         }
     }
 }
@@ -135,5 +158,9 @@ where
         let existing = unsafe { existing.unwrap_unchecked() };
 
         *existing = updated;
+    }
+
+    fn nodes_generated(&self) -> usize {
+        self.key_to_bounds.len()
     }
 }

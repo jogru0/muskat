@@ -20,7 +20,7 @@ use rayon::iter::{IntoParallelRefIterator, ParallelIterator as _};
 use std::{
     fmt::Debug,
     io::{self},
-    time::Instant,
+    time::{Duration, Instant},
 };
 use thiserror::Error;
 
@@ -77,6 +77,8 @@ pub struct PossibleWorldData<A> {
     // TODO: Proper type
     matadors: Option<u8>,
     probability_weight: f64,
+    nodes: usize,
+    time: Duration,
 }
 
 impl<A> PossibleWorldData<A> {
@@ -88,6 +90,8 @@ impl<A> PossibleWorldData<A> {
             game_conclusion_for_plays: self.game_conclusion_for_plays.map(f),
             matadors: self.matadors,
             probability_weight: self.probability_weight,
+            nodes: self.nodes,
+            time: self.time,
         }
     }
 
@@ -216,7 +220,7 @@ where
 
     let start_solve = Instant::now();
 
-    let possible_world_data_vec = sampled_deals
+    let possible_world_data_vec: Vec<PossibleWorldData<YieldSoFar>> = sampled_deals
         .par_iter()
         .map(|&possible_deal| {
             let OpenGameState {
@@ -249,10 +253,15 @@ where
                 final_declarer_yield_for_possible_plays(open_situation, yield_so_far, &mut solver);
             // .map(GameConclusion::from_final_declarer_yield);
 
+            let nodes = solver.nodes_generated();
+            let time = solver.time_spent();
+
             PossibleWorldData {
                 game_conclusion_for_plays,
                 matadors,
                 probability_weight: 1.0,
+                nodes,
+                time,
             }
         })
         .collect();
@@ -265,9 +274,50 @@ where
         end_solve - start_solve
     );
 
+    write_stats(
+        "Number of 1000 nodes:",
+        possible_world_data_vec.iter().map(|data| data.nodes as f64),
+        w,
+    )?;
+
+    write_stats(
+        "Time spend in ms:",
+        possible_world_data_vec
+            .iter()
+            .map(|data| data.time.as_secs_f64() * 1000.0),
+        w,
+    )?;
+
     Ok(SampledWorldsData {
         possible_world_data_vec,
     })
+}
+
+fn write_stats(
+    name: &str,
+    data: impl Iterator<Item = f64>,
+    w: &mut impl io::Write,
+) -> Result<(), io::Error> {
+    writeln!(w, "{name}:")?;
+
+    let mut v = data.collect_vec();
+    debug_assert!(!v.is_empty());
+
+    v.sort_by(f64::total_cmp);
+
+    let mean = v.iter().sum::<f64>() / v.len() as f64;
+
+    let median = if v.len() % 2 == 0 {
+        v[v.len() / 2].midpoint(v[v.len() / 2 - 1])
+    } else {
+        v[v.len() / 2]
+    };
+
+    let max = v.last().expect("not empty");
+
+    writeln!(w, "\tmean: {mean}")?;
+    writeln!(w, "\tmedian: {median}")?;
+    writeln!(w, "\tmax: {max}")
 }
 
 fn write_table_line_numbers(

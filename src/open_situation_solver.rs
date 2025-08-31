@@ -9,6 +9,7 @@ use crate::power::CardPower;
 use crate::situation::OpenSituation;
 use crate::trick_yield::{TrickYield, YieldSoFar};
 use std::cmp::Reverse;
+use std::time::{Duration, Instant};
 
 mod bounds_and_preference;
 
@@ -101,6 +102,7 @@ pub mod bounds_cache;
 pub struct OpenSituationSolver<C> {
     cache: C,
     game_type: GameType,
+    time_spend_calculating_bounds: Duration,
 }
 
 impl<C: OpenSituationSolverCache> OpenSituationSolver<C> {
@@ -249,10 +251,11 @@ impl<C: OpenSituationSolverCache> OpenSituationSolver<C> {
     }
 
     pub fn new(cache: C, game_type: GameType) -> Self {
-        // #[cfg(not(debug_assertions))]
-        // panic!("please don't turn off assertions");
-
-        Self { cache, game_type }
+        Self {
+            cache,
+            game_type,
+            time_spend_calculating_bounds: Duration::ZERO,
+        }
     }
 
     // TODO: I think for Null, it just returns any non empty yield in case of the declarer losing.
@@ -320,7 +323,11 @@ impl<C: OpenSituationSolverCache> OpenSituationSolver<C> {
         open_situation: OpenSituation,
         threshold: TrickYield,
     ) -> bool {
+        let start_time = Instant::now();
         let bounds = self.bounds_deciding_threshold(open_situation, threshold);
+        let end_time = Instant::now();
+        self.time_spend_calculating_bounds += end_time - start_time;
+
         if threshold <= bounds.lower() {
             return true;
         }
@@ -332,6 +339,14 @@ impl<C: OpenSituationSolverCache> OpenSituationSolver<C> {
 
     pub fn game_type(&self) -> GameType {
         self.game_type
+    }
+
+    pub fn nodes_generated(&self) -> usize {
+        self.cache.nodes_generated()
+    }
+
+    pub fn time_spent(&self) -> Duration {
+        self.time_spend_calculating_bounds
     }
 }
 

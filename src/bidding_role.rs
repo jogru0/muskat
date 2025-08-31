@@ -8,7 +8,9 @@ use crate::role::Role;
 pub enum BiddingRole {
     #[serde(alias = "hoerer")]
     FirstReceiver,
+    #[serde(alias = "sager")]
     FirstCaller,
+    #[serde(alias = "geber")]
     SecondCaller,
 }
 

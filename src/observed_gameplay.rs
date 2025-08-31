@@ -273,6 +273,11 @@ impl ObservedInitialGameState {
         bidding_winner: BiddingRole,
         contract: Contract,
     ) -> Self {
+        debug_assert_eq!(start_hand.len(), 10);
+        if let Some(skat) = skat_if_known {
+            debug_assert_eq!(skat.len(), 2);
+        }
+
         Self {
             start_hand,
             skat_if_known,
