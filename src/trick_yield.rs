@@ -11,7 +11,7 @@ pub struct TrickYield {
     number_of_tricks: u8,
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
 // Order of the member fields is important for deriving Ord.
 // Ordering this way, we have for example:
 // 28 card points with 2 tricks is better than 24 card point with 3 tricks.

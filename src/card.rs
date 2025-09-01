@@ -6,7 +6,7 @@ use strum::{EnumCount, VariantArray};
 
 use crate::{card_points::CardPoints, cards::Cards, game_type::GameType};
 
-#[derive(Clone, Copy, PartialEq, Eq, Deserialize)]
+#[derive(Clone, Copy, PartialEq, Eq, Deserialize, Hash)]
 #[repr(u8)]
 pub enum Suit {
     Diamonds,
@@ -20,7 +20,7 @@ pub enum Suit {
 
 assert_eq_size!(Suit, u8);
 
-#[derive(Clone, Copy, PartialEq, Eq, Deserialize)]
+#[derive(Clone, Copy, PartialEq, Eq, Deserialize, Hash)]
 pub enum CardType {
     #[serde(alias = "Grand")]
     Trump,

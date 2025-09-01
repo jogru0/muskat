@@ -2,12 +2,12 @@ use static_assertions::assert_eq_size;
 
 use crate::{card::Card, cards::Cards, trick::Trick};
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct PartialTrick(PartialTrickImpl);
 
 assert_eq_size!(PartialTrick, u16);
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 enum PartialTrickImpl {
     Empty,
     OneCard(Card),

@@ -22,7 +22,7 @@ fn test_calculate_potential_score(
     expected: TrickYield,
 ) {
     let deal = deck.deal();
-    let open_situation = OpenSituation::new(deal, declarer);
+    let open_situation = OpenSituation::initial(deal, declarer);
     // dbg!(open_situation);
 
     let mut solver = OpenSituationSolver::new(

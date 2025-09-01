@@ -18,7 +18,7 @@ use crate::{
 /// regarding expected future trick yield, so it needs to be optimized for that:
 /// * does not contain history like bidding information or trick yields so far, or even the game type
 /// * fast to deduce possible next moves, get resulting child situations, etc.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct OpenSituation {
     hand_declarer: Cards,
     hand_first_defender: Cards,
@@ -157,7 +157,7 @@ impl OpenSituation {
         result
     }
 
-    pub fn new(deal: Deal, bidding_winner: BiddingRole) -> Self {
+    pub fn initial(deal: Deal, bidding_winner: BiddingRole) -> Self {
         let &hand_declarer = deal.hand(bidding_winner);
         let &hand_first_defender = deal.hand(bidding_winner.next());
         let &hand_second_defender = deal.hand(bidding_winner.next().next());

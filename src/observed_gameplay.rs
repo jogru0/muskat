@@ -42,7 +42,7 @@ impl ObservedPlayedCards {
     ) -> OpenGameState {
         let matadors = deal.matadors(bidding_winner, game_type);
 
-        let mut open_situation = OpenSituation::new(deal, bidding_winner);
+        let mut open_situation = OpenSituation::initial(deal, bidding_winner);
         let mut yield_so_far = deal.initial_yield();
 
         for trick in &self.done_tricks {

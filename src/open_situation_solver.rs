@@ -257,6 +257,7 @@ impl<C: OpenSituationSolverCache> OpenSituationSolver<C> {
         }
     }
 
+    // TODO: Should probably not be a member of this struct.
     // TODO: I think for Null, it just returns any non empty yield in case of the declarer losing.
     // So this makes only sense to be called with completely new games? Or is there some outside logic
     // making sure that we calculate the total yield correctly?
@@ -317,7 +318,8 @@ impl<C: OpenSituationSolverCache> OpenSituationSolver<C> {
         goal
     }
 
-    fn still_makes_at_least(
+    /// Main entry point for algorithms using the solver.
+    pub fn still_makes_at_least(
         &mut self,
         open_situation: OpenSituation,
         threshold: TrickYield,

@@ -1,5 +1,6 @@
 use crate::{
     card::{Card, CardType},
+    card_points::CardPoints,
     dist::UniformPossibleDealsFromObservedGameplay,
     game_type::GameType,
     observed_gameplay::{
@@ -12,6 +13,7 @@ use crate::{
         OpenSituationSolver,
         bounds_cache::{FastOpenSituationSolverCache, open_situation_reachable_from_to_u32_key},
     },
+    stats::write_stats,
     trick_yield::YieldSoFar,
 };
 use itertools::Itertools;
@@ -24,7 +26,7 @@ use std::{
 };
 use thiserror::Error;
 
-#[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Debug)]
+#[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Debug, Hash)]
 pub enum GameConclusion {
     DeclarerIsSchwarz,
     DeclarerIsSchneider,
@@ -35,6 +37,17 @@ pub enum GameConclusion {
 }
 
 impl GameConclusion {
+    pub fn least_yield_necessary_to_be_in_here(self) -> YieldSoFar {
+        match self {
+            GameConclusion::DeclarerIsSchwarz => YieldSoFar::new(CardPoints(0), 0),
+            GameConclusion::DeclarerIsSchneider => YieldSoFar::new(CardPoints(0), 1),
+            GameConclusion::DeclarerIsDominated => YieldSoFar::new(CardPoints(31), 1),
+            GameConclusion::DefendersAreDominated => YieldSoFar::new(CardPoints(61), 1),
+            GameConclusion::DefendersAreSchneider => YieldSoFar::new(CardPoints(90), 1),
+            GameConclusion::DefendersAreSchwarz => YieldSoFar::new(CardPoints(120), 10),
+        }
+    }
+
     pub fn from_final_declarer_yield(final_declarer_yield: &YieldSoFar) -> Self {
         match (
             final_declarer_yield.card_points().0,
@@ -304,7 +317,9 @@ where
 
     write_stats(
         "Number of 1000 nodes",
-        possible_world_data_vec.iter().map(|data| data.nodes as f64),
+        possible_world_data_vec
+            .iter()
+            .map(|data| data.nodes as f64 / 1000.),
         wt,
     )?;
 
@@ -319,33 +334,6 @@ where
     Ok(SampledWorldsData {
         possible_world_data_vec,
     })
-}
-
-fn write_stats(
-    name: &str,
-    data: impl Iterator<Item = f64>,
-    wt: &mut impl io::Write,
-) -> Result<(), io::Error> {
-    writeln!(wt, "{name}:")?;
-
-    let mut v = data.collect_vec();
-    debug_assert!(!v.is_empty());
-
-    v.sort_by(f64::total_cmp);
-
-    let mean = v.iter().sum::<f64>() / v.len() as f64;
-
-    let median = if v.len() % 2 == 0 {
-        v[v.len() / 2].midpoint(v[v.len() / 2 - 1])
-    } else {
-        v[v.len() / 2]
-    };
-
-    let max = v.last().expect("not empty");
-
-    writeln!(wt, "\tmean: {mean}")?;
-    writeln!(wt, "\tmedian: {median}")?;
-    writeln!(wt, "\tmax: {max}")
 }
 
 fn write_table_line_numbers(

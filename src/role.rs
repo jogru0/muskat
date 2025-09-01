@@ -1,7 +1,7 @@
 use crate::bidding_role::BiddingRole;
 use static_assertions::assert_eq_size;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Role {
     Declarer,
     FirstDefender,

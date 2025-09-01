@@ -25,3 +25,15 @@ pub fn final_declarer_yield_for_possible_plays<C: OpenSituationSolverCache>(
         },
     )
 }
+
+// TODO: mod name
+// TODO: Not for Null!
+// TODO: Only for new situation.
+pub fn initial_situation_makes_at_least<C: OpenSituationSolverCache>(
+    open_situation: OpenSituation,
+    open_situation_solver: &mut OpenSituationSolver<C>,
+    to_reach: YieldSoFar,
+) -> bool {
+    let delta = to_reach.saturating_sub(open_situation.yield_from_skat());
+    open_situation_solver.still_makes_at_least(open_situation, delta)
+}
