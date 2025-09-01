@@ -47,10 +47,17 @@ pub struct Dto {
     position: BiddingRole,
     hand: Cards,
     skat: Option<Cards>,
+    revealed: Option<Cards>,
     game_mode: AnnouncementDto,
+    #[serde(default = "bidding_value_default")]
     bidding_value: i16,
     played_cards: Vec<Vec<Card>>,
 }
+
+fn bidding_value_default() -> i16 {
+    18
+}
+
 impl Dto {
     pub fn pre_game_observations(&self) -> Result<ObservedInitialGameState, AnnouncementError> {
         let contract = Contract::new(self.bidding_value, self.game_mode.announcement()?);
@@ -58,6 +65,7 @@ impl Dto {
         Ok(ObservedInitialGameState::new(
             self.hand,
             self.skat,
+            self.revealed,
             self.game_mode.game_type(),
             self.position,
             self.game_mode.bidding_winner(),

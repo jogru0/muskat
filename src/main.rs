@@ -19,9 +19,10 @@ enum Commands {
     File {
         path: PathBuf,
         iterations: usize,
-        /// lists test values
         #[arg(short, long)]
         output: Option<PathBuf>,
+        #[arg(short, long)]
+        timing: Option<PathBuf>,
     },
 }
 
@@ -35,13 +36,29 @@ fn main() -> Result<(), anyhow::Error> {
             path,
             iterations,
             output,
+            timing,
         } => {
-            if let Some(output) = output {
-                let outpup_file = File::create(output)?;
-                let mut w = BufWriter::new(outpup_file);
-                main_file(path, iterations, &mut w)
-            } else {
-                main_file(path, iterations, &mut stdout())
+            let mut w = match output {
+                Some(path) => {
+                    let outpup_file = File::create(path)?;
+                    Some(BufWriter::new(outpup_file))
+                }
+                None => None,
+            };
+
+            let mut wt = match timing {
+                Some(path) => {
+                    let outpup_file = File::create(path)?;
+                    Some(BufWriter::new(outpup_file))
+                }
+                None => None,
+            };
+
+            match (&mut w, &mut wt) {
+                (None, None) => main_file(path, iterations, &mut stdout(), &mut stdout()),
+                (None, Some(wt)) => main_file(path, iterations, &mut stdout(), wt),
+                (Some(w), None) => main_file(path, iterations, w, &mut stdout()),
+                (Some(w), Some(wt)) => main_file(path, iterations, w, wt),
             }
         }
     }
@@ -51,6 +68,7 @@ fn main_file(
     path: PathBuf,
     iterations: usize,
     w: &mut impl io::Write,
+    wt: &mut impl io::Write,
 ) -> Result<(), anyhow::Error> {
     let dto: Dto = serde_json::from_str(&read_to_string(path)?)?;
 
@@ -59,7 +77,7 @@ fn main_file(
     let initial = dto.pre_game_observations()?;
     let observed_turns = dto.played_cards();
 
-    analyze_observations(&initial, observed_turns, iterations, &mut rng, w)?;
+    analyze_observations(&initial, observed_turns, iterations, &mut rng, w, wt)?;
 
     Ok(())
 }

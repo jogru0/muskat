@@ -1,3 +1,8 @@
 /target
 
 /log
+
+/out/*
+!/out/timing
+/out/timing/*
+!/out/timing/.gitkeep

@@ -91,6 +91,7 @@ impl Deal {
     pub fn matadors(self, bidding_winner: BiddingRole, game_type: GameType) -> Option<u8> {
         // TODO and/or naming.
         let hand_and_skat = self.hand(bidding_winner).or(self.skat);
+        debug_assert_eq!(hand_and_skat.len(), 12);
 
         let mut trumps = Cards::of_trump(game_type).to_vec();
         // TODO: Maybe we don't need that for clever card bit selection. Then we could even use `Cards::remove_next`.
@@ -100,7 +101,7 @@ impl Deal {
             debug_assert!(matches!(game_type, GameType::Null));
             return None;
         };
-        assert!(matches!(highest_trump, Card::EU));
+        debug_assert!(matches!(highest_trump, Card::EU));
 
         let count_with = hand_and_skat.contains(highest_trump);
 

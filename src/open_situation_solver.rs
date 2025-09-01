@@ -212,7 +212,7 @@ impl<C: OpenSituationSolverCache> OpenSituationSolver<C> {
     /// This, together with `improve_bounds_to_decide_threshold`, is the tight hot recursive loop
     /// at the core of the `OpenSituationSolver`. Therefore, these two together are
     /// highly optimized and should be changes with care.
-    pub fn bounds_deciding_threshold(
+    fn bounds_deciding_threshold(
         &mut self,
         open_situation: OpenSituation,
         threshold: TrickYield,
@@ -238,7 +238,6 @@ impl<C: OpenSituationSolverCache> OpenSituationSolver<C> {
             return bounds_and_preference.bounds();
         }
 
-        //New path.
         let mut bounds = open_situation.quick_bounds();
         if !bounds.decides_threshold(threshold) {
             bounds = self

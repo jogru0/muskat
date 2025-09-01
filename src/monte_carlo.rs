@@ -122,6 +122,11 @@ impl<A: PartialEq> SampledWorldsData<A> {
 
         Some(result)
     }
+
+    #[expect(clippy::len_without_is_empty, reason = "is never empty")]
+    pub fn len(&self) -> usize {
+        self.possible_world_data_vec.len()
+    }
 }
 
 impl<A> SampledWorldsData<A> {
@@ -188,35 +193,57 @@ impl<A> SampledWorldsData<A> {
 }
 
 // TODO: Requirement for observed_gameplay to have the observer active.
-pub fn run_monte_carlo_simulation<R, W>(
+pub fn run_monte_carlo_simulation<R, W, Wt>(
     initial_state: &ObservedInitialGameState,
     observed_tricks: &ObservedPlayedCards,
     sample_size: usize,
     rng: &mut R,
     w: &mut W,
+    wt: &mut Wt,
 ) -> Result<SampledWorldsData<YieldSoFar>, io::Error>
 where
     R: Rng + ?Sized,
     W: io::Write,
+    Wt: io::Write,
 {
+    writeln!(w, "-------------------------------------------")?;
+    writeln!(wt, "-------------------------------------------")?;
+
     let card_knowledge = CardKnowledge::from_observation(initial_state, observed_tricks);
 
     let dist =
         UniformPossibleDealsFromObservedGameplay::new(&card_knowledge, initial_state.game_type());
 
-    dbg!(dist.color_distributions());
+    dbg!(dist.number_of_color_distributions());
     dbg!(dist.number_of_possibilities());
 
     let do_all_samples_threshold = 10_000.max(sample_size);
     let do_all_samples = dist.number_of_possibilities() <= do_all_samples_threshold;
 
+    let start_sample = Instant::now();
+
     let sampled_deals = if do_all_samples {
         dist.get_all_possibilities()
     } else {
-        dist.sample_iter(rng).take(sample_size).collect_vec()
+        (&dist).sample_iter(rng).take(sample_size).collect_vec()
     };
 
-    writeln!(w, "sampling from {} possible deals", sampled_deals.len())?;
+    let end_sample = Instant::now();
+
+    writeln!(
+        wt,
+        "sampling {} sample deals took {:?}",
+        sampled_deals.len(),
+        end_sample - start_sample
+    )?;
+
+    writeln!(
+        w,
+        "sampling from {} possible deals [coming from {} with {} color distributions]",
+        sampled_deals.len(),
+        dist.number_of_possibilities(),
+        dist.number_of_color_distributions()
+    )?;
 
     let start_solve = Instant::now();
 
@@ -268,24 +295,25 @@ where
 
     let end_solve = Instant::now();
 
-    eprintln!(
+    writeln!(
+        wt,
         "multithreaded solving of {} sample deals took {:?}",
         sampled_deals.len(),
         end_solve - start_solve
-    );
-
-    write_stats(
-        "Number of 1000 nodes:",
-        possible_world_data_vec.iter().map(|data| data.nodes as f64),
-        w,
     )?;
 
     write_stats(
-        "Time spend in ms:",
+        "Number of 1000 nodes",
+        possible_world_data_vec.iter().map(|data| data.nodes as f64),
+        wt,
+    )?;
+
+    write_stats(
+        "Time spend in ms",
         possible_world_data_vec
             .iter()
             .map(|data| data.time.as_secs_f64() * 1000.0),
-        w,
+        wt,
     )?;
 
     Ok(SampledWorldsData {
@@ -296,9 +324,9 @@ where
 fn write_stats(
     name: &str,
     data: impl Iterator<Item = f64>,
-    w: &mut impl io::Write,
+    wt: &mut impl io::Write,
 ) -> Result<(), io::Error> {
-    writeln!(w, "{name}:")?;
+    writeln!(wt, "{name}:")?;
 
     let mut v = data.collect_vec();
     debug_assert!(!v.is_empty());
@@ -315,9 +343,9 @@ fn write_stats(
 
     let max = v.last().expect("not empty");
 
-    writeln!(w, "\tmean: {mean}")?;
-    writeln!(w, "\tmedian: {median}")?;
-    writeln!(w, "\tmax: {max}")
+    writeln!(wt, "\tmean: {mean}")?;
+    writeln!(wt, "\tmedian: {median}")?;
+    writeln!(wt, "\tmax: {max}")
 }
 
 fn write_table_line_numbers(
@@ -368,7 +396,7 @@ fn write_table_header(
 }
 
 pub fn write_statistics(
-    declarer_yield_data: SampledWorldsData<YieldSoFar>,
+    declarer_yield_data: &SampledWorldsData<YieldSoFar>,
     contract: Contract,
     w: &mut impl io::Write,
 ) -> Result<(), io::Error> {
@@ -456,6 +484,10 @@ fn value_due_to_overbid(overbid: i16, game_type: GameType) -> i16 {
 }
 
 impl Contract {
+    pub fn announcement(&self) -> Announcement {
+        self.announcement
+    }
+
     pub fn conclude(self, conclusion: &GameConclusion, matadors: Option<u8>) -> GameResult {
         let announcement_value = self.announcement.value(conclusion, matadors);
 
@@ -578,6 +610,20 @@ impl Announcement {
         match self.0 {
             AnnouncementImpl::Null { hand: _, ouvert: _ } => GameType::Null,
             AnnouncementImpl::Trump { trump, level: _ } => GameType::Trump(trump),
+        }
+    }
+
+    pub fn hand(&self) -> bool {
+        match self.0 {
+            AnnouncementImpl::Null { hand, ouvert: _ } => hand,
+            AnnouncementImpl::Trump { trump: _, level } => TrumpGameLevel::Hand <= level,
+        }
+    }
+
+    pub fn ouvert(&self) -> bool {
+        match self.0 {
+            AnnouncementImpl::Null { hand: _, ouvert } => ouvert,
+            AnnouncementImpl::Trump { trump: _, level } => TrumpGameLevel::Ouvert <= level,
         }
     }
 

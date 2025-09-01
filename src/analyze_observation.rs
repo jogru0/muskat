@@ -4,7 +4,10 @@ use crate::{
     observed_gameplay::{ObservedInitialGameState, ObservedPlayedCards},
 };
 use rand::Rng;
-use std::io::{self, Write};
+use std::{
+    io::{self, Write},
+    time::Instant,
+};
 
 fn analyze_options(
     initial_state: &ObservedInitialGameState,
@@ -12,9 +15,20 @@ fn analyze_options(
     sample_size: usize,
     rng: &mut (impl Rng + ?Sized),
     w: &mut impl Write,
+    wt: &mut impl Write,
 ) -> Result<(), io::Error> {
-    let data = run_monte_carlo_simulation(initial_state, observed_tricks, sample_size, rng, w)?;
-    write_statistics(data, initial_state.contract(), w)
+    let data = run_monte_carlo_simulation(initial_state, observed_tricks, sample_size, rng, w, wt)?;
+
+    let write_stats_start = Instant::now();
+    write_statistics(&data, initial_state.contract(), w)?;
+    let write_stats_end = Instant::now();
+
+    writeln!(
+        wt,
+        "Writing statistics for {} analyzed games took {:?}.",
+        data.len(),
+        write_stats_end - write_stats_start
+    )
 }
 
 pub fn analyze_observations(
@@ -23,11 +37,12 @@ pub fn analyze_observations(
     sample_size: usize,
     rng: &mut (impl Rng + ?Sized),
     w: &mut impl Write,
+    wt: &mut impl Write,
 ) -> Result<(), io::Error> {
     let mut observed_tricks = ObservedPlayedCards::initial();
     loop {
         if observed_tricks.active_role() == initial.bidding_role() {
-            analyze_options(initial, &observed_tricks, sample_size, rng, w)?;
+            analyze_options(initial, &observed_tricks, sample_size, rng, w, wt)?;
         }
 
         let Some(next_card) = turns.next() else {

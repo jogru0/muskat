@@ -1,0 +1,93 @@
+Played: S7
+-------------------------------------------
+sampling from 12 possible deals [coming from 92378 with 106 color distributions]
+card |     SZ     SO     SA
+avg. |  41.25  29.42  41.75
+nlb  | 100.0%  91.7% 100.0%
+nls  | 100.0%  50.0% 100.0%
+game | -120.00 -131.67 -120.00
+Played: SA
+Played: S8
+-------------------------------------------
+sampling from 12 possible deals [coming from 48620 with 82 color distributions]
+card |     SZ     SO     H7     H8     H9     HZ     G8     GK     EA
+avg. |  39.17  31.08  41.67  41.67  41.67  39.58  39.00  39.00  43.08
+nls  |  75.0%  66.7% 100.0% 100.0% 100.0%  83.3%  91.7%  91.7% 100.0%
+game | -125.00 -126.67 -120.00 -120.00 -120.00 -123.33 -121.67 -121.67 -120.00
+Played: H7
+Played: SU
+Played: HK
+Played: SK
+Played: S9
+-------------------------------------------
+sampling from 3432 possible deals [coming from 3432 with 24 color distributions]
+card |     SZ     SO
+avg. |  49.91  34.29
+nls  | 100.0%  94.5%
+w    |   3.3%   0.0%
+game | -114.07 -121.10
+Played: SZ
+-------------------------------------------
+sampling from 3432 possible deals [coming from 3432 with 24 color distributions]
+card |     SO     H8     H9     HZ     G8     GK     EA
+avg. |  43.50  48.52  48.52  47.82  47.93  47.37  48.97
+w    |   0.0%   0.8%   0.8%   0.0%   1.3%   0.7%   3.0%
+game | -120.00 -118.64 -118.64 -119.95 -117.74 -118.74 -114.60
+Played: EA
+Played: E8
+Played: E9
+-------------------------------------------
+sampling from 924 possible deals [coming from 924 with 18 color distributions]
+card |     SO     H8     H9     HZ     G8     GK
+avg. |  46.24  47.04  47.04  46.67  46.56  46.42
+w    |   0.0%   2.2%   2.2%   0.0%   1.3%   1.3%
+game | -120.00 -116.10 -116.10 -120.00 -117.66 -117.66
+Played: H8
+Played: EU
+Played: HO
+Played: G7
+Played: GO
+-------------------------------------------
+sampling from 70 possible deals [coming from 70 with 10 color distributions]
+card |     G8     GK
+avg. |  48.20  57.17
+w    |   8.6%  22.9%
+game | -104.57 -78.86
+Played: GK
+-------------------------------------------
+sampling from 70 possible deals [coming from 70 with 10 color distributions]
+card |     SO     H9     HZ     G8
+avg. |  53.00  55.54  54.11  56.83
+w    |   0.0%  14.3%   4.3%  21.4%
+game | -120.00 -94.29 -112.29 -81.43
+Played: G8
+Played: GA
+Played: EZ
+Played: G9
+Played: HA
+-------------------------------------------
+sampling from 6 possible deals [coming from 6 with 3 color distributions]
+card |     SO     H9     HZ
+avg. |  64.33  53.00  53.00
+w    |  66.7%   0.0%   0.0%
+game |   0.00 -120.00 -120.00
+Played: SO
+Played: GU
+-------------------------------------------
+sampling from 3 possible deals [coming from 3 with 2 color distributions]
+card |     H9     HZ
+avg. |  64.33  57.67
+w    |  66.7%   0.0%
+game |   0.00 -120.00
+Played: H9
+Played: EK
+Played: HU
+-------------------------------------------
+sampling from 1 possible deals [coming from 1 with 1 color distributions]
+card |     HZ
+avg. |  53.00
+res. | DeclarerIsDominated
+game | -120.00
+Played: HZ
+Played: EO
+Analysis done.

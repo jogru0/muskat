@@ -82,31 +82,32 @@ impl ObservedPlayedCards {
 }
 
 impl CardKnowledge {
-    pub fn apply(
-        &mut self,
-        observed: &ObservedPlayedCards,
-        bidding_role_person_with_this_knowledge: BiddingRole,
-        game_type: GameType,
-    ) {
+    pub fn apply(&mut self, observed: &ObservedPlayedCards, game_type: GameType) {
         let mut first_player = BiddingRole::FIRST_ACTIVE_PLAYER;
         for trick in &observed.done_tricks {
-            let second_player = first_player.next();
-            let third_player = second_player.next();
-
             let first_card = trick.first();
             let trick_type = first_card.card_type(game_type);
 
-            if bidding_role_person_with_this_knowledge != first_player {
-                self.learn_about(first_card, first_player, trick_type, game_type);
-            }
+            self.learn_about_if_not_everything_of_that_player_already_known(
+                first_card,
+                first_player,
+                trick_type,
+                game_type,
+            );
 
-            if bidding_role_person_with_this_knowledge != second_player {
-                self.learn_about(trick.second(), second_player, trick_type, game_type);
-            }
+            self.learn_about_if_not_everything_of_that_player_already_known(
+                trick.second(),
+                first_player.next(),
+                trick_type,
+                game_type,
+            );
 
-            if bidding_role_person_with_this_knowledge != third_player {
-                self.learn_about(trick.third(), third_player, trick_type, game_type);
-            }
+            self.learn_about_if_not_everything_of_that_player_already_known(
+                trick.third(),
+                first_player.next().next(),
+                trick_type,
+                game_type,
+            );
 
             match trick.winner_position(game_type) {
                 Position::Forehand => {}
@@ -118,15 +119,20 @@ impl CardKnowledge {
         if let Some(first_card) = observed.current_trick.first() {
             let trick_type = first_card.card_type(game_type);
 
-            if bidding_role_person_with_this_knowledge != first_player {
-                self.learn_about(first_card, first_player, trick_type, game_type);
-            }
+            self.learn_about_if_not_everything_of_that_player_already_known(
+                first_card,
+                first_player,
+                trick_type,
+                game_type,
+            );
 
-            if let Some(second_card) = observed.current_trick.second()
-                && let second_player = first_player.next()
-                && bidding_role_person_with_this_knowledge != second_player
-            {
-                self.learn_about(second_card, second_player, trick_type, game_type);
+            if let Some(second_card) = observed.current_trick.second() {
+                self.learn_about_if_not_everything_of_that_player_already_known(
+                    second_card,
+                    first_player.next(),
+                    trick_type,
+                    game_type,
+                );
             }
         }
     }
@@ -150,6 +156,7 @@ impl CardKnowledge {
 pub struct ObservedInitialGameState {
     start_hand: Cards,
     skat_if_known: Option<Cards>,
+    revealed_if_known_and_not_own_hand: Option<Cards>,
     game_type: GameType,
     bidding_role: BiddingRole,
     // TODO: Whould this be part of this?
@@ -204,7 +211,7 @@ impl CardKnowledge {
         self.unknown_cards[id].remove(1);
     }
 
-    pub fn learn_about(
+    pub fn learn_about_if_not_everything_of_that_player_already_known(
         &mut self,
         card: Card,
         bidding_role_of_player_with_this_card: BiddingRole,
@@ -212,6 +219,11 @@ impl CardKnowledge {
         game_type: GameType,
     ) {
         let position = UnknownCardPosition::Hand(bidding_role_of_player_with_this_card);
+
+        if self.unknown_cards[position.id()].is_empty() {
+            debug_assert!(self.observed_cards[position.id()].contains(card));
+            return;
+        }
 
         self.learn_about_where_the_card_initially_was_without_any_further_inferences(
             card, position,
@@ -222,7 +234,13 @@ impl CardKnowledge {
         }
     }
 
-    fn initial(hand: Cards, skat_if_known: Option<Cards>, bidding_role: BiddingRole) -> Self {
+    fn initial(
+        hand: Cards,
+        skat_if_known: Option<Cards>,
+        revealed_if_known_and_not_own_hand: Option<Cards>,
+        bidding_role: BiddingRole,
+        bidding_winner: BiddingRole,
+    ) -> Self {
         let mut result = Self::NO_KNOWLEDGE;
 
         debug_assert_eq!(hand.len(), 10);
@@ -243,6 +261,18 @@ impl CardKnowledge {
             }
         }
 
+        if let Some(revealed) = revealed_if_known_and_not_own_hand {
+            debug_assert_eq!(revealed.len(), 10);
+            debug_assert_ne!(bidding_role, bidding_winner);
+
+            for card in revealed {
+                result.learn_about_where_the_card_initially_was_without_any_further_inferences(
+                    card,
+                    UnknownCardPosition::Hand(bidding_winner),
+                );
+            }
+        }
+
         result
     }
 
@@ -253,9 +283,11 @@ impl CardKnowledge {
         let mut result = Self::initial(
             initial.start_hand,
             initial.skat_if_known,
+            initial.revealed_if_known_and_not_own_hand,
             initial.bidding_role,
+            initial.bidding_winner,
         );
-        result.apply(tricks, initial.bidding_role, initial.game_type);
+        result.apply(tricks, initial.game_type);
         result
     }
 }
@@ -268,6 +300,7 @@ impl ObservedInitialGameState {
     pub fn new(
         start_hand: Cards,
         skat_if_known: Option<Cards>,
+        revealed_if_known_and_not_own_hand: Option<Cards>,
         game_type: GameType,
         bidding_role: BiddingRole,
         bidding_winner: BiddingRole,
@@ -278,9 +311,24 @@ impl ObservedInitialGameState {
             debug_assert_eq!(skat.len(), 2);
         }
 
+        if let Some(revealed) = revealed_if_known_and_not_own_hand {
+            debug_assert_eq!(revealed.len(), 10);
+            debug_assert!(revealed.and(start_hand).is_empty());
+        }
+
+        let is_delcarer = bidding_role == bidding_winner;
+
+        debug_assert!(skat_if_known.is_some() == (is_delcarer && !contract.announcement().hand()));
+
+        debug_assert!(
+            revealed_if_known_and_not_own_hand.is_some()
+                == (!is_delcarer && contract.announcement().ouvert())
+        );
+
         Self {
             start_hand,
             skat_if_known,
+            revealed_if_known_and_not_own_hand,
             game_type,
             bidding_role,
             bidding_winner,
@@ -333,7 +381,7 @@ mod tests {
             observed_initial.game_type,
         );
 
-        assert_eq!(dist.color_distributions(), 140);
+        assert_eq!(dist.number_of_color_distributions(), 140);
         assert_eq!(dist.number_of_possibilities(), 184756);
 
         Ok(())

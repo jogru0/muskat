@@ -78,7 +78,7 @@ impl UnknownCards {
         self.number = self.number.checked_sub(number).expect("valid operation");
     }
 
-    fn is_empty(&self) -> bool {
+    pub fn is_empty(&self) -> bool {
         self.number == 0
     }
 
@@ -417,7 +417,6 @@ impl OpenCards {
     where
         R: Rng + ?Sized,
     {
-        
         self.clubs.shuffle(rng);
         self.hearts.shuffle(rng);
         self.diamonds.shuffle(rng);
@@ -516,7 +515,7 @@ impl UniformPossibleDealsFromObservedGameplay {
         unreachable!("out of bounds for possible color distributions")
     }
 
-    pub fn color_distributions(&self) -> usize {
+    pub fn number_of_color_distributions(&self) -> usize {
         self.possible_color_distributions_vec.len()
     }
 

@@ -10,7 +10,9 @@ use crate::{card_points::CardPoints, cards::Cards, game_type::GameType};
 #[repr(u8)]
 pub enum Suit {
     Diamonds,
+    #[serde(alias = "Herz")]
     Hearts,
+    #[serde(alias = "Green")]
     Spades,
     #[serde(alias = "Eichel")]
     Clubs,
@@ -20,6 +22,7 @@ assert_eq_size!(Suit, u8);
 
 #[derive(Clone, Copy, PartialEq, Eq, Deserialize)]
 pub enum CardType {
+    #[serde(alias = "Grand")]
     Trump,
     #[serde(untagged)]
     Suit(Suit),
