@@ -103,6 +103,7 @@ pub struct OpenSituationSolver<C> {
     cache: C,
     game_type: GameType,
     time_spend_calculating_bounds: Duration,
+    analyzed_nodes: usize,
 }
 
 impl<C: OpenSituationSolverCache> OpenSituationSolver<C> {
@@ -217,6 +218,8 @@ impl<C: OpenSituationSolverCache> OpenSituationSolver<C> {
         open_situation: OpenSituation,
         threshold: TrickYield,
     ) -> Bounds {
+        self.analyzed_nodes += 1;
+
         // We try to avoid using the cache for situations without multiple parents.
         // Specifically, we don't cache situations with an ongoing trick.
         if !open_situation.is_trick_in_progress() {
@@ -254,6 +257,7 @@ impl<C: OpenSituationSolverCache> OpenSituationSolver<C> {
             cache,
             game_type,
             time_spend_calculating_bounds: Duration::ZERO,
+            analyzed_nodes: 0,
         }
     }
 
@@ -343,7 +347,7 @@ impl<C: OpenSituationSolverCache> OpenSituationSolver<C> {
     }
 
     pub fn nodes_generated(&self) -> usize {
-        self.cache.nodes_generated()
+        self.analyzed_nodes
     }
 
     pub fn time_spent(&self) -> Duration {
