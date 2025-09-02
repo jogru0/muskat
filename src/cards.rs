@@ -233,8 +233,11 @@ impl Cards {
         let id_card = self.bits.trailing_zeros() as u8;
         debug_assert!(id_card < 32);
 
+        let bit_to_flip = 1 << id_card;
+        debug_assert!(bit_to_flip == self.bits & (self.bits - 1) ^ self.bits);
+
         //TODO: Speed compared to just call remove?
-        self.bits ^= 1 << id_card;
+        self.bits ^= bit_to_flip;
 
         unsafe { transmute(id_card) }
     }
