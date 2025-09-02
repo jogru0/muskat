@@ -35,7 +35,7 @@ impl OpenSituation {
     }
 
     pub fn is_initial_situation(self) -> bool {
-        self.cellar().len() == 2
+        self.cellar().len() == 2 && matches!(self.partial_trick, PartialTrick::EMPTY)
     }
 
     pub fn maybe_first_trick_card(self) -> Option<Card> {

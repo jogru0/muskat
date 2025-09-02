@@ -9,7 +9,7 @@ fn regression_test(name: &str, iterations: usize) -> Result<(), anyhow::Error> {
         "-o",
         &format!("res/expected/expected_{name}.log"),
         "-t",
-        &format!("out/timing/timing_{name}.log"),
+        &format!("res/timing/timing_{name}.log"),
     ]);
     cmd.assert().success();
 

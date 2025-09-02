@@ -1,0 +1,78 @@
+-------------------------------------------
+sampling 1 sample deals took 12.884µs
+multithreaded solving of 1 sample deals took 17.307136026s
+Number of 1000 nodes:
+	mean: 2899
+	median: 2899
+	max: 2899
+Time spend in ms:
+	mean: 17290
+	median: 17290
+	max: 17290
+Mean duration per node: 5.964µs
+Writing statistics for 1 analyzed games took 15.559µs.
+-------------------------------------------
+sampling 1 sample deals took 7.064µs
+multithreaded solving of 1 sample deals took 31.465811ms
+Number of 1000 nodes:
+	mean: 30
+	median: 30
+	max: 30
+Time spend in ms:
+	mean: 31
+	median: 31
+	max: 31
+Mean duration per node: 1.036µs
+Writing statistics for 1 analyzed games took 10.81µs.
+-------------------------------------------
+sampling 3432 sample deals took 4.537812ms
+multithreaded solving of 3432 sample deals took 1.421664661s
+Number of 1000 nodes:
+	mean: 3
+	median: 1
+	max: 27
+Time spend in ms:
+	mean: 5
+	median: 2
+	max: 74
+Mean duration per node: 1.691µs
+Writing statistics for 3432 analyzed games took 3.211402ms.
+-------------------------------------------
+sampling 1716 sample deals took 2.276791ms
+multithreaded solving of 1716 sample deals took 1.339835689s
+Number of 1000 nodes:
+	mean: 5
+	median: 4
+	max: 22
+Time spend in ms:
+	mean: 9
+	median: 8
+	max: 54
+Mean duration per node: 1.747µs
+Writing statistics for 1716 analyzed games took 4.106508ms.
+-------------------------------------------
+sampling 56 sample deals took 70.992µs
+multithreaded solving of 56 sample deals took 6.352924ms
+Number of 1000 nodes:
+	mean: 1
+	median: 1
+	max: 2
+Time spend in ms:
+	mean: 1
+	median: 1
+	max: 3
+Mean duration per node: 1.343µs
+Writing statistics for 56 analyzed games took 127.327µs.
+-------------------------------------------
+sampling 56 sample deals took 72.886µs
+multithreaded solving of 56 sample deals took 4.083698ms
+Number of 1000 nodes:
+	mean: 0
+	median: 0
+	max: 1
+Time spend in ms:
+	mean: 1
+	median: 0
+	max: 2
+Mean duration per node: 1.327µs
+Writing statistics for 56 analyzed games took 100.868µs.

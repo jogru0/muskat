@@ -3,9 +3,9 @@ use std::{fs::File, io::BufWriter, io::Write};
 use itertools::Itertools;
 use muskat::{
     open_analysis_performance::{
-        Level, analyzer_conclusion, analyzer_is_won, analyzer_yield,
-        generate_random_trump_games_of_active_player,
+        Level, generate_random_trump_games_of_active_player,
         measure_performance_to_decide_winner_of_open_situations,
+        measure_performance_to_judge_possible_next_turns_of_open_situation,
     },
     rng::cheap_rng,
 };
@@ -31,21 +31,38 @@ pub fn test_performance_2003_is_win() -> Result<(), anyhow::Error> {
 
     let performance_results = measure_performance_to_decide_winner_of_open_situations(
         fixed_setup.iter().copied(),
-        analyzer_is_won,
         Level::IsWon,
     );
     performance_results.write(&mut wt)?;
 
     let performance_results = measure_performance_to_decide_winner_of_open_situations(
         fixed_setup.iter().copied(),
-        analyzer_conclusion,
         Level::Conclusion,
     );
     performance_results.write(&mut wt)?;
 
     let performance_results = measure_performance_to_decide_winner_of_open_situations(
         fixed_setup.iter().copied(),
-        analyzer_yield,
+        Level::Yield,
+    );
+    performance_results.write(&mut wt)?;
+
+    writeln!(wt, "\n//////////\n")?;
+
+    let performance_results = measure_performance_to_judge_possible_next_turns_of_open_situation(
+        fixed_setup.iter().copied(),
+        Level::IsWon,
+    );
+    performance_results.write(&mut wt)?;
+
+    let performance_results = measure_performance_to_judge_possible_next_turns_of_open_situation(
+        fixed_setup.iter().copied(),
+        Level::Conclusion,
+    );
+    performance_results.write(&mut wt)?;
+
+    let performance_results = measure_performance_to_judge_possible_next_turns_of_open_situation(
+        fixed_setup.iter().copied(),
         Level::Yield,
     );
     performance_results.write(&mut wt)?;

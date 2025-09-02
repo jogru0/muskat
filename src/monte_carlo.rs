@@ -13,7 +13,7 @@ use crate::{
         OpenSituationSolver,
         bounds_cache::{FastOpenSituationSolverCache, open_situation_reachable_from_to_u32_key},
     },
-    stats::write_stats,
+    stats::write_node_timing_stats,
     trick_yield::YieldSoFar,
 };
 use itertools::Itertools;
@@ -315,19 +315,9 @@ where
         end_solve - start_solve
     )?;
 
-    write_stats(
-        "Number of 1000 nodes",
-        possible_world_data_vec
-            .iter()
-            .map(|data| data.nodes as f64 / 1000.),
-        wt,
-    )?;
-
-    write_stats(
-        "Time spend in ms",
-        possible_world_data_vec
-            .iter()
-            .map(|data| data.time.as_secs_f64() * 1000.0),
+    write_node_timing_stats(
+        possible_world_data_vec.iter().map(|data| &data.nodes),
+        possible_world_data_vec.iter().map(|data| &data.time),
         wt,
     )?;
 
