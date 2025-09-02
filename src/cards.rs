@@ -81,46 +81,10 @@ impl Debug for Cards {
     }
 }
 
-const fn suit_id(suit: Suit) -> u8 {
-    match suit {
-        Suit::Diamonds => 0,
-        Suit::Hearts => 1,
-        Suit::Spades => 2,
-        Suit::Clubs => 3,
-    }
-}
-
-const fn rank_id(rank: Rank) -> u8 {
-    match rank {
-        Rank::L7 => 0,
-        Rank::L8 => 1,
-        Rank::L9 => 2,
-        Rank::Z => 3,
-        Rank::U => 4,
-        Rank::O => 5,
-        Rank::K => 6,
-        Rank::A => 7,
-    }
-}
-
 impl Cards {
     pub const EMPTY: Self = Self { bits: 0 };
 
     pub const ALL: Self = Self { bits: u32::MAX };
-
-    const fn via_suit_id(suit_id: u8) -> Self {
-        assert!(suit_id < 4);
-        Self {
-            bits: 0b00000000_00000000_00000000_11111111 << (8 * suit_id),
-        }
-    }
-
-    const fn via_rank_id(rank_id: u8) -> Self {
-        assert!(rank_id < 8);
-        Self {
-            bits: 0b00000001_00000001_00000001_00000001 << rank_id,
-        }
-    }
 
     pub const fn just(card: Card) -> Self {
         Self {
@@ -129,11 +93,27 @@ impl Cards {
     }
 
     pub const fn of_suit(suit: Suit) -> Self {
-        Self::via_suit_id(suit_id(suit))
+        let bits = match suit {
+            Suit::Diamonds => 0b00010000_00000000_00000000_01111111,
+            Suit::Hearts => 0b00100000_00000000_00111111_10000000,
+            Suit::Spades => 0b01000000_00011111_11000000_00000000,
+            Suit::Clubs => 0b10001111_11100000_00000000_00000000,
+        };
+        Self { bits }
     }
 
     pub const fn of_rank(rank: Rank) -> Self {
-        Self::via_rank_id(rank_id(rank))
+        let bits = match rank {
+            Rank::L7 => 0b00000000_00100000_01000000_10000001,
+            Rank::L8 => 0b00000000_01000000_10000001_00000010,
+            Rank::L9 => 0b00000000_10000001_00000010_00000100,
+            Rank::O => 0b00000001_00000010_00000100_00001000,
+            Rank::K => 0b00000010_00000100_00001000_00010000,
+            Rank::Z => 0b00000100_00001000_00010000_00100000,
+            Rank::A => 0b00001000_00010000_00100000_01000000,
+            Rank::U => 0b11110000_00000000_00000000_00000000,
+        };
+        Self { bits }
     }
 
     pub const fn of_trump(game_type: GameType) -> Self {
@@ -242,14 +222,11 @@ impl Cards {
         unsafe { transmute(id_card) }
     }
 
-    //TODO: Fast?
+    //TODO: Fast? Vs checking contains?
     pub fn to_points(self) -> CardPoints {
         let mut result = CardPoints(0);
-        for i in 0..32 {
-            let card = unsafe { transmute::<u8, Card>(i) };
-            if self.contains(card) {
-                result = CardPoints(result.0 + card.to_points().0);
-            }
+        for card in self {
+            result = CardPoints(result.0 + card.to_points().0);
         }
         result
     }

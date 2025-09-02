@@ -1,10 +1,7 @@
-use std::mem::transmute;
-
+use crate::{card_points::CardPoints, cards::Cards, game_type::GameType};
 use serde::Deserialize;
 use static_assertions::assert_eq_size;
 use strum::{EnumCount, VariantArray};
-
-use crate::{card_points::CardPoints, cards::Cards, game_type::GameType};
 
 #[derive(Clone, Copy, PartialEq, Eq, Deserialize, Hash)]
 #[repr(u8)]
@@ -75,35 +72,35 @@ pub enum Card {
     S7,
     S8,
     S9,
-    SZ,
-    SU,
     SO,
     SK,
+    SZ,
     SA,
     H7,
     H8,
     H9,
-    HZ,
-    HU,
     HO,
     HK,
+    HZ,
     HA,
     G7,
     G8,
     G9,
-    GZ,
-    GU,
     GO,
     GK,
+    GZ,
     GA,
     E7,
     E8,
     E9,
-    EZ,
-    EU,
     EO,
     EK,
+    EZ,
     EA,
+    SU,
+    HU,
+    GU,
+    EU,
 }
 
 assert_eq_size!(Card, u8);
@@ -122,15 +119,53 @@ impl Card {
     }
 
     pub const fn suit(self) -> Suit {
-        let suite_id = self.to_u8() / 8;
-        debug_assert!(suite_id < 4);
-        unsafe { transmute(suite_id) }
+        match self {
+            Card::S7
+            | Card::S8
+            | Card::S9
+            | Card::SO
+            | Card::SK
+            | Card::SZ
+            | Card::SU
+            | Card::SA => Suit::Diamonds,
+            Card::H7
+            | Card::H8
+            | Card::H9
+            | Card::HO
+            | Card::HK
+            | Card::HZ
+            | Card::HU
+            | Card::HA => Suit::Hearts,
+            Card::G7
+            | Card::G8
+            | Card::G9
+            | Card::GO
+            | Card::GK
+            | Card::GZ
+            | Card::GU
+            | Card::GA => Suit::Spades,
+            Card::E7
+            | Card::E8
+            | Card::E9
+            | Card::EO
+            | Card::EK
+            | Card::EZ
+            | Card::EU
+            | Card::EA => Suit::Clubs,
+        }
     }
 
     pub const fn rank(self) -> Rank {
-        let rank_id = self.to_u8() % 8;
-        debug_assert!(rank_id < 8);
-        unsafe { transmute(rank_id) }
+        match self {
+            Card::S7 | Card::H7 | Card::G7 | Card::E7 => Rank::L7,
+            Card::S8 | Card::H8 | Card::G8 | Card::E8 => Rank::L8,
+            Card::S9 | Card::H9 | Card::G9 | Card::E9 => Rank::L9,
+            Card::SZ | Card::HZ | Card::GZ | Card::EZ => Rank::Z,
+            Card::SU | Card::HU | Card::GU | Card::EU => Rank::U,
+            Card::SO | Card::HO | Card::GO | Card::EO => Rank::O,
+            Card::SK | Card::HK | Card::GK | Card::EK => Rank::K,
+            Card::SA | Card::HA | Card::GA | Card::EA => Rank::A,
+        }
     }
 
     pub const fn card_type(self, game_type: GameType) -> CardType {

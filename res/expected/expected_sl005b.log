@@ -1,19 +1,19 @@
 Played: S7
 -------------------------------------------
 sampling from 12 possible deals [coming from 92378 with 106 color distributions]
-card |     SZ     SO     SA
-avg. |  41.25  29.42  41.75
-nlb  | 100.0%  91.7% 100.0%
-nls  | 100.0%  50.0% 100.0%
-game | -120.00 -131.67 -120.00
+card |     SO     SZ     SA
+avg. |  29.33  40.75  41.25
+nlb  |  91.7% 100.0% 100.0%
+nls  |  50.0% 100.0% 100.0%
+game | -131.67 -120.00 -120.00
 Played: SA
 Played: S8
 -------------------------------------------
 sampling from 12 possible deals [coming from 48620 with 82 color distributions]
-card |     SZ     SO     H7     H8     H9     HZ     G8     GK     EA
-avg. |  39.17  31.08  41.67  41.67  41.67  39.58  39.00  39.00  43.08
-nls  |  75.0%  66.7% 100.0% 100.0% 100.0%  83.3%  91.7%  91.7% 100.0%
-game | -125.00 -126.67 -120.00 -120.00 -120.00 -123.33 -121.67 -121.67 -120.00
+card |     SO     SZ     H7     H8     H9     HZ     G8     GK     EA
+avg. |  30.67  39.08  40.92  40.92  40.92  38.25  38.00  38.00  42.08
+nls  |  66.7%  75.0% 100.0% 100.0% 100.0%  83.3%  91.7%  91.7% 100.0%
+game | -126.67 -125.00 -120.00 -120.00 -120.00 -123.33 -121.67 -121.67 -120.00
 Played: H7
 Played: SU
 Played: HK
@@ -21,11 +21,11 @@ Played: SK
 Played: S9
 -------------------------------------------
 sampling from 3432 possible deals [coming from 3432 with 24 color distributions]
-card |     SZ     SO
-avg. |  49.91  34.29
-nls  | 100.0%  94.5%
-w    |   3.3%   0.0%
-game | -114.07 -121.10
+card |     SO     SZ
+avg. |  34.29  49.91
+nls  |  94.5% 100.0%
+w    |   0.0%   3.3%
+game | -121.10 -114.07
 Played: SZ
 -------------------------------------------
 sampling from 3432 possible deals [coming from 3432 with 24 color distributions]

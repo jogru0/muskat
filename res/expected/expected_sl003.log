@@ -1,18 +1,18 @@
 -------------------------------------------
 sampling from 1 possible deals [coming from 184756 with 140 color distributions]
-card |     SU     SO     SK     SA     H8     HU     E7     E8     E9     EU
-avg. |  57.00  32.00  32.00  55.00  46.00  57.00  55.00  55.00  55.00  57.00
-res. | DeclarerIsDominated DeclarerIsDominated DeclarerIsDominated DeclarerIsDominated DeclarerIsDominated DeclarerIsDominated DeclarerIsDominated DeclarerIsDominated DeclarerIsDominated DeclarerIsDominated
-game | -48.00 -48.00 -48.00 -48.00 -48.00 -48.00 -48.00 -48.00 -48.00 -48.00
+card |     SO     SK     SA     H8     E7     E8     E9     SU     HU     EU
+avg. |  25.00  25.00  54.00  45.00  39.00  39.00  39.00  53.00  53.00  58.00
+res. | DeclarerIsSchneider DeclarerIsSchneider DeclarerIsDominated DeclarerIsDominated DeclarerIsDominated DeclarerIsDominated DeclarerIsDominated DeclarerIsDominated DeclarerIsDominated DeclarerIsDominated
+game | -72.00 -72.00 -48.00 -48.00 -48.00 -48.00 -48.00 -48.00 -48.00 -48.00
 Played: EU
 Played: EO
 Played: EK
 -------------------------------------------
 sampling from 1 possible deals [coming from 48620 with 100 color distributions]
-card |     SU     SO     SK     SA     H8     HU     E7     E8     E9
-avg. |  71.00  73.00  72.00  73.00  73.00  71.00  73.00  73.00  73.00
-res. | DefendersAreDominated DefendersAreDominated DefendersAreDominated DefendersAreDominated DefendersAreDominated DefendersAreDominated DefendersAreDominated DefendersAreDominated DefendersAreDominated
-game |  24.00  24.00  24.00  24.00  24.00  24.00  24.00  24.00  24.00
+card |     SO     SK     SA     H8     E7     E8     E9     SU     HU
+avg. |  72.00  71.00  72.00  72.00  52.00  52.00  52.00  72.00  72.00
+res. | DefendersAreDominated DefendersAreDominated DefendersAreDominated DefendersAreDominated DeclarerIsDominated DeclarerIsDominated DeclarerIsDominated DefendersAreDominated DefendersAreDominated
+game |  24.00  24.00  24.00  24.00 -48.00 -48.00 -48.00  24.00  24.00
 Played: HU
 Played: GU
 Played: EA
@@ -29,28 +29,28 @@ Played: H8
 Played: HZ
 -------------------------------------------
 sampling from 1716 possible deals [coming from 1716 with 29 color distributions]
-card |     SU     SO     SK     SA     E7     E8     E9
-avg. |  58.34  56.14  56.00  41.69  72.76  72.76  72.76
-nls  | 100.0% 100.0% 100.0%  94.4% 100.0% 100.0% 100.0%
-w    |  22.2%  16.0%  16.0%   0.0%  89.3%  89.3%  89.3%
-ws   |   0.0%   0.0%   0.0%   0.0%  10.7%  10.7%  10.7%
-game | -32.01 -36.46 -36.50 -49.34  17.57  17.57  17.57
+card |     SO     SK     SA     E7     E8     E9     SU
+avg. |  56.14  56.00  41.69  72.76  72.76  72.76  58.34
+nls  | 100.0% 100.0%  94.4% 100.0% 100.0% 100.0% 100.0%
+w    |  16.0%  16.0%   0.0%  89.3%  89.3%  89.3%  22.2%
+ws   |   0.0%   0.0%   0.0%  10.7%  10.7%  10.7%   0.0%
+game | -36.46 -36.50 -49.34  17.57  17.57  17.57 -32.01
 Played: E7
 Played: EZ
 Played: GO
 Played: GA
 -------------------------------------------
 sampling from 56 possible deals [coming from 56 with 4 color distributions]
-card |     SU     SO     SK     SA     E8     E9
-avg. |  56.16  41.25  41.12  27.45  56.16  56.16
-nls  | 100.0% 100.0% 100.0%  33.9% 100.0% 100.0%
-w    |  12.5%   0.0%   0.0%   0.0%  12.5%  12.5%
-game | -39.00 -48.00 -48.00 -63.86 -39.00 -39.00
+card |     SO     SK     SA     E8     E9     SU
+avg. |  41.25  41.12  27.45  56.16  56.16  56.16
+nls  | 100.0% 100.0%  33.9% 100.0% 100.0% 100.0%
+w    |   0.0%   0.0%   0.0%  12.5%  12.5%  12.5%
+game | -48.00 -48.00 -63.86 -39.00 -39.00 -39.00
 Played: E8
 -------------------------------------------
 sampling from 56 possible deals [coming from 56 with 4 color distributions]
-card |     SU     SO     SK     SA     E9
-avg. |  55.79  54.16  53.98  55.79  55.79
-w    |  12.5%   0.0%   0.0%  12.5%  12.5%
-game | -39.00 -48.00 -48.00 -39.00 -39.00
+card |     SO     SK     SA     E9     SU
+avg. |  54.16  53.98  55.79  55.79  55.79
+w    |   0.0%   0.0%  12.5%  12.5%  12.5%
+game | -48.00 -48.00 -39.00 -39.00 -39.00
 Analysis done.
