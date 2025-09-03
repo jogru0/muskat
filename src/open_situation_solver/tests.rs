@@ -7,19 +7,20 @@ use crate::{
     card_points::CardPoints,
     deck::Deck,
     game_type::GameType,
+    open_analysis_performance::analyzer_yield,
     open_situation_solver::{
         OpenSituationSolver,
         bounds_cache::{FastOpenSituationSolverCache, open_situation_reachable_from_to_u32_key},
     },
     situation::OpenSituation,
-    trick_yield::{TrickYield, YieldSoFar},
+    trick_yield::YieldSoFar,
 };
 
 fn test_calculate_potential_score(
     deck: Deck,
     game_type: GameType,
     declarer: BiddingRole,
-    expected: TrickYield,
+    expected: YieldSoFar,
 ) {
     let deal = deck.deal();
     let open_situation = OpenSituation::initial(deal, declarer);
@@ -30,9 +31,10 @@ fn test_calculate_potential_score(
         game_type,
     );
 
-    let actual = solver.calculate_future_yield_with_optimal_open_play(
+    let actual = analyzer_yield(
         open_situation,
-        YieldSoFar::new(open_situation.cellar().to_points(), 0),
+        &mut solver,
+        open_situation.yield_from_skat(),
     );
 
     assert_eq!(actual, expected);
@@ -42,7 +44,7 @@ fn test_calculate_potential_score_rng_batch(
     game_type: GameType,
     declarer: BiddingRole,
     seed: u64,
-    expecteds: &[TrickYield],
+    expecteds: &[YieldSoFar],
 ) {
     let mut rng = Xoshiro256PlusPlus::seed_from_u64(seed);
 
@@ -59,11 +61,11 @@ fn test_calculate_potential_score_suit_declarer() {
         BiddingRole::FirstCaller,
         432,
         &[
-            TrickYield::new(CardPoints(5), 1),
-            TrickYield::new(CardPoints(5), 1),
-            TrickYield::new(CardPoints(33), 1),
-            TrickYield::new(CardPoints(25), 1),
-            TrickYield::new(CardPoints(38), 1),
+            YieldSoFar::new(CardPoints(9), 1),
+            YieldSoFar::new(CardPoints(12), 1),
+            YieldSoFar::new(CardPoints(47), 1),
+            YieldSoFar::new(CardPoints(32), 1),
+            YieldSoFar::new(CardPoints(45), 1),
         ],
     );
 }
@@ -75,11 +77,11 @@ fn test_calculate_potential_score_grand_first_receiver() {
         BiddingRole::FirstReceiver,
         32,
         &[
-            TrickYield::new(CardPoints(26), 1),
-            TrickYield::new(CardPoints(14), 1),
-            TrickYield::new(CardPoints(0), 0),
-            TrickYield::new(CardPoints(34), 1),
-            TrickYield::new(CardPoints(14), 1),
+            YieldSoFar::new(CardPoints(30), 1),
+            YieldSoFar::new(CardPoints(27), 1),
+            YieldSoFar::new(CardPoints(21), 0),
+            YieldSoFar::new(CardPoints(36), 1),
+            YieldSoFar::new(CardPoints(25), 1),
         ],
     );
 }
@@ -89,61 +91,12 @@ fn test_calculate_potential_score_null_second_caller() {
     test_calculate_potential_score_rng_batch(
         GameType::Null,
         BiddingRole::SecondCaller,
-        543,
+        333,
         &[
-            TrickYield::new(CardPoints(0), 1),
-            TrickYield::new(CardPoints(0), 1),
-            TrickYield::new(CardPoints(0), 1),
-            TrickYield::new(CardPoints(0), 1),
-            TrickYield::new(CardPoints(0), 1),
-            TrickYield::new(CardPoints(0), 1),
-            TrickYield::new(CardPoints(0), 1),
-            TrickYield::new(CardPoints(0), 1),
-            TrickYield::new(CardPoints(0), 1),
-            TrickYield::new(CardPoints(0), 1),
-            TrickYield::new(CardPoints(0), 1),
-            TrickYield::new(CardPoints(0), 1),
-            TrickYield::new(CardPoints(0), 1),
-            TrickYield::new(CardPoints(0), 1),
-            TrickYield::new(CardPoints(0), 1),
-            TrickYield::new(CardPoints(0), 1),
-            TrickYield::new(CardPoints(0), 1),
-            TrickYield::new(CardPoints(0), 1),
-            TrickYield::new(CardPoints(0), 1),
-            TrickYield::new(CardPoints(0), 1),
-            TrickYield::new(CardPoints(0), 1),
-            TrickYield::new(CardPoints(0), 1),
-            TrickYield::new(CardPoints(0), 1),
-            TrickYield::new(CardPoints(0), 1),
-            TrickYield::new(CardPoints(0), 1),
-            TrickYield::new(CardPoints(0), 1),
-            TrickYield::new(CardPoints(0), 1),
-            TrickYield::new(CardPoints(0), 1),
-            TrickYield::new(CardPoints(0), 1),
-            TrickYield::new(CardPoints(0), 1),
-            TrickYield::new(CardPoints(0), 1),
-            TrickYield::new(CardPoints(0), 1),
-            TrickYield::new(CardPoints(0), 1),
-            TrickYield::new(CardPoints(0), 1),
-            TrickYield::new(CardPoints(0), 1),
-            TrickYield::new(CardPoints(0), 1),
-            TrickYield::new(CardPoints(0), 1),
-            TrickYield::new(CardPoints(0), 1),
-            TrickYield::new(CardPoints(0), 1),
-            TrickYield::new(CardPoints(0), 1),
-            TrickYield::new(CardPoints(0), 1),
-            TrickYield::new(CardPoints(0), 1),
-            TrickYield::new(CardPoints(0), 1),
-            TrickYield::new(CardPoints(0), 1),
-            TrickYield::new(CardPoints(0), 1),
-            TrickYield::new(CardPoints(0), 1),
-            TrickYield::new(CardPoints(0), 1),
-            TrickYield::new(CardPoints(0), 1),
-            TrickYield::new(CardPoints(0), 1),
-            TrickYield::new(CardPoints(0), 1),
-            TrickYield::new(CardPoints(0), 1),
-            TrickYield::new(CardPoints(0), 1),
-            TrickYield::new(CardPoints(0), 0),
+            YieldSoFar::new(CardPoints(89), 1),
+            YieldSoFar::new(CardPoints(62), 1),
+            YieldSoFar::new(CardPoints(50), 1),
+            YieldSoFar::new(CardPoints(65), 1),
         ],
     );
 }

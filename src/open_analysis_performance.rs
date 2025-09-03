@@ -5,12 +5,13 @@ use std::{
     time::Duration,
 };
 
-use rand::Rng;
+use rand::{Rng, seq::IteratorRandom};
 use rustc_hash::FxHasher;
 
 use crate::{
     bidding_role::BiddingRole,
     card::{CardType, Suit},
+    card_points::CardPoints,
     deck::Deck,
     game_type::GameType,
     monte_carlo::GameConclusion,
@@ -21,16 +22,16 @@ use crate::{
             open_situation_reachable_from_to_u32_key,
         },
     },
-    role::Role,
     situation::OpenSituation,
     stats::write_node_timing_stats,
-    trick_yield::{TrickYield, YieldSoFar},
+    trick_yield::YieldSoFar,
 };
 
 #[derive(Hash, Clone, Copy)]
 pub struct OpenSituationAndGameType {
     open_situation: OpenSituation,
     game_type: GameType,
+    yield_so_far: YieldSoFar,
 }
 
 pub fn generate_random_trump_games_of_active_player(
@@ -47,9 +48,71 @@ pub fn generate_random_trump_games_of_active_player(
             _ => unreachable!("out of range"),
         };
 
+        let open_situation = OpenSituation::initial(random_deal, BiddingRole::FIRST_ACTIVE_PLAYER);
+
         Some(OpenSituationAndGameType {
-            open_situation: OpenSituation::initial(random_deal, BiddingRole::FIRST_ACTIVE_PLAYER),
+            open_situation,
             game_type: GameType::Trump(random_trump_type),
+            yield_so_far: open_situation.yield_from_skat(),
+        })
+    })
+}
+
+pub fn generate_random_unfinished_open_situations(
+    rng: &mut impl Rng,
+) -> impl Iterator<Item = OpenSituationAndGameType> {
+    from_fn(|| {
+        let deal = Deck::shuffled(rng).deal();
+        let game_type = match rng.random_range(0..2) {
+            0 => GameType::Null,
+            1 => {
+                let card_type = match rng.random_range(0..2) {
+                    0 => {
+                        let suit = match rng.random_range(0..4) {
+                            0 => Suit::Clubs,
+                            1 => Suit::Hearts,
+                            2 => Suit::Diamonds,
+                            3 => Suit::Spades,
+                            _ => unreachable!("out of range"),
+                        };
+                        CardType::Suit(suit)
+                    }
+                    1 => CardType::Trump,
+                    _ => unreachable!("out of range"),
+                };
+                GameType::Trump(card_type)
+            }
+            _ => unreachable!("out of range"),
+        };
+
+        let bidding_winner = match rng.random_range(0..3) {
+            0 => BiddingRole::FirstReceiver,
+            1 => BiddingRole::FirstCaller,
+            2 => BiddingRole::SecondCaller,
+            _ => unreachable!("out of range"),
+        };
+
+        let mut open_situation = OpenSituation::initial(deal, bidding_winner);
+
+        let mut yield_so_far = open_situation.yield_from_skat();
+
+        // Up to 29 decisions, so there is one more left (where we can analyze all childs).
+        for _ in 0..rng.random_range(0..30) {
+            let possibilities_for_decision = open_situation.next_possible_plays(game_type);
+            yield_so_far.add_assign(
+                open_situation.play_card(
+                    possibilities_for_decision
+                        .choose(rng)
+                        .expect("was choosen out of it"),
+                    game_type,
+                ),
+            );
+        }
+
+        Some(OpenSituationAndGameType {
+            open_situation,
+            game_type,
+            yield_so_far,
         })
     })
 }
@@ -115,6 +178,7 @@ pub fn measure_performance_to_decide_winner_of_open_situations(
         let OpenSituationAndGameType {
             open_situation,
             game_type,
+            yield_so_far,
         } = open_situation_and_game_type;
 
         let mut solver = OpenSituationSolver::new(
@@ -124,18 +188,7 @@ pub fn measure_performance_to_decide_winner_of_open_situations(
             game_type,
         );
 
-        debug_assert_eq!(
-            open_situation_and_game_type.open_situation.active_role(),
-            Role::Declarer
-        );
-        debug_assert!(!matches!(
-            open_situation_and_game_type.game_type,
-            GameType::Null
-        ));
-
-        let yield_from_skat = open_situation.yield_from_skat();
-
-        let total_yield = analyzer(open_situation, &mut solver, yield_from_skat, level);
+        let total_yield = analyzer(open_situation, &mut solver, yield_so_far, level);
 
         let conclusion = GameConclusion::from_final_declarer_yield(&total_yield);
         let is_won = GameConclusion::DefendersAreDominated <= conclusion;
@@ -177,6 +230,7 @@ pub fn measure_performance_to_judge_possible_next_turns_of_open_situation(
         let OpenSituationAndGameType {
             open_situation,
             game_type,
+            yield_so_far,
         } = open_situation_and_game_type;
 
         let mut solver = OpenSituationSolver::new(
@@ -186,23 +240,12 @@ pub fn measure_performance_to_judge_possible_next_turns_of_open_situation(
             game_type,
         );
 
-        debug_assert_eq!(
-            open_situation_and_game_type.open_situation.active_role(),
-            Role::Declarer
-        );
-        debug_assert!(!matches!(
-            open_situation_and_game_type.game_type,
-            GameType::Null
-        ));
-
-        let yield_from_skat = open_situation.yield_from_skat();
-
         for card in open_situation.next_possible_plays(game_type) {
             let mut child = open_situation;
-            let more_yield = child.play_card(card, game_type);
-            debug_assert_eq!(more_yield, TrickYield::ZERO_TRICKS);
 
-            let total_yield = analyzer(child, &mut solver, yield_from_skat, level);
+            let yield_so_far_child = yield_so_far.add(child.play_card(card, game_type));
+
+            let total_yield = analyzer(child, &mut solver, yield_so_far_child, level);
 
             let conclusion = GameConclusion::from_final_declarer_yield(&total_yield);
             let is_won = GameConclusion::DefendersAreDominated <= conclusion;
@@ -280,13 +323,24 @@ fn analyzer_conclusion<C: OpenSituationSolverCache>(
     conclusion.least_yield_necessary_to_be_in_here()
 }
 
-fn analyzer_yield<C: OpenSituationSolverCache>(
+pub fn analyzer_yield<C: OpenSituationSolverCache>(
     open_situation: OpenSituation,
     solver: &mut OpenSituationSolver<C>,
     yield_so_far: YieldSoFar,
 ) -> YieldSoFar {
-    let future_yield =
-        solver.calculate_future_yield_with_optimal_open_play(open_situation, yield_so_far);
+    let mut yield_goal = YieldSoFar::MAX;
 
-    yield_so_far.add(future_yield)
+    loop {
+        let threshold = yield_goal.saturating_sub(yield_so_far);
+
+        if solver.still_makes_at_least(open_situation, threshold) {
+            return yield_goal;
+        }
+
+        if yield_goal == YieldSoFar::new(CardPoints(0), 1) {
+            return yield_so_far;
+        }
+
+        yield_goal = YieldSoFar::new(CardPoints(yield_goal.card_points().0 - 1), 1)
+    }
 }

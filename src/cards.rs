@@ -256,6 +256,10 @@ impl Cards {
     }
 }
 
+/// Input the max delta that should lead to banning childs.
+/// The returned CardPoints is the biggest delta of an actually banned card.
+/// Therefore, we get as tight bounds as possible for banned childs to use
+/// to tighten our own bounds.
 pub fn quasi_equivalent_with_max_delta(
     card: Card,
     in_hand_or_yielded: Cards,

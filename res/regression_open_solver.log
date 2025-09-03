@@ -1,0 +1,99 @@
+==========================================
+Performance of getting IsWon of 1000 samples:
+Number of 1000 nodes:
+	mean: 6
+	median: 0
+	max: 503
+Time spend in ms:
+	mean: 1
+	median: 0
+	max: 67
+Mean duration per node: 136ns
+
+Hash in: 4257708388493276702
+
+Hash won: 4234195513575996823
+==========================================
+Performance of getting Conclusion of 1000 samples:
+Number of 1000 nodes:
+	mean: 17
+	median: 0
+	max: 2491
+Time spend in ms:
+	mean: 2
+	median: 0
+	max: 362
+Mean duration per node: 138ns
+
+Hash in: 4257708388493276702
+
+Hash won: 4234195513575996823
+Hash conclusion: 4404927750135915265
+==========================================
+Performance of getting Yield of 1000 samples:
+Number of 1000 nodes:
+	mean: 66
+	median: 1
+	max: 5845
+Time spend in ms:
+	mean: 9
+	median: 0
+	max: 964
+Mean duration per node: 137ns
+
+Hash in: 4257708388493276702
+
+Hash won: 4234195513575996823
+Hash conclusion: 4404927750135915265
+Hash yield: 1756499652752783402
+
+//////////
+
+==========================================
+Performance of getting IsWon of 1000 samples:
+Number of 1000 nodes:
+	mean: 13
+	median: 0
+	max: 1292
+Time spend in ms:
+	mean: 2
+	median: 0
+	max: 173
+Mean duration per node: 135ns
+
+Hash in: 4257708388493276702
+
+Hash won: 17831707663039502104
+==========================================
+Performance of getting Conclusion of 1000 samples:
+Number of 1000 nodes:
+	mean: 35
+	median: 0
+	max: 3457
+Time spend in ms:
+	mean: 5
+	median: 0
+	max: 508
+Mean duration per node: 142ns
+
+Hash in: 4257708388493276702
+
+Hash won: 17831707663039502104
+Hash conclusion: 16584833800199005998
+==========================================
+Performance of getting Yield of 1000 samples:
+Number of 1000 nodes:
+	mean: 128
+	median: 1
+	max: 11368
+Time spend in ms:
+	mean: 17
+	median: 0
+	max: 1669
+Mean duration per node: 135ns
+
+Hash in: 4257708388493276702
+
+Hash won: 17831707663039502104
+Hash conclusion: 16584833800199005998
+Hash yield: 8693108597931385855

@@ -79,7 +79,8 @@ impl OpenSituation {
         self.hand_cards_of(self.active_role)
     }
 
-    //Returns what the declarer yields with this move.
+    /// Returns what the declarer yields with this move.
+    #[must_use]
     pub fn play_card(&mut self, card: Card, game_type: GameType) -> TrickYield {
         debug_assert!(self.next_possible_plays(game_type).contains(card));
         let hand = self.active_hand_cards_mut();
@@ -157,6 +158,7 @@ impl OpenSituation {
         result
     }
 
+    //TODO: Return Yield so far so we don't forget?
     pub fn initial(deal: Deal, bidding_winner: BiddingRole) -> Self {
         let &hand_declarer = deal.hand(bidding_winner);
         let &hand_first_defender = deal.hand(bidding_winner.next());

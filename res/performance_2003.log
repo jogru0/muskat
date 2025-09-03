@@ -5,12 +5,12 @@ Number of 1000 nodes:
 	median: 3
 	max: 833
 Time spend in ms:
-	mean: 4
+	mean: 6
 	median: 0
-	max: 75
-Mean duration per node: 95ns
+	max: 109
+Mean duration per node: 135ns
 
-Hash in: 374999614823141144
+Hash in: 17575038338139922089
 
 Hash won: 12428537979773323644
 ==========================================
@@ -20,12 +20,12 @@ Number of 1000 nodes:
 	median: 100
 	max: 2188
 Time spend in ms:
-	mean: 24
-	median: 9
-	max: 362
-Mean duration per node: 106ns
+	mean: 31
+	median: 13
+	max: 304
+Mean duration per node: 133ns
 
-Hash in: 374999614823141144
+Hash in: 17575038338139922089
 
 Hash won: 12428537979773323644
 Hash conclusion: 4145872674780928481
@@ -36,12 +36,12 @@ Number of 1000 nodes:
 	median: 469
 	max: 11890
 Time spend in ms:
-	mean: 125
-	median: 57
-	max: 1439
-Mean duration per node: 119ns
+	mean: 151
+	median: 64
+	max: 2038
+Mean duration per node: 144ns
 
-Hash in: 374999614823141144
+Hash in: 17575038338139922089
 
 Hash won: 12428537979773323644
 Hash conclusion: 4145872674780928481
@@ -56,12 +56,12 @@ Number of 1000 nodes:
 	median: 3
 	max: 1575
 Time spend in ms:
-	mean: 9
+	mean: 10
 	median: 0
-	max: 200
-Mean duration per node: 124ns
+	max: 215
+Mean duration per node: 134ns
 
-Hash in: 374999614823141144
+Hash in: 17575038338139922089
 
 Hash won: 16747943433204923367
 ==========================================
@@ -71,12 +71,12 @@ Number of 1000 nodes:
 	median: 396
 	max: 6347
 Time spend in ms:
-	mean: 120
-	median: 45
-	max: 1055
-Mean duration per node: 142ns
+	mean: 115
+	median: 52
+	max: 842
+Mean duration per node: 137ns
 
-Hash in: 374999614823141144
+Hash in: 17575038338139922089
 
 Hash won: 16747943433204923367
 Hash conclusion: 9089143242566064017
@@ -87,12 +87,12 @@ Number of 1000 nodes:
 	median: 1271
 	max: 19815
 Time spend in ms:
-	mean: 260
-	median: 136
-	max: 2590
-Mean duration per node: 112ns
+	mean: 321
+	median: 165
+	max: 2972
+Mean duration per node: 138ns
 
-Hash in: 374999614823141144
+Hash in: 17575038338139922089
 
 Hash won: 16747943433204923367
 Hash conclusion: 9089143242566064017

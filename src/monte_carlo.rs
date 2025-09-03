@@ -291,7 +291,6 @@ where
             //TODO: final_declarer_yield_for_possible_plays analogue for game conclusions
             let game_conclusion_for_plays =
                 final_declarer_yield_for_possible_plays(open_situation, yield_so_far, &mut solver);
-            // .map(GameConclusion::from_final_declarer_yield);
 
             let nodes = solver.nodes_generated();
             let time = solver.time_spent();

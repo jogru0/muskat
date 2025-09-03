@@ -8,7 +8,7 @@ use crate::open_situation_solver::bounds_and_preference::BoundsAndMaybePreferenc
 use crate::open_situation_solver::bounds_cache::OpenSituationSolverCache;
 use crate::power::CardPower;
 use crate::situation::OpenSituation;
-use crate::trick_yield::{TrickYield, YieldSoFar};
+use crate::trick_yield::TrickYield;
 use std::cmp::Reverse;
 use std::time::{Duration, Instant};
 
@@ -191,6 +191,12 @@ impl<C: OpenSituationSolverCache> OpenSituationSolver<C> {
 
             let max_delta = Bounds::new(lower_bound_via_child, upper_bound_via_child)
                 .distance_to_threshold(threshold)
+                // Allow delta at most 1 to be comparable to Kupferschmid 2007.
+                // Once we experiment with other values, it would be interesting to see if there
+                // is an optimum below allowing all deltas
+                // (it is a trade-off because skipping childs can mean the bound we find for this node are less strict)
+                // and if there are faster implementations abusing certain max deltas
+                // (as suggested by K2007, but I think my way of doing it might already be superior to what they found)
                 .min(CardPoints(1));
             let (banned, delta) = quasi_equivalent_with_max_delta(
                 card,
@@ -206,6 +212,8 @@ impl<C: OpenSituationSolverCache> OpenSituationSolver<C> {
             still_considered = still_considered.without(banned);
 
             //TODO: was constexpr
+            // Here, the biggest delta of skipped childs has to be taken into consideration
+            // for this update of bound_calculated_over_all_children.
             match active_minimax_role {
                 MinimaxRole::Min => {
                     bound_calculated_over_all_children =
@@ -217,6 +225,10 @@ impl<C: OpenSituationSolverCache> OpenSituationSolver<C> {
                 }
             }
         }
+
+        // TODO: Should we not always update both of our bounds according to the children?
+        // Probably not, I'm currently too tired to really think about it.
+        // But please do in the future and then leave a comment explaining why we do what we do and nothing more.
 
         // TODO: Understand again what this case means and why we are sure it decides the threshold, but no card is suggested for play.
         if maybe_deciding_card.is_none() {
@@ -295,67 +307,6 @@ impl<C: OpenSituationSolverCache> OpenSituationSolver<C> {
             time_spend_calculating_bounds: Duration::ZERO,
             analyzed_nodes: 0,
         }
-    }
-
-    // TODO: Should probably not be a member of this struct.
-    // TODO: I think for Null, it just returns any non empty yield in case of the declarer losing.
-    // So this makes only sense to be called with completely new games? Or is there some outside logic
-    // making sure that we calculate the total yield correctly?
-    // If this is meant to abort when it's clear that we can't reach the target, could that be used for non null as well?
-    pub fn calculate_future_yield_with_optimal_open_play(
-        &mut self,
-        open_situation: OpenSituation,
-        yield_so_far: YieldSoFar,
-    ) -> TrickYield {
-        if matches!(self.game_type, GameType::Null) {
-            // TODO: Should we check whether score so far is NONE?
-            if self.still_makes_at_least(open_situation, TrickYield::new(CardPoints(0), 1)) {
-                return TrickYield::new(CardPoints(0), 1);
-            }
-            return TrickYield::ZERO_TRICKS;
-        }
-
-        // TODO: Duplication to call this here, should we instead just use MAX and then let the cache work for us?
-        let quick_bounds = open_situation.quick_bounds();
-
-        let needed_for_schwarz = YieldSoFar::MAX.saturating_sub(yield_so_far);
-        debug_assert!(quick_bounds.upper() <= needed_for_schwarz);
-
-        if needed_for_schwarz == quick_bounds.upper() {
-            //Try to force Schwarz for the declarer.
-            if self.still_makes_at_least(open_situation, needed_for_schwarz) {
-                return needed_for_schwarz;
-            }
-        }
-        debug_assert!(!self.still_makes_at_least(open_situation, needed_for_schwarz));
-
-        if quick_bounds.upper().number_of_tricks() == 0 {
-            // We already know that no tricks can be made.
-            debug_assert_eq!(quick_bounds.upper().card_points().0, 0);
-            debug_assert!(
-                !self.still_makes_at_least(open_situation, TrickYield::new(CardPoints(0), 1))
-            );
-            debug_assert_eq!(quick_bounds.lower(), TrickYield::ZERO_TRICKS);
-            return TrickYield::ZERO_TRICKS;
-        }
-
-        //See if we make points (and therefore one trick), and how many, or no points, but at least one trick.
-        //TODO: E.g. here, it is not necessary to check if we can make at least one trick,
-        // when the yield_so_far is not NONE anyway.
-        let mut goal = TrickYield::new(quick_bounds.upper().card_points(), 1);
-        while !self.still_makes_at_least(open_situation, goal) {
-            if goal.card_points().0 == 0 {
-                //Looks like the declarer cannot make a single trick.
-                debug_assert_eq!(quick_bounds.lower(), TrickYield::ZERO_TRICKS);
-                return TrickYield::ZERO_TRICKS;
-            }
-            goal = TrickYield::new(CardPoints(goal.card_points().0 - 1), 1);
-        }
-
-        //TODO: Would be really cool if we could return the actual threshold we found, not
-        //the arbitrary one with 1 trick.
-        debug_assert!(quick_bounds.lower() <= goal);
-        goal
     }
 
     /// Main entry point for algorithms using the solver.

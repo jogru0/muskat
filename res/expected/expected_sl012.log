@@ -2,16 +2,18 @@ Played: HZ
 -------------------------------------------
 sampling from 55 possible deals [coming from 55 with 10 color distributions]
 card |     HU
-avg. |   7.64
+avg. |  21.13
 nlb  |  83.6%
+nls  |  20.0%
 game | -69.42
 Played: HU
 Played: H9
 -------------------------------------------
 sampling from 55 possible deals [coming from 55 with 10 color distributions]
 card |     SK     SA     G7     GO     GA     E8     E9     EO     EA
-avg. |   7.64   7.64   7.64   7.64   7.64   7.64   7.64   7.64   7.64
+avg. |  21.07  21.07  15.09  15.16  13.33  21.13  21.13  20.78  18.00
 nlb  |  83.6%  83.6%  74.5%  18.2%  18.2%  83.6%  83.6%  83.6%  83.6%
+nls  |  20.0%  20.0%   1.8%  18.2%  16.4%  20.0%  20.0%  20.0%  10.9%
 game | -69.42 -69.42 -56.87  20.91  20.91 -69.42 -69.42 -69.42 -69.42
 Played: GA
 Played: GZ
@@ -19,8 +21,9 @@ Played: GU
 -------------------------------------------
 sampling from 45 possible deals [coming from 45 with 10 color distributions]
 card |     SK     SA     G7     GO     E8     E9     EO     EA
-avg. |   8.00   8.00   8.00   8.00   8.00   8.00   8.00   8.00
+avg. |   9.80   9.80   8.22   8.00  11.62  11.62  11.42   9.33
 nlb  |  13.3%  13.3%   2.2%   0.0%  11.1%  11.1%  13.3%  13.3%
+nls  |   2.2%   2.2%   0.0%   0.0%  11.1%  11.1%   8.9%   0.0%
 game |  27.60  27.60  42.93  46.00  30.67  30.67  27.60  27.60
 Played: G7
 Played: G8
