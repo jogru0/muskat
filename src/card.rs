@@ -177,4 +177,41 @@ impl Card {
 
         CardType::Suit(self.suit())
     }
+
+    pub fn of(rank: Rank, suit: Suit) -> Self {
+        match (rank, suit) {
+            (Rank::L7, Suit::Diamonds) => Card::S7,
+            (Rank::L7, Suit::Hearts) => Card::H7,
+            (Rank::L7, Suit::Spades) => Card::G7,
+            (Rank::L7, Suit::Clubs) => Card::E7,
+            (Rank::L8, Suit::Diamonds) => Card::S8,
+            (Rank::L8, Suit::Hearts) => Card::H8,
+            (Rank::L8, Suit::Spades) => Card::G8,
+            (Rank::L8, Suit::Clubs) => Card::E8,
+            (Rank::L9, Suit::Diamonds) => Card::S9,
+            (Rank::L9, Suit::Hearts) => Card::H9,
+            (Rank::L9, Suit::Spades) => Card::G9,
+            (Rank::L9, Suit::Clubs) => Card::E9,
+            (Rank::Z, Suit::Diamonds) => Card::SZ,
+            (Rank::Z, Suit::Hearts) => Card::HZ,
+            (Rank::Z, Suit::Spades) => Card::GZ,
+            (Rank::Z, Suit::Clubs) => Card::EZ,
+            (Rank::U, Suit::Diamonds) => Card::SU,
+            (Rank::U, Suit::Hearts) => Card::HU,
+            (Rank::U, Suit::Spades) => Card::GU,
+            (Rank::U, Suit::Clubs) => Card::EU,
+            (Rank::O, Suit::Diamonds) => Card::SO,
+            (Rank::O, Suit::Hearts) => Card::HO,
+            (Rank::O, Suit::Spades) => Card::GO,
+            (Rank::O, Suit::Clubs) => Card::EO,
+            (Rank::K, Suit::Diamonds) => Card::SK,
+            (Rank::K, Suit::Hearts) => Card::HK,
+            (Rank::K, Suit::Spades) => Card::GK,
+            (Rank::K, Suit::Clubs) => Card::EK,
+            (Rank::A, Suit::Diamonds) => Card::SA,
+            (Rank::A, Suit::Hearts) => Card::HA,
+            (Rank::A, Suit::Spades) => Card::GA,
+            (Rank::A, Suit::Clubs) => Card::EA,
+        }
+    }
 }

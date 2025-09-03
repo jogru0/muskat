@@ -255,3 +255,84 @@ impl Cards {
         result
     }
 }
+
+pub fn quasi_equivalent_with_max_delta(
+    card: Card,
+    in_hand_or_yielded: Cards,
+    game_type: GameType,
+    max_delta: CardPoints,
+) -> (Cards, CardPoints) {
+    if matches!(game_type, GameType::Null) {
+        let sorted_ranks = [
+            Rank::L7,
+            Rank::L8,
+            Rank::L9,
+            Rank::Z,
+            Rank::U,
+            Rank::O,
+            Rank::K,
+            Rank::A,
+        ];
+
+        let suit = card.suit();
+
+        (
+            quasi_equivalent_impl(
+                card,
+                sorted_ranks.into_iter().map(|rank| Card::of(rank, suit)),
+                in_hand_or_yielded,
+                // The impl doesn't know about points being irrelevant in 0,
+                // so by allowing a big max_delta, we hack in not filtering out any cards in the null case.
+                CardPoints(11),
+            )
+            .0,
+            CardPoints(0),
+        )
+    } else {
+        // We rely on the fact that for pure type Cards and not null games, iterating Cards is sorted by rank.
+        quasi_equivalent_impl(
+            card,
+            Cards::of_card_type(card.card_type(game_type), game_type),
+            in_hand_or_yielded,
+            max_delta,
+        )
+    }
+}
+
+fn quasi_equivalent_impl(
+    card: Card,
+    candidates_sorted_by_rank: impl IntoIterator<Item = Card>,
+    in_hand_or_yielded: Cards,
+    max_delta: CardPoints,
+) -> (Cards, CardPoints) {
+    let mut filtered_equivalence_set = Cards::EMPTY;
+    let mut result_max_delta = 0;
+    let mut found_card = false;
+
+    let card_points = card.to_points();
+
+    for candidate in candidates_sorted_by_rank {
+        if !in_hand_or_yielded.contains(candidate) {
+            if found_card {
+                break;
+            }
+
+            filtered_equivalence_set = Cards::EMPTY;
+            result_max_delta = 0;
+            continue;
+        }
+
+        let delta = candidate.to_points().0.abs_diff(card_points.0);
+        if max_delta.0 < delta {
+            continue;
+        }
+
+        filtered_equivalence_set.add_new(candidate);
+        found_card |= candidate == card;
+        result_max_delta = result_max_delta.max(delta)
+    }
+
+    debug_assert!(found_card);
+    debug_assert!(filtered_equivalence_set.contains(card));
+    (filtered_equivalence_set, CardPoints(result_max_delta))
+}

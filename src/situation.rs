@@ -190,4 +190,9 @@ impl OpenSituation {
             active_role,
         }
     }
+
+    pub(crate) fn in_hand_or_yielded(&self) -> Cards {
+        self.active_hand_cards()
+            .combined_with_disjoint(self.cellar())
+    }
 }

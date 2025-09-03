@@ -141,4 +141,18 @@ impl TrickYield {
         debug_assert!(result.makes_probably_sense());
         result
     }
+
+    pub fn sub(&self, delta: CardPoints) -> TrickYield {
+        TrickYield {
+            card_points: CardPoints(self.card_points.0.saturating_sub(delta.0)),
+            number_of_tricks: self.number_of_tricks,
+        }
+    }
+
+    pub fn add(&self, delta: CardPoints) -> TrickYield {
+        TrickYield {
+            card_points: CardPoints(self.card_points.0 + delta.0),
+            number_of_tricks: self.number_of_tricks,
+        }
+    }
 }
