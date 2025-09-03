@@ -93,10 +93,10 @@ fn test_calculate_potential_score_null_second_caller() {
         BiddingRole::SecondCaller,
         333,
         &[
-            YieldSoFar::new(CardPoints(89), 1),
+            YieldSoFar::new(CardPoints(91), 1),
             YieldSoFar::new(CardPoints(62), 1),
-            YieldSoFar::new(CardPoints(50), 1),
-            YieldSoFar::new(CardPoints(65), 1),
+            YieldSoFar::new(CardPoints(60), 1),
+            YieldSoFar::new(CardPoints(67), 1),
         ],
     );
 }

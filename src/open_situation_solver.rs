@@ -198,6 +198,7 @@ impl<C: OpenSituationSolverCache> OpenSituationSolver<C> {
                 // and if there are faster implementations abusing certain max deltas
                 // (as suggested by K2007, but I think my way of doing it might already be superior to what they found)
                 .min(CardPoints(1));
+
             let (banned, delta) = quasi_equivalent_with_max_delta(
                 card,
                 in_hand_or_yielded,
@@ -210,6 +211,33 @@ impl<C: OpenSituationSolverCache> OpenSituationSolver<C> {
 
             debug_assert_eq!(still_considered.and(banned), banned);
             still_considered = still_considered.without(banned);
+
+            // Assertions for quasi symmetry reduction ...
+            // for banned_card in banned {
+            //     let mut banned_child = open_situation;
+            //     let add = banned_child.play_card(banned_card, self.game_type);
+            //     let bth = threshold.saturating_sub(add);
+            //     let bbounds = self.bounds_deciding_threshold(banned_child, bth);
+
+            //     match active_minimax_role {
+            //         MinimaxRole::Min => {
+            //             let mut end = bbounds.upper();
+            //             end.add_assign(add);
+            //             debug_assert!(threshold <= end);
+            //         }
+            //         MinimaxRole::Max => {
+            //             let mut end = bbounds.lower();
+            //             end.add_assign(add);
+            //             debug_assert!(
+            //                 end < threshold,
+            //                 "card: {:?}, banned: {:?}, delta: {:?}",
+            //                 card,
+            //                 banned,
+            //                 delta
+            //             );
+            //         }
+            //     }
+            // }
 
             //TODO: was constexpr
             // Here, the biggest delta of skipped childs has to be taken into consideration

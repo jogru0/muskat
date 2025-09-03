@@ -1,39 +1,39 @@
 -------------------------------------------
-sampling 55 sample deals took 171.61µs
-multithreaded solving of 55 sample deals took 6.944821152s
+sampling 55 sample deals took 91.427µs
+multithreaded solving of 55 sample deals took 39.849632154s
 Number of 1000 nodes:
-	mean: 2617
-	median: 2688
-	max: 4280
+	mean: 15451
+	median: 14077
+	max: 28009
 Time spend in ms:
-	mean: 1404
-	median: 1347
-	max: 2916
-Mean duration per node: 537ns
-Writing statistics for 55 analyzed games took 82.694µs.
+	mean: 8087
+	median: 7762
+	max: 19329
+Mean duration per node: 523ns
+Writing statistics for 55 analyzed games took 89.918µs.
 -------------------------------------------
-sampling 55 sample deals took 185.325µs
-multithreaded solving of 55 sample deals took 5.806749288s
+sampling 55 sample deals took 153.424µs
+multithreaded solving of 55 sample deals took 27.013942915s
 Number of 1000 nodes:
-	mean: 3294
-	median: 3475
-	max: 5416
+	mean: 16974
+	median: 15774
+	max: 43271
 Time spend in ms:
-	mean: 1192
-	median: 1123
-	max: 2428
-Mean duration per node: 362ns
-Writing statistics for 55 analyzed games took 201.585µs.
+	mean: 5409
+	median: 4915
+	max: 12984
+Mean duration per node: 319ns
+Writing statistics for 55 analyzed games took 160.65µs.
 -------------------------------------------
-sampling 45 sample deals took 91.25µs
-multithreaded solving of 45 sample deals took 1.070012805s
+sampling 45 sample deals took 79.975µs
+multithreaded solving of 45 sample deals took 4.147078834s
 Number of 1000 nodes:
-	mean: 711
-	median: 737
-	max: 1530
+	mean: 3452
+	median: 3420
+	max: 11126
 Time spend in ms:
-	mean: 225
-	median: 210
-	max: 522
-Mean duration per node: 317ns
-Writing statistics for 45 analyzed games took 178.823µs.
+	mean: 979
+	median: 1004
+	max: 3051
+Mean duration per node: 284ns
+Writing statistics for 45 analyzed games took 118.604µs.

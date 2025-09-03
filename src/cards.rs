@@ -281,18 +281,14 @@ pub fn quasi_equivalent_with_max_delta(
 
         let suit = card.suit();
 
-        (
-            quasi_equivalent_impl(
-                card,
-                sorted_ranks.into_iter().map(|rank| Card::of(rank, suit)),
-                in_hand_or_yielded,
-                // The impl doesn't know about points being irrelevant in 0,
-                // so by allowing a big max_delta, we hack in not filtering out any cards in the null case.
-                CardPoints(11),
-                still_considered,
-            )
-            .0,
-            CardPoints(0),
+        // TODO: Think about null/schwarz. Do we ignore cases because we have a max delta, even though they would
+        // saturate? I don't think so, but I am not sure.
+        quasi_equivalent_impl(
+            card,
+            sorted_ranks.into_iter().map(|rank| Card::of(rank, suit)),
+            in_hand_or_yielded,
+            max_delta,
+            still_considered,
         )
     } else {
         // We rely on the fact that for pure type Cards and not null games, iterating Cards is sorted by rank.

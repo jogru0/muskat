@@ -4,6 +4,7 @@ use static_assertions::assert_eq_size;
 use strum::{EnumCount, VariantArray};
 
 #[derive(Clone, Copy, PartialEq, Eq, Deserialize, Hash)]
+// Ordered for U
 #[repr(u8)]
 pub enum Suit {
     Diamonds,
@@ -39,6 +40,7 @@ impl CardType {
 assert_eq_size!(CardType, u8);
 
 #[derive(Clone, Copy)]
+// Ordered for Null and partially for Nonnull.
 #[repr(u8)]
 pub enum Rank {
     L7,

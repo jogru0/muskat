@@ -21,18 +21,34 @@ impl Bounds {
         threshold <= self.lower || self.upper < threshold
     }
 
-    // TODO: On CardPoints ...
+    // TODO: Write test making sure this is strict, in particular if number_of_tricks make the obvious bounds not tight.
+    // After these are stricter, enable the assertions again that no quasi symmetric cards are banned even though they would
+    // Be on the sought after side of the threshold.
     /// Meaning the bounds could be the distance larger in both directions and still decide the threshold.
+    ///
+    /// The most amount of card points you can widen the bounds (without changing the value for number_of_tricks)
+    /// to still decide the threshold
     pub fn distance_to_threshold(self, threshold: TrickYield) -> CardPoints {
         debug_assert!(self.decides_threshold(threshold));
 
         // TODO: Have to do saturating sub because of stuff with number of tricks ...
         // We really should make sure we don't have sublte bugs related to stuff like this!
         let th = threshold.card_points().0;
-        CardPoints(
+        let result = CardPoints(
             th.checked_sub(self.upper.card_points().0 + 1)
                 .unwrap_or_else(|| self.lower.card_points().0.saturating_sub(th)),
-        )
+        );
+
+        debug_assert!(
+            Bounds::new(self.lower.sub(result), self.upper.add(result))
+                .decides_threshold(threshold),
+            "self: {:?}, threshold: {:?}, result: {:?}, new_bounds: {:?}",
+            self,
+            threshold,
+            result,
+            Bounds::new(self.lower.sub(result), self.upper.add(result))
+        );
+        result
     }
 
     pub fn lower(self) -> TrickYield {
