@@ -1,7 +1,7 @@
 use crate::bounds::Bounds;
 use crate::card::Card;
 use crate::card_points::CardPoints;
-use crate::cards::{Cards, quasi_equivalent_with_max_delta};
+use crate::cards::quasi_equivalent_with_max_delta;
 use crate::game_type::GameType;
 use crate::minimax_role::MinimaxRole;
 use crate::open_situation_solver::bounds_and_preference::BoundsAndMaybePreference;
@@ -138,7 +138,7 @@ impl<C: OpenSituationSolverCache> OpenSituationSolver<C> {
 
         let mut maybe_deciding_card = None;
 
-        let mut banned_due_to_being_too_quasi_equivalent = Cards::EMPTY;
+        let mut still_considered = open_situation.next_possible_plays(self.game_type);
 
         let in_hand_or_yielded = open_situation.in_hand_or_yielded();
 
@@ -148,9 +148,10 @@ impl<C: OpenSituationSolverCache> OpenSituationSolver<C> {
                 break;
             };
 
-            if banned_due_to_being_too_quasi_equivalent.contains(card) {
+            if !still_considered.contains(card) {
                 continue;
             }
+            still_considered.remove(card);
 
             let mut child = open_situation;
 
@@ -188,14 +189,21 @@ impl<C: OpenSituationSolverCache> OpenSituationSolver<C> {
                 break;
             }
 
-            let delta = Bounds::new(lower_bound_via_child, upper_bound_via_child)
-                .distance_to_threshold(threshold);
+            let max_delta = Bounds::new(lower_bound_via_child, upper_bound_via_child)
+                .distance_to_threshold(threshold)
+                .min(CardPoints(1));
             let (banned, delta) = quasi_equivalent_with_max_delta(
                 card,
                 in_hand_or_yielded,
                 self.game_type,
-                delta.min(CardPoints(1)),
+                max_delta,
+                still_considered,
             );
+
+            debug_assert!(delta <= max_delta);
+
+            debug_assert_eq!(still_considered.and(banned), banned);
+            still_considered = still_considered.without(banned);
 
             //TODO: was constexpr
             match active_minimax_role {
@@ -208,9 +216,6 @@ impl<C: OpenSituationSolverCache> OpenSituationSolver<C> {
                         bound_calculated_over_all_children.max(upper_bound_via_child.add(delta));
                 }
             }
-
-            banned_due_to_being_too_quasi_equivalent =
-                banned_due_to_being_too_quasi_equivalent.or(banned)
         }
 
         // TODO: Understand again what this case means and why we are sure it decides the threshold, but no card is suggested for play.

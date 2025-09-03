@@ -1,13 +1,13 @@
 -------------------------------------------
-sampling 100 sample deals took 38.703123ms
-multithreaded solving of 100 sample deals took 5.654561201s
+sampling 100 sample deals took 22.004531ms
+multithreaded solving of 100 sample deals took 5.469284425s
 Number of 1000 nodes:
-	mean: 523
-	median: 323
-	max: 4494
+	mean: 455
+	median: 282
+	max: 4156
 Time spend in ms:
-	mean: 456
-	median: 265
-	max: 3248
-Mean duration per node: 872ns
-Writing statistics for 100 analyzed games took 855.672µs.
+	mean: 411
+	median: 253
+	max: 2824
+Mean duration per node: 902ns
+Writing statistics for 100 analyzed games took 817.679µs.

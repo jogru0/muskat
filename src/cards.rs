@@ -261,6 +261,7 @@ pub fn quasi_equivalent_with_max_delta(
     in_hand_or_yielded: Cards,
     game_type: GameType,
     max_delta: CardPoints,
+    still_considered: Cards,
 ) -> (Cards, CardPoints) {
     if matches!(game_type, GameType::Null) {
         let sorted_ranks = [
@@ -284,6 +285,7 @@ pub fn quasi_equivalent_with_max_delta(
                 // The impl doesn't know about points being irrelevant in 0,
                 // so by allowing a big max_delta, we hack in not filtering out any cards in the null case.
                 CardPoints(11),
+                still_considered,
             )
             .0,
             CardPoints(0),
@@ -295,6 +297,7 @@ pub fn quasi_equivalent_with_max_delta(
             Cards::of_card_type(card.card_type(game_type), game_type),
             in_hand_or_yielded,
             max_delta,
+            still_considered,
         )
     }
 }
@@ -304,6 +307,7 @@ fn quasi_equivalent_impl(
     candidates_sorted_by_rank: impl IntoIterator<Item = Card>,
     in_hand_or_yielded: Cards,
     max_delta: CardPoints,
+    still_considered: Cards,
 ) -> (Cards, CardPoints) {
     let mut filtered_equivalence_set = Cards::EMPTY;
     let mut result_max_delta = 0;
@@ -322,17 +326,61 @@ fn quasi_equivalent_impl(
             continue;
         }
 
+        found_card |= candidate == card;
+
+        if !still_considered.contains(candidate) {
+            continue;
+        }
+
         let delta = candidate.to_points().0.abs_diff(card_points.0);
         if max_delta.0 < delta {
             continue;
         }
 
         filtered_equivalence_set.add_new(candidate);
-        found_card |= candidate == card;
         result_max_delta = result_max_delta.max(delta)
     }
 
     debug_assert!(found_card);
-    debug_assert!(filtered_equivalence_set.contains(card));
     (filtered_equivalence_set, CardPoints(result_max_delta))
+}
+
+impl<const N: usize> From<&[Card; N]> for Cards {
+    fn from(cards: &[Card; N]) -> Self {
+        let mut result = Self::EMPTY;
+        for &card in cards {
+            result.add_new(card);
+        }
+        result
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{
+        card::{Card, CardType},
+        card_points::CardPoints,
+        cards::{Cards, quasi_equivalent_with_max_delta},
+        game_type::GameType,
+    };
+
+    #[test]
+    fn quasi_equivalence_u() {
+        let card = Card::EU;
+        let in_hand_or_yielded = Cards::from(&[Card::EU, Card::SU, Card::GU]);
+        let game_type = GameType::Trump(CardType::Trump);
+        let max_delta = CardPoints(0);
+        let still_considered = Cards::from(&[Card::SU, Card::HU, Card::GU]);
+
+        let (banned, delta) = quasi_equivalent_with_max_delta(
+            card,
+            in_hand_or_yielded,
+            game_type,
+            max_delta,
+            still_considered,
+        );
+
+        assert_eq!(banned, Cards::from(&[Card::GU]));
+        assert_eq!(delta, CardPoints(0));
+    }
 }
