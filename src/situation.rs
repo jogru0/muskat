@@ -3,7 +3,8 @@ use static_assertions::assert_eq_size;
 use crate::{
     bidding_role::BiddingRole,
     bounds::Bounds,
-    card::Card,
+    card::{Card, CardType, Rank, Suit},
+    card_points::CardPoints,
     cards::Cards,
     deal::Deal,
     game_type::GameType,
@@ -18,6 +19,7 @@ use crate::{
 /// regarding expected future trick yield, so it needs to be optimized for that:
 /// * does not contain history like bidding information or trick yields so far, or even the game type
 /// * fast to deduce possible next moves, get resulting child situations, etc.
+// TODO: Check trading of memory footprint/speed of playing a card vs having to recalculate certain stuff when needed
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct OpenSituation {
     hand_declarer: Cards,
@@ -84,7 +86,7 @@ impl OpenSituation {
     pub fn play_card(&mut self, card: Card, game_type: GameType) -> TrickYield {
         debug_assert!(self.next_possible_plays(game_type).contains(card));
         let hand = self.active_hand_cards_mut();
-        hand.remove(card);
+        hand.remove_existing(card);
 
         self.active_role = self.active_role.next();
 
@@ -131,8 +133,164 @@ impl OpenSituation {
         debug_assert_eq!(number_cards_belonging_to_p, number_cards_belonging_to_nnp);
     }
 
-    pub fn quick_bounds(self) -> Bounds {
-        let lower = TrickYield::ZERO_TRICKS;
+    // TODO: For upper bound, can remove points from opposing matadors.
+
+    pub fn lower_bound_non_null_declarer_forehand(mut self, trump: CardType) -> TrickYield {
+        debug_assert_eq!(self.active_role, Role::Declarer);
+        debug_assert!(matches!(self.partial_trick, PartialTrick::EMPTY));
+
+        let game_type = GameType::Trump(trump);
+        let trump_cards = Cards::of_card_type(CardType::Trump, game_type);
+
+        let mut count_f = 0;
+        let mut count_s = 0;
+
+        let mut points = CardPoints(0);
+        let mut tricks = 0;
+
+        let remaining_cards = self
+            .hand_declarer
+            .combined_with_disjoint(self.hand_first_defender)
+            .combined_with_disjoint(self.hand_second_defender);
+
+        let mut remaining_trump = remaining_cards.and(trump_cards);
+        let mut count_f_trump = 0;
+        let mut hand_f = self.hand_first_defender;
+        let mut count_s_trump = 0;
+        let mut hand_s = self.hand_second_defender;
+
+        while let Some(matador) = remaining_trump.remove_highest_non_null()
+            && self.hand_declarer.remove_if_there(matador)
+        {
+            tricks += 1;
+            points += matador.to_points();
+
+            if let Some(low_trump) = hand_f.remove_lowest_of_type(CardType::Trump, game_type) {
+                remaining_trump.remove_existing(low_trump);
+                count_f_trump += 1;
+            } else {
+                count_f += 1;
+            }
+
+            if let Some(low_trump) = hand_s.remove_lowest_of_type(CardType::Trump, game_type) {
+                remaining_trump.remove_existing(low_trump);
+                count_s_trump += 1;
+            } else {
+                count_s += 1;
+            }
+        }
+
+        for _ in 0..count_f_trump {
+            let mut available = self.hand_first_defender.and(Cards::of_trump(game_type));
+            let card = available
+                .and(Cards::OF_ZERO_POINTS)
+                .remove_smallest()
+                .or_else(|| {
+                    available
+                        .and(Cards::of_rank(crate::card::Rank::U))
+                        .remove_smallest()
+                })
+                .unwrap_or_else(|| unsafe { available.remove_smallest_unchecked() });
+
+            self.hand_first_defender.remove_existing(card);
+            points += card.to_points();
+        }
+
+        for _ in 0..count_s_trump {
+            let mut available = self.hand_second_defender.and(Cards::of_trump(game_type));
+            let card = available
+                .and(Cards::OF_ZERO_POINTS)
+                .remove_smallest()
+                .or_else(|| {
+                    available
+                        .and(Cards::of_rank(crate::card::Rank::U))
+                        .remove_smallest()
+                })
+                .unwrap_or_else(|| unsafe { available.remove_smallest_unchecked() });
+
+            self.hand_second_defender.remove_existing(card);
+            points += card.to_points();
+        }
+
+        for suit in [Suit::Clubs, Suit::Diamonds, Suit::Hearts, Suit::Spades] {
+            let card_type = CardType::Suit(suit);
+            let cards_of_type = Cards::of_card_type(card_type, game_type);
+
+            let mut remaining_suit = remaining_cards.and(cards_of_type);
+            while (!self.hand_first_defender.and(cards_of_type).is_empty()
+                || self.hand_first_defender.and(trump_cards).is_empty())
+                && (!self.hand_second_defender.and(cards_of_type).is_empty()
+                    || self.hand_second_defender.and(trump_cards).is_empty())
+                && let Some(highest) = remaining_suit.remove_highest_non_null()
+                && self.hand_declarer.remove_if_there(highest)
+            {
+                tricks += 1;
+                points += highest.to_points();
+
+                if let Some(lowest) = self
+                    .hand_first_defender
+                    .remove_lowest_of_type(card_type, game_type)
+                {
+                    remaining_suit.remove_existing(lowest);
+                    points += lowest.to_points();
+                } else {
+                    count_f += 1;
+                }
+
+                if let Some(lowest) = self
+                    .hand_second_defender
+                    .remove_lowest_of_type(card_type, game_type)
+                {
+                    remaining_suit.remove_existing(lowest);
+                    points += lowest.to_points();
+                } else {
+                    count_s += 1;
+                }
+            }
+        }
+
+        'outer: for _ in 0..count_f {
+            for rank in Rank::BY_POINTS {
+                if let Some(card) = self
+                    .hand_first_defender
+                    .and(Cards::of_rank(rank))
+                    .remove_smallest()
+                {
+                    self.hand_first_defender.remove_existing(card);
+                    points += card.to_points();
+                    continue 'outer;
+                }
+            }
+
+            unreachable!("no cards left");
+        }
+
+        'outer: for _ in 0..count_s {
+            for rank in Rank::BY_POINTS {
+                if let Some(card) = self
+                    .hand_second_defender
+                    .and(Cards::of_rank(rank))
+                    .remove_smallest()
+                {
+                    self.hand_second_defender.remove_existing(card);
+                    points += card.to_points();
+                    continue 'outer;
+                }
+            }
+
+            unreachable!("no cards left");
+        }
+
+        TrickYield::new(points, tricks)
+    }
+
+    pub fn quick_bounds(self, game_type: GameType) -> Bounds {
+        let lower = match (self.is_trick_in_progress(), self.active_role, game_type) {
+            (false, Role::Declarer, GameType::Trump(trump)) => {
+                self.lower_bound_non_null_declarer_forehand(trump)
+            }
+            _ => TrickYield::ZERO_TRICKS,
+        };
 
         //TODO: How many tricks left?
         let cellar = self.cellar();

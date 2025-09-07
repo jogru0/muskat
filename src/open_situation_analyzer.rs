@@ -90,7 +90,7 @@ where
     debug_assert!(!possible_plays.is_empty());
 
     //TODO: Going over all childs should be its own thing.
-    while let Some(card) = possible_plays.remove_next() {
+    while let Some(card) = possible_plays.remove_smallest() {
         let mut child = open_situation;
         let points_to_get_to_child = child.play_card(card, game_type);
         let mut yield_so_far_child = yield_so_far;

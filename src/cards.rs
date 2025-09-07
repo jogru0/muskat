@@ -20,7 +20,7 @@ impl Iterator for Cards {
     type Item = Card;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.remove_next()
+        self.remove_smallest()
     }
 }
 
@@ -86,6 +86,10 @@ impl Cards {
 
     pub const ALL: Self = Self { bits: u32::MAX };
 
+    pub const OF_ZERO_POINTS: Self = Self::of_rank(Rank::L7)
+        .or(Self::of_rank(Rank::L8))
+        .or(Self::of_rank(Rank::L9));
+
     pub const fn just(card: Card) -> Self {
         Self {
             bits: card.detail_to_bit(),
@@ -149,7 +153,7 @@ impl Cards {
         self.overlaps(Cards::just(card))
     }
 
-    pub fn remove(&mut self, card: Card) {
+    pub fn remove_existing(&mut self, card: Card) {
         debug_assert!(self.contains(card));
         *self = self.without(Cards::just(card))
     }
@@ -198,18 +202,18 @@ impl Cards {
         }
     }
 
-    pub const fn remove_next(&mut self) -> Option<Card> {
+    pub const fn remove_smallest(&mut self) -> Option<Card> {
         if self.is_empty() {
             return None;
         }
 
-        Some(unsafe { self.remove_next_unchecked() })
+        Some(unsafe { self.remove_smallest_unchecked() })
     }
 
     /// # Safety
     ///
     /// self must not be empty.
-    pub const unsafe fn remove_next_unchecked(&mut self) -> Card {
+    pub const unsafe fn remove_smallest_unchecked(&mut self) -> Card {
         let id_card = self.bits.trailing_zeros() as u8;
         debug_assert!(id_card < 32);
 
@@ -248,11 +252,40 @@ impl Cards {
     pub fn to_vec(mut self) -> Vec<Card> {
         let mut result = Vec::new();
 
-        while let Some(card) = self.remove_next() {
+        while let Some(card) = self.remove_smallest() {
             result.push(card);
         }
 
         result
+    }
+
+    pub fn remove_highest_non_null(&mut self) -> Option<Card> {
+        let id_card = self.bits.checked_ilog2()? as u8;
+        debug_assert!(id_card < 32);
+        self.bits ^= 1 << id_card;
+
+        Some(unsafe { transmute::<u8, Card>(id_card) })
+    }
+
+    pub fn remove_if_there(&mut self, card: Card) -> bool {
+        let new = self.without(Cards::just(card));
+        let was_there = &new != self;
+        *self = new;
+        was_there
+    }
+
+    pub fn remove_lowest_of_cards(&mut self, cards: Cards) -> Option<Card> {
+        let card = self.and(cards).remove_smallest()?;
+        self.remove_existing(card);
+        Some(card)
+    }
+
+    pub fn remove_lowest_of_type(
+        &mut self,
+        card_type: CardType,
+        game_type: GameType,
+    ) -> Option<Card> {
+        self.remove_lowest_of_cards(Cards::of_card_type(card_type, game_type))
     }
 }
 

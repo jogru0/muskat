@@ -3,7 +3,7 @@ use serde::Deserialize;
 use static_assertions::assert_eq_size;
 use strum::{EnumCount, VariantArray};
 
-#[derive(Clone, Copy, PartialEq, Eq, Deserialize, Hash)]
+#[derive(Clone, Copy, PartialEq, Eq, Deserialize, Hash, Debug)]
 // Ordered for U
 #[repr(u8)]
 pub enum Suit {
@@ -18,7 +18,7 @@ pub enum Suit {
 
 assert_eq_size!(Suit, u8);
 
-#[derive(Clone, Copy, PartialEq, Eq, Deserialize, Hash)]
+#[derive(Clone, Copy, PartialEq, Eq, Deserialize, Hash, Debug)]
 pub enum CardType {
     #[serde(alias = "Grand")]
     Trump,
@@ -56,6 +56,17 @@ pub enum Rank {
 assert_eq_size!(Rank, u8);
 
 impl Rank {
+    pub const BY_POINTS: [Rank; 8] = [
+        Rank::L7,
+        Rank::L8,
+        Rank::L9,
+        Rank::U,
+        Rank::O,
+        Rank::K,
+        Rank::Z,
+        Rank::A,
+    ];
+
     const fn to_points(self) -> CardPoints {
         match self {
             Rank::L7 | Rank::L8 | Rank::L9 => CardPoints(0),

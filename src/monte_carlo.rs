@@ -282,9 +282,10 @@ where
             debug_assert_eq!(observed_tricks.active_role(), initial_state.bidding_role());
 
             let mut solver = OpenSituationSolver::new(
-                FastOpenSituationSolverCache::new(open_situation_reachable_from_to_u32_key(
-                    open_situation,
-                )),
+                FastOpenSituationSolverCache::new(
+                    open_situation_reachable_from_to_u32_key(open_situation),
+                    initial_state.game_type(),
+                ),
                 initial_state.game_type(),
             );
 

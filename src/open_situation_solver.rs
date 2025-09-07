@@ -32,7 +32,7 @@ fn get_cards_to_consider(
     let mut next_index = 0;
     if let Some(preference) = maybe_preference {
         result[next_index] = Some(preference);
-        cards.remove(preference);
+        cards.remove_existing(preference);
         next_index += 1;
     }
 
@@ -58,7 +58,7 @@ fn get_cards_to_consider(
     //TODO: Can't we store the values, or even sort?
     while !cards.is_empty() {
         let mut cards_copy = cards;
-        let mut best_card = unsafe { cards_copy.remove_next_unchecked() };
+        let mut best_card = unsafe { cards_copy.remove_smallest_unchecked() };
 
         // lower is better
         let mut best_options = get_options(best_card);
@@ -73,7 +73,7 @@ fn get_cards_to_consider(
             game_type,
         );
 
-        while let Some(card) = cards_copy.remove_next() {
+        while let Some(card) = cards_copy.remove_smallest() {
             let options = get_options(card);
             let card_power = CardPower::of(
                 card,
@@ -91,7 +91,7 @@ fn get_cards_to_consider(
         }
 
         result[next_index] = Some(best_card);
-        cards.remove(best_card);
+        cards.remove_existing(best_card);
         next_index += 1;
     }
 
@@ -116,6 +116,7 @@ impl<C: OpenSituationSolverCache> OpenSituationSolver<C> {
     ///
     /// `open_situation` should still be ongoing.
     // TODO: Performance for splitting this in maximizing and minimizing.
+    // TODO: Would it make sense to split into Forehand and NonForehand?
     fn improve_bounds_to_decide_threshold(
         &mut self,
         mut bounds: Bounds,
@@ -151,7 +152,7 @@ impl<C: OpenSituationSolverCache> OpenSituationSolver<C> {
             if !still_considered.contains(card) {
                 continue;
             }
-            still_considered.remove(card);
+            still_considered.remove_existing(card);
 
             let mut child = open_situation;
 
@@ -299,7 +300,9 @@ impl<C: OpenSituationSolverCache> OpenSituationSolver<C> {
         // We try to avoid using the cache for situations without multiple parents.
         // Specifically, we don't cache situations with an ongoing trick.
         if !open_situation.is_trick_in_progress() {
-            let mut bounds_and_preference = self.cache.get_copy(open_situation);
+            let mut bounds_and_preference = self
+                .cache
+                .get_current_knowledge(open_situation, self.game_type);
             if !bounds_and_preference.bounds().decides_threshold(threshold) {
                 bounds_and_preference = self.improve_bounds_to_decide_threshold(
                     bounds_and_preference.bounds(),
@@ -311,13 +314,13 @@ impl<C: OpenSituationSolverCache> OpenSituationSolver<C> {
                 debug_assert!(bounds_and_preference.bounds().decides_threshold(threshold));
 
                 self.cache
-                    .update_existing(open_situation, bounds_and_preference);
+                    .update_existing(open_situation, bounds_and_preference, self.game_type);
             }
 
             return bounds_and_preference.bounds();
         }
 
-        let mut bounds = open_situation.quick_bounds();
+        let mut bounds = open_situation.quick_bounds(self.game_type);
         if !bounds.decides_threshold(threshold) {
             bounds = self
                 .improve_bounds_to_decide_threshold(bounds, None, open_situation, threshold)

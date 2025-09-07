@@ -182,9 +182,10 @@ pub fn measure_performance_to_decide_winner_of_open_situations(
         } = open_situation_and_game_type;
 
         let mut solver = OpenSituationSolver::new(
-            FastOpenSituationSolverCache::new(open_situation_reachable_from_to_u32_key(
-                open_situation,
-            )),
+            FastOpenSituationSolverCache::new(
+                open_situation_reachable_from_to_u32_key(open_situation),
+                game_type,
+            ),
             game_type,
         );
 
@@ -234,9 +235,10 @@ pub fn measure_performance_to_judge_possible_next_turns_of_open_situation(
         } = open_situation_and_game_type;
 
         let mut solver = OpenSituationSolver::new(
-            FastOpenSituationSolverCache::new(open_situation_reachable_from_to_u32_key(
-                open_situation,
-            )),
+            FastOpenSituationSolverCache::new(
+                open_situation_reachable_from_to_u32_key(open_situation),
+                game_type,
+            ),
             game_type,
         );
 

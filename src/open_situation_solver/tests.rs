@@ -27,7 +27,10 @@ fn test_calculate_potential_score(
     // dbg!(open_situation);
 
     let mut solver = OpenSituationSolver::new(
-        FastOpenSituationSolverCache::new(open_situation_reachable_from_to_u32_key(open_situation)),
+        FastOpenSituationSolverCache::new(
+            open_situation_reachable_from_to_u32_key(open_situation),
+            game_type,
+        ),
         game_type,
     );
 
