@@ -1,12 +1,12 @@
+use foldhash::fast::FixedState;
+use rand::{Rng, seq::IteratorRandom};
+use std::hash::BuildHasher;
 use std::{
     hash::{Hash, Hasher},
     io,
     iter::from_fn,
     time::Duration,
 };
-
-use rand::{Rng, seq::IteratorRandom};
-use rustc_hash::FxHasher;
 
 use crate::{
     bidding_role::BiddingRole,
@@ -164,10 +164,11 @@ pub fn measure_performance_to_decide_winner_of_open_situations(
     open_situation_and_game_type_iter: impl Iterator<Item = OpenSituationAndGameType>,
     level: Level,
 ) -> PerformanceResult {
-    let mut hasher_in = FxHasher::default();
-    let mut hasher_yield = FxHasher::default();
-    let mut hasher_conclusion = FxHasher::default();
-    let mut hasher_won = FxHasher::default();
+    let fixed_state = FixedState::default();
+    let mut hasher_in = fixed_state.build_hasher();
+    let mut hasher_yield = fixed_state.build_hasher();
+    let mut hasher_conclusion = fixed_state.build_hasher();
+    let mut hasher_won = fixed_state.build_hasher();
 
     let mut nodes_vec = Vec::new();
     let mut time_vec = Vec::new();
@@ -217,10 +218,11 @@ pub fn measure_performance_to_judge_possible_next_turns_of_open_situation(
     open_situation_and_game_type_iter: impl Iterator<Item = OpenSituationAndGameType>,
     level: Level,
 ) -> PerformanceResult {
-    let mut hasher_in = FxHasher::default();
-    let mut hasher_yield = FxHasher::default();
-    let mut hasher_conclusion = FxHasher::default();
-    let mut hasher_won = FxHasher::default();
+    let fixed_state = FixedState::default();
+    let mut hasher_in = fixed_state.build_hasher();
+    let mut hasher_yield = fixed_state.build_hasher();
+    let mut hasher_conclusion = fixed_state.build_hasher();
+    let mut hasher_won = fixed_state.build_hasher();
 
     let mut nodes_vec = Vec::new();
     let mut time_vec = Vec::new();

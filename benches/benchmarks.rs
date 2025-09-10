@@ -1,3 +1,5 @@
+use std::hint::black_box;
+
 use criterion::{BatchSize, Criterion, criterion_group, criterion_main};
 use muskat::{
     card::{Card, CardType, Suit},
@@ -29,6 +31,26 @@ fn criterion_benchmark(c: &mut Criterion) {
                 )
             },
             |trick| trick.winner_position(game_type),
+            BatchSize::SmallInput,
+        )
+    });
+
+    c.bench_function("iterate Cards to end", |b| {
+        b.iter_batched(
+            || Cards::random(&mut rng),
+            |cards| {
+                for card in cards {
+                    black_box(card);
+                }
+            },
+            BatchSize::SmallInput,
+        )
+    });
+
+    c.bench_function("Cards::of_type random", |b| {
+        b.iter_batched(
+            || (CardType::random(&mut rng), GameType::random(&mut rng)),
+            |(card_type, game_type)| Cards::of_card_type(card_type, game_type),
             BatchSize::SmallInput,
         )
     });

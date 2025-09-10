@@ -108,7 +108,7 @@ pub struct FastOpenSituationSolverCache<Key, OpenSituationToKey> {
     // Therefore, what subsets of situations can be analyzed with the same instance
     // is dictated by the properties of `situation_to_key`.
     // For that, also note that we don't cache situations with ongoing ticks.
-    key_to_bounds: HashMap<Key, BoundsAndMaybePreference>,
+    key_to_bounds: foldhash::HashMap<Key, BoundsAndMaybePreference>,
 }
 
 impl<Key: Hash + Eq, OpenSituationToKey: Fn(OpenSituation) -> Key>

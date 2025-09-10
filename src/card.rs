@@ -18,6 +18,17 @@ pub enum Suit {
     #[serde(alias = "Eichel")]
     Clubs,
 }
+impl Suit {
+    fn random(rng: &mut impl Rng) -> Self {
+        match rng.random_range(0..4) {
+            0 => Self::Clubs,
+            1 => Self::Diamonds,
+            2 => Self::Spades,
+            3 => Self::Hearts,
+            _ => unreachable!("out of range"),
+        }
+    }
+}
 
 assert_eq_size!(Suit, u8);
 
@@ -29,13 +40,21 @@ pub enum CardType {
     Suit(Suit),
 }
 impl CardType {
-    pub(crate) fn base_value(&self) -> i16 {
+    pub fn base_value(&self) -> i16 {
         match self {
             CardType::Trump => 24,
             CardType::Suit(Suit::Clubs) => 12,
             CardType::Suit(Suit::Spades) => 11,
             CardType::Suit(Suit::Hearts) => 10,
             CardType::Suit(Suit::Diamonds) => 9,
+        }
+    }
+
+    pub fn random(rng: &mut impl Rng) -> Self {
+        if rng.random() {
+            Self::Trump
+        } else {
+            Self::Suit(Suit::random(rng))
         }
     }
 }

@@ -7,12 +7,12 @@ Number of 1000 nodes:
 Time spend in ms:
 	mean: 1
 	median: 0
-	max: 128
-Mean duration per node: 86ns
+	max: 126
+Mean duration per node: 81ns
 
-Hash in: 4257708388493276702
+Hash in: 14001211232889776291
 
-Hash won: 5226074986380619194
+Hash won: 6008327360909702995
 ==========================================
 Performance of getting Conclusion of 1000 samples:
 Number of 1000 nodes:
@@ -22,13 +22,13 @@ Number of 1000 nodes:
 Time spend in ms:
 	mean: 4
 	median: 0
-	max: 461
-Mean duration per node: 89ns
+	max: 406
+Mean duration per node: 84ns
 
-Hash in: 4257708388493276702
+Hash in: 14001211232889776291
 
-Hash won: 5226074986380619194
-Hash conclusion: 5320211088945260650
+Hash won: 6008327360909702995
+Hash conclusion: 11095470188138170372
 ==========================================
 Performance of getting Yield of 1000 samples:
 Number of 1000 nodes:
@@ -36,16 +36,16 @@ Number of 1000 nodes:
 	median: 1
 	max: 14563
 Time spend in ms:
-	mean: 18
+	mean: 17
 	median: 0
-	max: 1111
-Mean duration per node: 81ns
+	max: 1115
+Mean duration per node: 79ns
 
-Hash in: 4257708388493276702
+Hash in: 14001211232889776291
 
-Hash won: 5226074986380619194
-Hash conclusion: 5320211088945260650
-Hash yield: 10402408617290177324
+Hash won: 6008327360909702995
+Hash conclusion: 11095470188138170372
+Hash yield: 17081439537706300946
 
 //////////
 
@@ -58,12 +58,12 @@ Number of 1000 nodes:
 Time spend in ms:
 	mean: 2
 	median: 0
-	max: 180
-Mean duration per node: 84ns
+	max: 174
+Mean duration per node: 81ns
 
-Hash in: 4257708388493276702
+Hash in: 14001211232889776291
 
-Hash won: 5511113995747167311
+Hash won: 8259625004446582411
 ==========================================
 Performance of getting Conclusion of 1000 samples:
 Number of 1000 nodes:
@@ -73,13 +73,13 @@ Number of 1000 nodes:
 Time spend in ms:
 	mean: 6
 	median: 0
-	max: 408
-Mean duration per node: 88ns
+	max: 434
+Mean duration per node: 84ns
 
-Hash in: 4257708388493276702
+Hash in: 14001211232889776291
 
-Hash won: 5511113995747167311
-Hash conclusion: 1286093508480236060
+Hash won: 8259625004446582411
+Hash conclusion: 6506175558576467695
 ==========================================
 Performance of getting Yield of 1000 samples:
 Number of 1000 nodes:
@@ -87,13 +87,13 @@ Number of 1000 nodes:
 	median: 1
 	max: 34178
 Time spend in ms:
-	mean: 33
+	mean: 31
 	median: 0
-	max: 2884
-Mean duration per node: 86ns
+	max: 2709
+Mean duration per node: 82ns
 
-Hash in: 4257708388493276702
+Hash in: 14001211232889776291
 
-Hash won: 5511113995747167311
-Hash conclusion: 1286093508480236060
-Hash yield: 15282672878047050273
+Hash won: 8259625004446582411
+Hash conclusion: 6506175558576467695
+Hash yield: 13431875324341772844
