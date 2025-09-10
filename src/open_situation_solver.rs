@@ -1,102 +1,16 @@
 use crate::bounds::Bounds;
-use crate::card::Card;
+use crate::card::{Card, CardType, Suit};
 use crate::card_points::CardPoints;
-use crate::cards::quasi_equivalent_with_max_delta;
+use crate::cards::{Cards, quasi_equivalent_with_max_delta};
 use crate::game_type::GameType;
 use crate::minimax_role::MinimaxRole;
 use crate::open_situation_solver::bounds_and_preference::BoundsAndMaybePreference;
 use crate::open_situation_solver::bounds_cache::OpenSituationSolverCache;
-use crate::power::CardPower;
 use crate::situation::OpenSituation;
 use crate::trick_yield::TrickYield;
-use std::cmp::Reverse;
 use std::time::{Duration, Instant};
 
 mod bounds_and_preference;
-
-/// Cards to consider for playing next, to be checked in that order.
-/// Result is only None after first None.
-///
-/// `open_situation` should still be ongoing.
-fn get_cards_to_consider(
-    open_situation: OpenSituation,
-    game_type: GameType,
-    maybe_preference: Option<Card>,
-) -> [Option<Card>; 10] {
-    let mut result = [None; 10];
-
-    let mut cards = open_situation.next_possible_plays(game_type);
-    debug_assert!(!cards.is_empty());
-    debug_assert!(cards.len() < 11);
-
-    let mut next_index = 0;
-    if let Some(preference) = maybe_preference {
-        result[next_index] = Some(preference);
-        cards.remove_existing(preference);
-        next_index += 1;
-    }
-
-    let maybe_fixed_first_trick_card = open_situation.maybe_first_trick_card();
-
-    let n = open_situation.active_role().next();
-    let nn = n.next();
-    let n_h = open_situation.hand_cards_of(n);
-    let nn_h = open_situation.hand_cards_of(nn);
-
-    // TODO: Why for every card individually, it only depends on the suit w.r.t. the game type.
-    let get_options = |card| {
-        if maybe_fixed_first_trick_card.is_some() {
-            // We don't need to calculate as it doesn't depend on `card` anyway.
-            return 0;
-        }
-
-        n_h.possible_plays(Some(card), game_type).len()
-            * nn_h.possible_plays(Some(card), game_type).len()
-    };
-
-    //TODO: First doesn't need to be a copy.
-    //TODO: Can't we store the values, or even sort?
-    while !cards.is_empty() {
-        let mut cards_copy = cards;
-        let mut best_card = unsafe { cards_copy.remove_smallest_unchecked() };
-
-        // lower is better
-        let mut best_options = get_options(best_card);
-
-        //higher is better
-        let mut best_card_power = CardPower::of(
-            best_card,
-            //TODO: Is this calculation for free or should we buffer?
-            maybe_fixed_first_trick_card
-                .unwrap_or(best_card)
-                .card_type(game_type),
-            game_type,
-        );
-
-        while let Some(card) = cards_copy.remove_smallest() {
-            let options = get_options(card);
-            let card_power = CardPower::of(
-                card,
-                maybe_fixed_first_trick_card
-                    .unwrap_or(card)
-                    .card_type(game_type),
-                game_type,
-            );
-
-            if (options, Reverse(card_power)) < (best_options, Reverse(best_card_power)) {
-                best_card = card;
-                best_options = options;
-                best_card_power = card_power;
-            }
-        }
-
-        result[next_index] = Some(best_card);
-        cards.remove_existing(best_card);
-        next_index += 1;
-    }
-
-    result
-}
 
 pub mod bounds_cache;
 
@@ -120,7 +34,7 @@ impl<C: OpenSituationSolverCache> OpenSituationSolver<C> {
     fn improve_bounds_to_decide_threshold(
         &mut self,
         mut bounds: Bounds,
-        maybe_preference: Option<Card>,
+        mut maybe_preference: Option<Card>,
         open_situation: OpenSituation,
         threshold: TrickYield,
     ) -> BoundsAndMaybePreference {
@@ -131,28 +45,70 @@ impl<C: OpenSituationSolverCache> OpenSituationSolver<C> {
 
         let mut bound_calculated_over_all_children = TrickYield::worst(active_minimax_role);
 
-        let cards_to_consider =
-            get_cards_to_consider(open_situation, self.game_type, maybe_preference);
+        // What cards to consider for evaluating what happens when played.
+        // We go through them in a certain order to hopefully be able to return sooner,
+        // and we sometimes remove cards without evaluating due to quasi equivalence.
+        let mut still_considered = open_situation.next_possible_plays(self.game_type);
 
         //We catch these via strict bounds.
-        debug_assert!(cards_to_consider[0].is_some());
+        debug_assert!(!still_considered.is_empty());
 
         let mut maybe_deciding_card = None;
 
-        let mut still_considered = open_situation.next_possible_plays(self.game_type);
-
+        // Decides what counts as quasi equivalent.
         let in_hand_or_yielded = open_situation.in_hand_or_yielded();
 
-        // TODO: function that returns maybe_deciding_card?
-        for maybe_card in cards_to_consider {
-            let Some(card) = maybe_card else {
-                break;
+        let mut maybe_types_and_index = if !open_situation.is_trick_in_progress() {
+            let n = open_situation.active_role().next();
+            let nn = n.next();
+            let hn = open_situation.hand_cards_of(n);
+            let hnn = open_situation.hand_cards_of(nn);
+
+            // TODO: Does it make sense to sort stable, so we prefer trump in case of a tie?
+            let mut types = [
+                CardType::Trump,
+                CardType::Suit(Suit::Clubs),
+                CardType::Suit(Suit::Diamonds),
+                CardType::Suit(Suit::Hearts),
+                CardType::Suit(Suit::Spades),
+            ];
+            types.sort_by_key(|&ty| {
+                hn.possible_plays_for_trick_type(ty, self.game_type).len()
+                    * hnn.possible_plays_for_trick_type(ty, self.game_type).len()
+            });
+            Some((types, 0))
+        } else {
+            None
+        };
+
+        // TODO: Could we separate order logic from selected child evaluation?
+        loop {
+            let card = if let Some(preference) = maybe_preference {
+                still_considered.remove_existing(preference);
+                maybe_preference = None;
+                preference
+            } else if let Some((types, index)) = &mut maybe_types_and_index {
+                let Some(highest_of_type) = still_considered
+                    .remove_highest_of_cards(Cards::of_card_type(types[*index], self.game_type))
+                else {
+                    if *index == 4 {
+                        break;
+                    }
+
+                    *index += 1;
+                    continue;
+                };
+                highest_of_type
+            } else {
+                // TODO: Non null.. On the other hand, this all makes no sense for null anyway ...
+                let Some(highest) = still_considered.remove_highest_non_null() else {
+                    break;
+                };
+
+                highest
             };
 
-            if !still_considered.contains(card) {
-                continue;
-            }
-            still_considered.remove_existing(card);
+            debug_assert!(!still_considered.contains(card));
 
             let mut child = open_situation;
 

@@ -166,6 +166,25 @@ impl Cards {
     /// Assumed to not be used on empty hand.
     ///
     /// Therefore guaranteed to return at least one option.
+    pub const fn possible_plays_for_trick_type(
+        self,
+        trick_type: CardType,
+        game_type: GameType,
+    ) -> Self {
+        debug_assert!(!self.is_empty());
+
+        let self_and_following_suit = self.and(Cards::of_card_type(trick_type, game_type));
+
+        if self_and_following_suit.is_empty() {
+            return self;
+        }
+
+        self_and_following_suit
+    }
+
+    /// Assumed to not be used on empty hand.
+    ///
+    /// Therefore guaranteed to return at least one option.
     pub const fn possible_plays(
         self,
         maybe_first_trick_card: Option<Card>,
@@ -177,16 +196,7 @@ impl Cards {
             return self;
         };
 
-        let self_and_following_suit = self.and(Cards::of_card_type(
-            first_trick_card.card_type(game_type),
-            game_type,
-        ));
-
-        if self_and_following_suit.is_empty() {
-            return self;
-        }
-
-        self_and_following_suit
+        self.possible_plays_for_trick_type(first_trick_card.card_type(game_type), game_type)
     }
 
     pub const fn or(self, other: Cards) -> Cards {

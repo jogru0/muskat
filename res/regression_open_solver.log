@@ -1,14 +1,14 @@
 ==========================================
 Performance of getting IsWon of 1000 samples:
 Number of 1000 nodes:
-	mean: 32
+	mean: 18
 	median: 0
-	max: 5321
+	max: 1622
 Time spend in ms:
-	mean: 3
+	mean: 1
 	median: 0
-	max: 553
-Mean duration per node: 101ns
+	max: 135
+Mean duration per node: 81ns
 
 Hash in: 4257708388493276702
 
@@ -16,14 +16,14 @@ Hash won: 5226074986380619194
 ==========================================
 Performance of getting Conclusion of 1000 samples:
 Number of 1000 nodes:
-	mean: 72
+	mean: 47
 	median: 0
-	max: 8545
+	max: 4667
 Time spend in ms:
-	mean: 8
+	mean: 4
 	median: 0
-	max: 986
-Mean duration per node: 105ns
+	max: 528
+Mean duration per node: 90ns
 
 Hash in: 4257708388493276702
 
@@ -32,14 +32,14 @@ Hash conclusion: 5320211088945260650
 ==========================================
 Performance of getting Yield of 1000 samples:
 Number of 1000 nodes:
-	mean: 330
+	mean: 223
 	median: 1
-	max: 41922
+	max: 14139
 Time spend in ms:
-	mean: 35
+	mean: 18
 	median: 0
-	max: 4891
-Mean duration per node: 106ns
+	max: 1311
+Mean duration per node: 81ns
 
 Hash in: 4257708388493276702
 
@@ -52,14 +52,14 @@ Hash yield: 10402408617290177324
 ==========================================
 Performance of getting IsWon of 1000 samples:
 Number of 1000 nodes:
-	mean: 52
+	mean: 32
 	median: 0
-	max: 5304
+	max: 2583
 Time spend in ms:
-	mean: 5
+	mean: 3
 	median: 0
-	max: 536
-Mean duration per node: 101ns
+	max: 215
+Mean duration per node: 85ns
 
 Hash in: 4257708388493276702
 
@@ -67,14 +67,14 @@ Hash won: 5511113995747167311
 ==========================================
 Performance of getting Conclusion of 1000 samples:
 Number of 1000 nodes:
-	mean: 112
+	mean: 77
 	median: 0
-	max: 9388
+	max: 4812
 Time spend in ms:
-	mean: 12
+	mean: 6
 	median: 0
-	max: 1081
-Mean duration per node: 104ns
+	max: 444
+Mean duration per node: 84ns
 
 Hash in: 4257708388493276702
 
@@ -83,14 +83,14 @@ Hash conclusion: 1286093508480236060
 ==========================================
 Performance of getting Yield of 1000 samples:
 Number of 1000 nodes:
-	mean: 538
+	mean: 383
 	median: 1
-	max: 46326
+	max: 33977
 Time spend in ms:
-	mean: 58
+	mean: 34
 	median: 0
-	max: 5493
-Mean duration per node: 108ns
+	max: 3314
+Mean duration per node: 89ns
 
 Hash in: 4257708388493276702
 
