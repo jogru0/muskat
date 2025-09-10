@@ -484,30 +484,43 @@ impl OpenSituation {
         naive_upper.saturating_sub(TrickYield::new(points, tricks))
     }
 
-    pub fn quick_bounds(self, game_type: GameType) -> Bounds {
-        let is_trick_in_progress = self.is_trick_in_progress();
+    pub fn quick_bounds_trick_not_in_progress(self, game_type: GameType) -> Bounds {
+        debug_assert!(!self.is_trick_in_progress());
 
-        let lower = match (is_trick_in_progress, self.active_role, game_type) {
-            (false, Role::Declarer, GameType::Trump(trump)) => {
+        let lower = match (self.active_role, game_type) {
+            (Role::Declarer, GameType::Trump(trump)) => {
                 self.lower_bound_non_null_declarer_forehand(trump)
             }
             _ => TrickYield::ZERO_TRICKS,
         };
 
-        let upper = match (is_trick_in_progress, self.active_role, game_type) {
-            (false, Role::FirstDefender | Role::SecondDefender, GameType::Trump(trump)) => {
+        let upper = match (self.active_role, game_type) {
+            (Role::FirstDefender | Role::SecondDefender, GameType::Trump(trump)) => {
                 self.upper_bound_non_null_defender_forehand(trump)
             }
-            _ => {
-                //TODO: How many tricks left?
-                let cellar = self.cellar();
-                let gone_tricks = cellar.len() / 3;
-                let cellar_score = YieldSoFar::new(cellar.to_points(), gone_tricks);
-                YieldSoFar::MAX.saturating_sub(cellar_score)
-            }
+            _ => TrickYield::new(
+                self.remaining_cards_in_hands().to_points(),
+                self.hand_declarer.len(),
+            ),
         };
 
         Bounds::new(lower, upper)
+    }
+
+    pub fn quick_bounds_trick_in_progress(self) -> Bounds {
+        debug_assert!(self.is_trick_in_progress());
+        Bounds::new(TrickYield::ZERO_TRICKS, self.quick_upper_bound_impl())
+    }
+
+    fn quick_upper_bound_impl(self) -> TrickYield {
+        let remaining_winnable_cards = self
+            .remaining_cards_in_hands()
+            .combined_with_disjoint(self.partial_trick.cards());
+        debug_assert_eq!(remaining_winnable_cards.len() % 3, 0);
+        TrickYield::new(
+            remaining_winnable_cards.to_points(),
+            remaining_winnable_cards.len() / 3,
+        )
     }
 
     pub fn remaining_cards_in_hands(self) -> Cards {

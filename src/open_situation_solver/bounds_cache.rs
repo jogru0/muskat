@@ -124,7 +124,10 @@ impl<Key: Hash + Eq, OpenSituationToKey: Fn(OpenSituation) -> Key>
             OpenSituation::leaf(Role::FirstDefender),
             OpenSituation::leaf(Role::SecondDefender),
         ] {
-            debug_assert_eq!(leaf.quick_bounds(game_type), strict_bounds_leaf);
+            debug_assert_eq!(
+                leaf.quick_bounds_trick_not_in_progress(game_type),
+                strict_bounds_leaf
+            );
             key_to_bounds.insert(
                 open_situation_to_key(leaf),
                 BoundsAndMaybePreference::new(strict_bounds_leaf, None),
@@ -149,13 +152,14 @@ where
         open_situation: OpenSituation,
         game_type: GameType,
     ) -> BoundsAndMaybePreference {
+        debug_assert!(!open_situation.is_trick_in_progress());
         let key = (self.open_situation_to_key)(open_situation);
 
         *self
             .key_to_bounds
             .entry(key)
             .or_insert(BoundsAndMaybePreference::new(
-                open_situation.quick_bounds(game_type),
+                open_situation.quick_bounds_trick_not_in_progress(game_type),
                 None,
             ))
     }

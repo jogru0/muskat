@@ -7,8 +7,8 @@ Number of 1000 nodes:
 Time spend in ms:
 	mean: 2
 	median: 0
-	max: 38
-Mean duration per node: 76ns
+	max: 35
+Mean duration per node: 71ns
 
 Hash in: 16336255308731055633
 
@@ -20,10 +20,10 @@ Number of 1000 nodes:
 	median: 50
 	max: 2209
 Time spend in ms:
-	mean: 16
-	median: 5
-	max: 227
-Mean duration per node: 88ns
+	mean: 12
+	median: 3
+	max: 147
+Mean duration per node: 69ns
 
 Hash in: 16336255308731055633
 
@@ -36,10 +36,10 @@ Number of 1000 nodes:
 	median: 316
 	max: 7894
 Time spend in ms:
-	mean: 71
-	median: 25
-	max: 667
-Mean duration per node: 88ns
+	mean: 59
+	median: 23
+	max: 611
+Mean duration per node: 73ns
 
 Hash in: 16336255308731055633
 
@@ -58,8 +58,8 @@ Number of 1000 nodes:
 Time spend in ms:
 	mean: 4
 	median: 0
-	max: 137
-Mean duration per node: 77ns
+	max: 120
+Mean duration per node: 70ns
 
 Hash in: 16336255308731055633
 
@@ -71,10 +71,10 @@ Number of 1000 nodes:
 	median: 289
 	max: 4049
 Time spend in ms:
-	mean: 55
-	median: 26
-	max: 306
-Mean duration per node: 81ns
+	mean: 48
+	median: 21
+	max: 272
+Mean duration per node: 70ns
 
 Hash in: 16336255308731055633
 
@@ -87,10 +87,10 @@ Number of 1000 nodes:
 	median: 836
 	max: 16447
 Time spend in ms:
-	mean: 171
-	median: 75
-	max: 1467
-Mean duration per node: 92ns
+	mean: 138
+	median: 61
+	max: 1329
+Mean duration per node: 74ns
 
 Hash in: 16336255308731055633
 

@@ -260,7 +260,7 @@ impl Cards {
     }
 
     pub fn combined_with_disjoint(&self, other: Cards) -> Cards {
-        assert!(self.and(other).is_empty());
+        debug_assert!(self.and(other).is_empty());
         self.or(other)
     }
 

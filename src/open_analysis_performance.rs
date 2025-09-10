@@ -29,9 +29,9 @@ use crate::{
 
 #[derive(Hash, Clone, Copy)]
 pub struct OpenSituationAndGameType {
-    open_situation: OpenSituation,
-    game_type: GameType,
-    yield_so_far: YieldSoFar,
+    pub open_situation: OpenSituation,
+    pub game_type: GameType,
+    pub yield_so_far: YieldSoFar,
 }
 
 pub fn generate_random_trump_games_of_active_player(
@@ -302,7 +302,7 @@ fn analyzer_is_won<C: OpenSituationSolverCache>(
     }
 }
 
-fn analyzer_conclusion<C: OpenSituationSolverCache>(
+pub fn analyzer_conclusion<C: OpenSituationSolverCache>(
     open_situation: OpenSituation,
     solver: &mut OpenSituationSolver<C>,
     yield_so_far: YieldSoFar,

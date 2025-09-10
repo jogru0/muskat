@@ -279,7 +279,7 @@ impl<C: OpenSituationSolverCache> OpenSituationSolver<C> {
             return bounds_and_preference.bounds();
         }
 
-        let mut bounds = open_situation.quick_bounds(self.game_type);
+        let mut bounds = open_situation.quick_bounds_trick_in_progress();
         if !bounds.decides_threshold(threshold) {
             bounds = self
                 .improve_bounds_to_decide_threshold(bounds, None, open_situation, threshold)
