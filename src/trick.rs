@@ -6,6 +6,7 @@ use crate::{
     position::Position,
     power::CardPower,
 };
+use rand::Rng;
 use static_assertions::assert_eq_size;
 
 #[derive(Clone, Copy)]
@@ -28,6 +29,10 @@ impl Trick {
             second,
             third,
         }
+    }
+
+    pub fn random(rng: &mut impl Rng) -> Self {
+        Self::new(Card::random(rng), Card::random(rng), Card::random(rng))
     }
 
     pub fn first(self) -> Card {
@@ -113,7 +118,7 @@ impl Trick {
     }
 
     pub fn to_points(self) -> CardPoints {
-        self.cards().to_points()
+        self.first.to_points() + self.second.to_points() + self.third.to_points()
     }
 
     pub const fn cards(&self) -> Cards {
