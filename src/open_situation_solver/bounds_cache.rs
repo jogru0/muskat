@@ -175,6 +175,21 @@ where
         //     assert!(lower_bound <= updated.bounds().upper());
         // }
 
+        // if cfg!(debug_assertions)
+        //     && !open_situation.is_trick_in_progress()
+        //     && open_situation.active_role() != Role::Declarer
+        //     && let GameType::Trump(trump) = game_type
+        // {
+        //     let upper_bound = open_situation.upper_bound_non_null_defender_forehand(trump);
+        //     if upper_bound < updated.bounds().lower() {
+        //         dbg!(game_type);
+        //         dbg!(updated.bounds());
+        //         dbg!(upper_bound);
+        //         dbg!(open_situation);
+        //     }
+        //     assert!(updated.bounds().lower() <= upper_bound);
+        // }
+
         let key = (self.open_situation_to_key)(open_situation);
         let existing = self.key_to_bounds.get_mut(&key);
 

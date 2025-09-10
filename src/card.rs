@@ -56,10 +56,12 @@ pub enum Rank {
 assert_eq_size!(Rank, u8);
 
 impl Rank {
+    /// For same point value, do reverse power, because if we look for points,
+    /// we want to keep the more powerful card for future points in case of a tie.
     pub const BY_POINTS: [Rank; 8] = [
-        Rank::L7,
-        Rank::L8,
         Rank::L9,
+        Rank::L8,
+        Rank::L7,
         Rank::U,
         Rank::O,
         Rank::K,

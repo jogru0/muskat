@@ -26,4 +26,12 @@ impl Role {
             BiddingRole::SecondCaller => Self::FirstDefender,
         }
     }
+
+    pub(crate) fn other_defender(self) -> Self {
+        match self {
+            Role::Declarer => unreachable!("only use on defender"),
+            Role::FirstDefender => Role::SecondDefender,
+            Role::SecondDefender => Role::FirstDefender,
+        }
+    }
 }

@@ -267,6 +267,10 @@ impl Cards {
         Some(unsafe { transmute::<u8, Card>(id_card) })
     }
 
+    pub fn highest_non_null(mut self) -> Option<Card> {
+        self.remove_highest_non_null()
+    }
+
     pub fn remove_if_there(&mut self, card: Card) -> bool {
         let new = self.without(Cards::just(card));
         let was_there = &new != self;
@@ -280,12 +284,47 @@ impl Cards {
         Some(card)
     }
 
+    pub fn remove_highest_of_cards(&mut self, cards: Cards) -> Option<Card> {
+        let card = self.and(cards).remove_highest_non_null()?;
+        self.remove_existing(card);
+        Some(card)
+    }
+
     pub fn remove_lowest_of_type(
         &mut self,
         card_type: CardType,
         game_type: GameType,
     ) -> Option<Card> {
         self.remove_lowest_of_cards(Cards::of_card_type(card_type, game_type))
+    }
+
+    /// If multiple have the same value, use the lowest of these.
+    fn remove_highest_value(&mut self) -> Card {
+        for rank in Rank::BY_POINTS.into_iter().rev() {
+            if let Some(card) = self.and(Cards::of_rank(rank)).remove_smallest() {
+                self.remove_existing(card);
+                return card;
+            }
+        }
+
+        unreachable!("empty cards")
+    }
+
+    /// If multiple have the same value, use the lowest of these.
+    pub fn highest_value(mut self) -> Card {
+        self.remove_highest_value()
+    }
+
+    // TODO: This order is weird. Maybe should just return points for n cards and not mutate to prevent misuse?
+    pub fn remove_lowest_value(&mut self) -> Card {
+        for rank in Rank::BY_POINTS {
+            if let Some(card) = self.and(Cards::of_rank(rank)).remove_smallest() {
+                self.remove_existing(card);
+                return card;
+            }
+        }
+
+        unreachable!("empty cards")
     }
 }
 
