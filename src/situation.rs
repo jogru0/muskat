@@ -522,7 +522,7 @@ impl OpenSituation {
         let result = Cards::ALL
             .without(self.remaining_cards_in_hands())
             .without(self.partial_trick.cards());
-        assert_eq!(result.len() % 3, 2);
+        debug_assert_eq!(result.len() % 3, 2);
         result
     }
 

@@ -1,3 +1,4 @@
+use rand::Rng;
 use serde::{Deserialize, de::Visitor};
 use static_assertions::assert_eq_size;
 use std::{fmt::Debug, mem::transmute};
@@ -94,6 +95,10 @@ impl Cards {
         Self {
             bits: card.detail_to_bit(),
         }
+    }
+
+    pub fn random(rng: &mut impl Rng) -> Self {
+        Self { bits: rng.random() }
     }
 
     pub const fn of_suit(suit: Suit) -> Self {
@@ -226,13 +231,11 @@ impl Cards {
         unsafe { transmute(id_card) }
     }
 
-    //TODO: Fast? Vs checking contains?
     pub fn to_points(self) -> CardPoints {
-        let mut result = CardPoints(0);
-        for card in self {
-            result = CardPoints(result.0 + card.to_points().0);
-        }
-        result
+        Rank::BY_POINTS
+            .iter()
+            .map(|&rank| self.and(Cards::of_rank(rank)).len() * rank.to_points())
+            .sum()
     }
 
     pub const fn add_new(&mut self, card: Card) {

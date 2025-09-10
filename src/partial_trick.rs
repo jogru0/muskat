@@ -14,6 +14,8 @@ enum PartialTrickImpl {
     TwoCards { first: Card, second: Card },
 }
 
+assert_eq_size!(PartialTrickImpl, u16);
+
 impl PartialTrick {
     pub const EMPTY: Self = Self(PartialTrickImpl::Empty);
 

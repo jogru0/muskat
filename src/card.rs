@@ -1,4 +1,7 @@
+use std::mem::transmute;
+
 use crate::{card_points::CardPoints, cards::Cards, game_type::GameType};
+use rand::Rng;
 use serde::Deserialize;
 use static_assertions::assert_eq_size;
 use strum::{EnumCount, VariantArray};
@@ -69,7 +72,7 @@ impl Rank {
         Rank::A,
     ];
 
-    const fn to_points(self) -> CardPoints {
+    pub const fn to_points(self) -> CardPoints {
         match self {
             Rank::L7 | Rank::L8 | Rank::L9 => CardPoints(0),
             Rank::Z => CardPoints(10),
@@ -123,6 +126,15 @@ assert_eq_size!(Card, u8);
 impl Card {
     pub const fn to_u8(self) -> u8 {
         self as u8
+    }
+
+    const fn from_u8(val: u8) -> Self {
+        debug_assert!(val < 32);
+        unsafe { transmute(val) }
+    }
+
+    pub fn random(rng: &mut impl Rng) -> Self {
+        Card::from_u8(rng.random_range(..32u8))
     }
 
     pub(crate) const fn detail_to_bit(self) -> u32 {
