@@ -242,6 +242,8 @@ impl Cards {
     }
 
     pub fn to_points(self) -> CardPoints {
+        // This seems to be optimized as good as hard coding each ranks points and adding for each rank explicitly,
+        // even when leaving out ranks giving zero points.
         Rank::BY_POINTS
             .iter()
             .map(|&rank| self.and(Cards::of_rank(rank)).len() * rank.to_points())
