@@ -1,14 +1,14 @@
 ==========================================
 Performance of getting IsWon of 1000 samples:
 Number of 1000 nodes:
-	mean: 18
+	mean: 16
 	median: 0
-	max: 1622
+	max: 1510
 Time spend in ms:
 	mean: 1
 	median: 0
-	max: 135
-Mean duration per node: 81ns
+	max: 128
+Mean duration per node: 86ns
 
 Hash in: 4257708388493276702
 
@@ -16,14 +16,14 @@ Hash won: 5226074986380619194
 ==========================================
 Performance of getting Conclusion of 1000 samples:
 Number of 1000 nodes:
-	mean: 47
+	mean: 42
 	median: 0
-	max: 4667
+	max: 4253
 Time spend in ms:
 	mean: 4
 	median: 0
-	max: 528
-Mean duration per node: 90ns
+	max: 461
+Mean duration per node: 89ns
 
 Hash in: 4257708388493276702
 
@@ -32,13 +32,13 @@ Hash conclusion: 5320211088945260650
 ==========================================
 Performance of getting Yield of 1000 samples:
 Number of 1000 nodes:
-	mean: 223
+	mean: 221
 	median: 1
-	max: 14139
+	max: 14563
 Time spend in ms:
 	mean: 18
 	median: 0
-	max: 1311
+	max: 1111
 Mean duration per node: 81ns
 
 Hash in: 4257708388493276702
@@ -52,14 +52,14 @@ Hash yield: 10402408617290177324
 ==========================================
 Performance of getting IsWon of 1000 samples:
 Number of 1000 nodes:
-	mean: 32
+	mean: 28
 	median: 0
-	max: 2583
+	max: 2194
 Time spend in ms:
-	mean: 3
+	mean: 2
 	median: 0
-	max: 215
-Mean duration per node: 85ns
+	max: 180
+Mean duration per node: 84ns
 
 Hash in: 4257708388493276702
 
@@ -67,14 +67,14 @@ Hash won: 5511113995747167311
 ==========================================
 Performance of getting Conclusion of 1000 samples:
 Number of 1000 nodes:
-	mean: 77
+	mean: 68
 	median: 0
-	max: 4812
+	max: 4360
 Time spend in ms:
 	mean: 6
 	median: 0
-	max: 444
-Mean duration per node: 84ns
+	max: 408
+Mean duration per node: 88ns
 
 Hash in: 4257708388493276702
 
@@ -83,14 +83,14 @@ Hash conclusion: 1286093508480236060
 ==========================================
 Performance of getting Yield of 1000 samples:
 Number of 1000 nodes:
-	mean: 383
+	mean: 380
 	median: 1
-	max: 33977
+	max: 34178
 Time spend in ms:
-	mean: 34
+	mean: 33
 	median: 0
-	max: 3314
-Mean duration per node: 89ns
+	max: 2884
+Mean duration per node: 86ns
 
 Hash in: 4257708388493276702
 

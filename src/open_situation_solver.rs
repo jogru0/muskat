@@ -1,6 +1,5 @@
 use crate::bounds::Bounds;
 use crate::card::{Card, CardType, Suit};
-use crate::card_points::CardPoints;
 use crate::cards::{Cards, quasi_equivalent_with_max_delta};
 use crate::game_type::GameType;
 use crate::minimax_role::MinimaxRole;
@@ -59,6 +58,8 @@ impl<C: OpenSituationSolverCache> OpenSituationSolver<C> {
         let in_hand_or_yielded = open_situation.in_hand_or_yielded();
 
         let mut maybe_types_and_index = if !open_situation.is_trick_in_progress() {
+            // TODO: So for ties, we arbitrarily decide which type we exhaust first, even though that might mean playing lower cards than from the other type ...
+
             let n = open_situation.active_role().next();
             let nn = n.next();
             let hn = open_situation.hand_cards_of(n);
@@ -78,6 +79,7 @@ impl<C: OpenSituationSolverCache> OpenSituationSolver<C> {
             });
             Some((types, 0))
         } else {
+            // TODO: So we don't have a nice ordering for discarding?
             None
         };
 
@@ -154,7 +156,8 @@ impl<C: OpenSituationSolverCache> OpenSituationSolver<C> {
                 // (it is a trade-off because skipping childs can mean the bound we find for this node are less strict)
                 // and if there are faster implementations abusing certain max deltas
                 // (as suggested by K2007, but I think my way of doing it might already be superior to what they found)
-                .min(CardPoints(1));
+                // .min(CardPoints(1));
+                ;
 
             let (banned, delta) = quasi_equivalent_with_max_delta(
                 card,
