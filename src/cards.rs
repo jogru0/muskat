@@ -326,6 +326,13 @@ impl Cards {
 
         unreachable!("empty cards")
     }
+
+    // Better call with single or no card ...
+    pub fn smaller(self, other: Cards) -> bool {
+        debug_assert!(self.len() <= 1);
+        debug_assert!(other.len() <= 1);
+        self.bits < other.bits
+    }
 }
 
 /// Input the max delta that should lead to banning childs.

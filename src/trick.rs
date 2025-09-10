@@ -49,6 +49,45 @@ impl Trick {
     pub fn winner_position(self, game_type: GameType) -> Position {
         let trick_type = self.trick_type(game_type);
 
+        if !matches!(game_type, GameType::Null) {
+            let trump = Cards::of_trump(game_type);
+
+            let trump_1 = Cards::just(self.first).and(trump);
+            let trump_2 = Cards::just(self.second).and(trump);
+            let trump_3 = Cards::just(self.third).and(trump);
+
+            if trump_1.or(trump_2).or(trump_3).is_empty() {
+                let matching_cards = Cards::of_card_type(trick_type, game_type);
+                let matching_1 = Cards::just(self.first);
+                let matching_2 = Cards::just(self.second).and(matching_cards);
+                let matching_3 = Cards::just(self.third).and(matching_cards);
+
+                return if matching_1.smaller(matching_2) {
+                    if matching_2.smaller(matching_3) {
+                        Position::Rearhand
+                    } else {
+                        Position::Middlehand
+                    }
+                } else if matching_1.smaller(matching_3) {
+                    Position::Rearhand
+                } else {
+                    Position::Forehand
+                };
+            }
+
+            return if trump_1.smaller(trump_2) {
+                if trump_2.smaller(trump_3) {
+                    Position::Rearhand
+                } else {
+                    Position::Middlehand
+                }
+            } else if trump_1.smaller(trump_3) {
+                Position::Rearhand
+            } else {
+                Position::Forehand
+            };
+        }
+
         let power_forehand = CardPower::of(self.first, trick_type, game_type);
         let power_middlehand = CardPower::of(self.second, trick_type, game_type);
         let power_rearhand = CardPower::of(self.third, trick_type, game_type);

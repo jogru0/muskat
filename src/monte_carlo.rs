@@ -227,9 +227,6 @@ where
     let dist =
         UniformPossibleDealsFromObservedGameplay::new(&card_knowledge, initial_state.game_type());
 
-    dbg!(dist.number_of_color_distributions());
-    dbg!(dist.number_of_possibilities());
-
     let do_all_samples_threshold = 10_000.max(sample_size);
     let do_all_samples = dist.number_of_possibilities() <= do_all_samples_threshold;
 
